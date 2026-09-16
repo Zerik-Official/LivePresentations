@@ -32,14 +32,14 @@ export function CodeBlock({
   const gutter = Array.from({ length: total }, (_, i) => startLine + i).join("\n");
 
   return (
-    <pre className={`relative h-full w-full overflow-auto rounded-md bg-[#2d2d2d] p-3 leading-relaxed ${className}`}>
+    <pre className={`relative h-full w-full overflow-auto whitespace-pre-wrap wrap-break-word rounded-md bg-[#2d2d2d] p-3 leading-relaxed ${className}`}>
       <div className="flex min-w-max">
         {lineNumbers && (
-          <span aria-hidden className="mr-3 shrink-0 select-none border-r border-zinc-600/60 pr-3 text-right text-zinc-500">
+          <span aria-hidden className="mr-3 shrink-0 select-none whitespace-pre border-r border-zinc-600/60 pr-3 text-right text-zinc-500">
             {gutter}
           </span>
         )}
-        <code className={`language-${lang} min-w-0 flex-1`} dangerouslySetInnerHTML={{ __html: html }} />
+        <code className={`language-${lang} min-w-0 flex-1 whitespace-pre-wrap wrap-break-word`} style={{ whiteSpace: "pre-wrap" }} dangerouslySetInnerHTML={{ __html: html }} />
       </div>
       {showBadge && (
         <span className="absolute right-1 top-1 rounded bg-zinc-700 px-1 text-[9px] uppercase text-zinc-200">{langLabel(lang)}</span>
