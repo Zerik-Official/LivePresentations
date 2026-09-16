@@ -70,7 +70,7 @@ export function ModalHeader({ title, subtitle, onClose }: ModalHeaderProps): Rea
         <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</h2>
         {subtitle ? <span className="text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</span> : null}
       </div>
-      <button type="button" className="flex h-8 w-8 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-700" onClick={onClose}>
+      <button type="button" className="flex h-8 w-8 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-700" onClick={onClose}>
         ×
       </button>
     </div>
