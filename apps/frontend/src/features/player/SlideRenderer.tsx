@@ -55,7 +55,19 @@ function ElementView({
   const content = (() => {
     switch (element.type) {
       case "text": {
-        const p = element.props as { text?: string; fontSize?: number; color?: string; align?: string; bold?: boolean };
+        const p = element.props as {
+          text?: string;
+          fontSize?: number;
+          color?: string;
+          align?: string;
+          bold?: boolean;
+          italic?: boolean;
+          underline?: boolean;
+          fontFamily?: string;
+          lineHeight?: number;
+          letterSpacing?: number;
+          opacity?: number;
+        };
         return (
           <div
             style={{
@@ -63,6 +75,12 @@ function ElementView({
               color: p.color ?? "#18181b",
               textAlign: (p.align as React.CSSProperties["textAlign"]) ?? "left",
               fontWeight: p.bold ? 700 : 400,
+              fontStyle: p.italic ? "italic" : "normal",
+              textDecoration: p.underline ? "underline" : "none",
+              fontFamily: p.fontFamily ? `"${p.fontFamily}", sans-serif` : undefined,
+              lineHeight: p.lineHeight ?? 1.2,
+              letterSpacing: p.letterSpacing ? `${p.letterSpacing}px` : undefined,
+              opacity: p.opacity ?? 1,
             }}
             className="h-full w-full overflow-hidden p-2"
           >
