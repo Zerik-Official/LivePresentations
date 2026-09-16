@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FiTrash2 } from "react-icons/fi";
 
 import type { SlideElement } from "../../../types/presentation";
+import { LANGUAGES, resolveLang } from "../../../lib/prism";
 
 import { IconPickerModal } from "./IconPickerModal";
 
@@ -100,7 +101,26 @@ export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.R
       {selected.type === "code" && (
         <div className="space-y-2">
           <label className="block text-xs">
-            Lenguaje <input value={(selected.props as { language?: string }).language ?? "javascript"} onChange={(e) => onPatch({ propsPatch: { language: e.target.value } })} className="mt-1 w-full rounded border px-2 py-1" />
+            Lenguaje
+            <select
+              value={resolveLang((selected.props as { language?: string }).language)}
+              onChange={(e) => onPatch({ propsPatch: { language: e.target.value } })}
+              className="mt-1 w-full rounded border px-2 py-1"
+            >
+              {LANGUAGES.map((l) => (
+                <option key={l.value} value={l.value}>
+                  {l.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex items-center gap-2 text-xs">
+            <input
+              type="checkbox"
+              checked={Boolean((selected.props as { lineNumbers?: boolean }).lineNumbers)}
+              onChange={(e) => onPatch({ propsPatch: { lineNumbers: e.target.checked } })}
+            />
+            Números de línea
           </label>
           <label className="block text-xs">
             Código <textarea value={(selected.props as { code?: string }).code ?? ""} onChange={(e) => onPatch({ propsPatch: { code: e.target.value } })} rows={5} className="mt-1 w-full rounded border px-2 py-1 font-mono text-xs" />
