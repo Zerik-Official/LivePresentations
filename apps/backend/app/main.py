@@ -2,12 +2,16 @@ from __future__ import annotations
 
 from contextlib import asynccontextmanager
 
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 from app.api.routes.auth import router as auth_router
 from app.api.routes.presentations import router as presentations_router
 from app.api.routes.rooms import router as rooms_router
+from app.api.routes.uploads import router as uploads_router
 from app.api.routes.users import router as users_router
 from app.core.config import settings
 from app.db.session import init_db
@@ -35,7 +39,14 @@ app.include_router(auth_router, prefix="/api")
 app.include_router(users_router, prefix="/api")
 app.include_router(presentations_router, prefix="/api")
 app.include_router(rooms_router, prefix="/api")
+app.include_router(uploads_router, prefix="/api")
 app.include_router(ws_router)
+
+_db_path = settings.database_url.replace("sqlite+aiosqlite:///", "")
+_instance = Path(_db_path).parent if _db_path else Path("instance")
+_upload_dir = _instance / "uploads"
+_upload_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(_instance)), name="static")
 
 
 @app.get("/health")
