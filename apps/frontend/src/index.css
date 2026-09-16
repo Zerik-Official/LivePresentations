@@ -1,1 +1,46 @@
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-border: #e4e4e7;
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+  --color-input-text: var(--input-text);
+}
+
+:root {
+  --input-bg: #ffffff;
+  --input-border: #e4e4e7;
+  --input-text: #18181b;
+  --input-placeholder: #71717a;
+}
+
+html.dark {
+  color-scheme: dark;
+  --input-bg: #27272a;
+  --input-border: #3f3f46;
+  --input-text: #f4f4f5;
+  --input-placeholder: #a1a1aa;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #a1a1aa transparent;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--input-placeholder);
+  opacity: 1;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
