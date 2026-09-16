@@ -3,12 +3,14 @@ from __future__ import annotations
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.deps import get_current_user
+from app.core.rooms import room_manager
 from app.db.session import get_db
 from app.models.presentation import Presentation
+from app.models.room import Room
 from app.models.user import User
 from app.schemas.presentation import PresentationCreate, PresentationRead, PresentationUpdate
 
@@ -86,11 +88,15 @@ async def delete_presentation(
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
-    """Delete a presentation if owned."""
+    """Delete a presentation and its associated rooms if owned."""
     result = await db.execute(select(Presentation).where(Presentation.id == presentation_id))
     pres = result.scalar_one_or_none()
     if pres is None or pres.owner_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Presentación no encontrada")
+    rooms_res = await db.execute(select(Room).where(Room.presentation_id == presentation_id))
+    for room in rooms_res.scalars().all():
+        room_manager.delete(room.code)
+        await db.delete(room)
     await db.delete(pres)
     await db.commit()
     return {"status": "deleted"}
