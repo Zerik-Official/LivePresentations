@@ -6,10 +6,12 @@ import { defineConfig } from "vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
+    host: "0.0.0.0",
     proxy: {
       "/api": "http://localhost:8000",
       "/health": "http://localhost:8000",
       "/static": "http://localhost:8000",
+      "/ws": { target: "ws://localhost:8000", ws: true },
     },
   },
 })
