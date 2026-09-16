@@ -27,6 +27,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def init_db() -> None:
     """Create all tables."""
     import app.models.presentation  # noqa: F401
+    import app.models.room  # noqa: F401
     import app.models.user  # noqa: F401
 
     async with engine.begin() as conn:
