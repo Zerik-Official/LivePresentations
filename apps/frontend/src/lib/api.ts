@@ -124,12 +124,13 @@ export async function updatePresentation(id: string, payload: { title?: string; 
 /**
  * Create a presentation.
  * @param title - Presentation title
+ * @param data - Optional initial data
  */
-export async function createPresentation(title: string): Promise<Presentation> {
+export async function createPresentation(title: string, data?: Record<string, unknown>): Promise<Presentation> {
   const res = await fetch(`${API_BASE}/api/presentations`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...getAuthHeader() },
-    body: JSON.stringify({ title, data: { slides: [], width: 1280, height: 720 } }),
+    body: JSON.stringify({ title, data: data ?? { slides: [], width: 1280, height: 720 } }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Error al crear" }));
