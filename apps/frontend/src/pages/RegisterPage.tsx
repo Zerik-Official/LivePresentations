@@ -36,13 +36,13 @@ export function RegisterPage(): React.ReactNode {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 px-4">
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-sm rounded-2xl border border-zinc-200 bg-white p-8 shadow-sm"
+        className="w-full max-w-sm rounded-2xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-8 shadow-sm"
       >
-        <h1 className="text-2xl font-semibold tracking-tight">Crear cuenta</h1>
-        <p className="mt-1 text-sm text-zinc-500">Solo necesitas correo y contraseña</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">Crear cuenta</h1>
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">Solo necesitas correo y contraseña</p>
 
         {error && (
           <div className="mt-4 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -51,7 +51,7 @@ export function RegisterPage(): React.ReactNode {
           </div>
         )}
 
-        <label className="mt-6 block text-sm font-medium">
+        <label className="mt-6 block text-sm font-medium text-zinc-900 dark:text-zinc-100">
           Correo electrónico
           <input
             type="email"
@@ -59,11 +59,11 @@ export function RegisterPage(): React.ReactNode {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="tu@correo.com"
-            className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:focus:border-zinc-300 focus:ring-1 focus:ring-zinc-900"
           />
         </label>
 
-        <label className="mt-4 block text-sm font-medium">
+        <label className="mt-4 block text-sm font-medium text-zinc-900 dark:text-zinc-100">
           Contraseña
           <input
             type="password"
@@ -72,21 +72,21 @@ export function RegisterPage(): React.ReactNode {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Mínimo 8 caracteres"
-            className="mt-1 w-full rounded-lg border border-zinc-200 px-3 py-2 text-sm outline-none focus:border-zinc-900 focus:ring-1 focus:ring-zinc-900"
+            className="mt-1 w-full rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:focus:border-zinc-300 focus:ring-1 focus:ring-zinc-900"
           />
         </label>
 
         <button
           type="submit"
           disabled={loading}
-          className="mt-6 w-full rounded-lg bg-zinc-900 px-4 py-2.5 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50"
+          className="mt-6 w-full rounded-lg bg-zinc-900 dark:bg-white px-4 py-2.5 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 disabled:opacity-50"
         >
           {loading ? "Creando cuenta..." : "Crear cuenta"}
         </button>
 
-        <p className="mt-4 text-center text-sm text-zinc-500">
+        <p className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
           ¿Ya tienes cuenta?{" "}
-          <Link to="/login" className="font-medium text-zinc-900 underline">
+          <Link to="/login" className="font-medium text-zinc-900 dark:text-white underline decoration-zinc-300 dark:decoration-zinc-600 hover:text-black dark:hover:text-zinc-200">
             Inicia sesión
           </Link>
         </p>
