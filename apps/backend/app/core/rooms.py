@@ -21,6 +21,7 @@ class RoomState:
     owner_id: str
     current_slide: int = 0
     highlighted_id: str | None = None
+    code_overlay: dict[str, object] | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(hours=4))
 
