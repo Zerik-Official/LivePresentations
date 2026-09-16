@@ -36,10 +36,10 @@ export function SlidesList({ data, activeSlide, onSelect, onAdd, onDelete, onDup
               <div className="truncate text-[10px] opacity-70">{s.elements.length} elementos</div>
             </button>
             <div className="mt-1 flex gap-1">
-              <button type="button" onClick={() => onDuplicate(idx)} className="rounded bg-white px-1.5 py-0.5 text-[10px] text-zinc-700">
+              <button type="button" onClick={() => onDuplicate(idx)} className="rounded border border-zinc-200 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-700 px-1.5 py-0.5 text-[10px] text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-600">
                 Duplicar
               </button>
-              <button type="button" onClick={() => onDelete(idx)} className="rounded bg-white px-1.5 py-0.5 text-[10px] text-red-600">
+              <button type="button" onClick={() => onDelete(idx)} className="rounded border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-1.5 py-0.5 text-[10px] text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900">
                 <FiTrash2 className="inline" />
               </button>
             </div>
