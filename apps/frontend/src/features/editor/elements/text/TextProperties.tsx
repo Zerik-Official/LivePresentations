@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { FiAlignCenter, FiAlignJustify, FiAlignLeft, FiAlignRight, FiBold, FiItalic, FiType, FiUnderline } from "react-icons/fi";
 
+import { TooltipSimple } from "@/components/ui/Tooltip";
+
 import type { SlideElement, TextElementProps } from "@/types/presentation";
 import { FONT_OPTIONS } from "./constants";
 import { FontPickerModal } from "./FontPickerModal";
@@ -47,13 +49,15 @@ export function TextProperties({ element, onPatch }: Props): React.ReactNode {
       </label>
 
       <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => setFontOpen(true)}
-          className="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700"
-        >
-          <FiType /> <span className="truncate" style={{ fontFamily: `"${fontFamily}", sans-serif` }}>{selectedFont?.label ?? fontFamily}</span>
-        </button>
+        <TooltipSimple content="Elegir tipografía" side="top">
+          <button
+            type="button"
+            onClick={() => setFontOpen(true)}
+            className="flex w-full cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+          >
+            <FiType /> <span className="truncate" style={{ fontFamily: `"${fontFamily}", sans-serif` }}>{selectedFont?.label ?? fontFamily}</span>
+          </button>
+        </TooltipSimple>
         <label className="flex flex-col text-xs font-medium text-zinc-700 dark:text-zinc-300">
           <span>Tamaño</span>
           <input type="number" value={props.fontSize ?? 32} onChange={(e) => onPatch({ propsPatch: { fontSize: Number(e.target.value) } })} className="mt-1 w-full rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-2 text-sm outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
@@ -65,37 +69,51 @@ export function TextProperties({ element, onPatch }: Props): React.ReactNode {
       <div className="space-y-1.5">
         <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Alineación</span>
         <div className="flex gap-1.5">
-          <button type="button" onClick={() => setAlign("left")} aria-label="Alinear izquierda" className={`flex h-8 flex-1 items-center justify-center rounded-lg border text-sm ${align === "left" ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
-            <FiAlignLeft />
-          </button>
-          <button type="button" onClick={() => setAlign("center")} aria-label="Centrar" className={`flex h-8 flex-1 items-center justify-center rounded-lg border text-sm ${align === "center" ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
-            <FiAlignCenter />
-          </button>
-          <button type="button" onClick={() => setAlign("right")} aria-label="Alinear derecha" className={`flex h-8 flex-1 items-center justify-center rounded-lg border text-sm ${align === "right" ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
-            <FiAlignRight />
-          </button>
-          <button type="button" onClick={() => setAlign("justify")} aria-label="Justificar" className={`flex h-8 flex-1 items-center justify-center rounded-lg border text-sm ${align === "justify" ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
-            <FiAlignJustify />
-          </button>
+          <TooltipSimple content="Alinear a la izquierda" side="top">
+            <button type="button" onClick={() => setAlign("left")} aria-label="Alinear izquierda" className={`flex h-8 flex-1 cursor-pointer items-center justify-center rounded-lg border text-sm ${align === "left" ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
+              <FiAlignLeft />
+            </button>
+          </TooltipSimple>
+          <TooltipSimple content="Centrar texto" side="top">
+            <button type="button" onClick={() => setAlign("center")} aria-label="Centrar" className={`flex h-8 flex-1 cursor-pointer items-center justify-center rounded-lg border text-sm ${align === "center" ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
+              <FiAlignCenter />
+            </button>
+          </TooltipSimple>
+          <TooltipSimple content="Alinear a la derecha" side="top">
+            <button type="button" onClick={() => setAlign("right")} aria-label="Alinear derecha" className={`flex h-8 flex-1 cursor-pointer items-center justify-center rounded-lg border text-sm ${align === "right" ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
+              <FiAlignRight />
+            </button>
+          </TooltipSimple>
+          <TooltipSimple content="Justificar texto" side="top">
+            <button type="button" onClick={() => setAlign("justify")} aria-label="Justificar" className={`flex h-8 flex-1 cursor-pointer items-center justify-center rounded-lg border text-sm ${align === "justify" ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
+              <FiAlignJustify />
+            </button>
+          </TooltipSimple>
         </div>
       </div>
 
       <div className="flex gap-1.5">
-        <button type="button" onClick={() => onPatch({ propsPatch: { bold: !props.bold } })} className={`flex h-8 flex-1 items-center justify-center rounded-lg border text-xs font-bold ${props.bold ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
-          <FiBold /> Negrita
-        </button>
-        <button type="button" onClick={() => onPatch({ propsPatch: { italic: !props.italic } })} className={`flex h-8 flex-1 items-center justify-center rounded-lg border text-xs italic ${props.italic ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
-          <FiItalic /> Cursiva
-        </button>
-        <button type="button" onClick={() => onPatch({ propsPatch: { underline: !props.underline } })} className={`flex h-8 flex-1 items-center justify-center rounded-lg border text-xs underline ${props.underline ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
-          <FiUnderline /> Subrayar
-        </button>
+        <TooltipSimple content="Negrita" side="top">
+          <button type="button" onClick={() => onPatch({ propsPatch: { bold: !props.bold } })} className={`flex h-8 flex-1 cursor-pointer items-center justify-center rounded-lg border text-xs font-bold ${props.bold ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
+            <FiBold /> Negrita
+          </button>
+        </TooltipSimple>
+        <TooltipSimple content="Cursiva" side="top">
+          <button type="button" onClick={() => onPatch({ propsPatch: { italic: !props.italic } })} className={`flex h-8 flex-1 cursor-pointer items-center justify-center rounded-lg border text-xs italic ${props.italic ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
+            <FiItalic /> Cursiva
+          </button>
+        </TooltipSimple>
+        <TooltipSimple content="Subrayado" side="top">
+          <button type="button" onClick={() => onPatch({ propsPatch: { underline: !props.underline } })} className={`flex h-8 flex-1 cursor-pointer items-center justify-center rounded-lg border text-xs underline ${props.underline ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}>
+            <FiUnderline /> Subrayar
+          </button>
+        </TooltipSimple>
       </div>
 
       <div className="grid grid-cols-3 gap-2">
         <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
           Color
-          <input type="color" value={props.color ?? "#18181b"} onChange={(e) => onPatch({ propsPatch: { color: e.target.value } })} className="h-8 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-1" />
+          <input type="color" value={props.color ?? "#18181b"} onChange={(e) => onPatch({ propsPatch: { color: e.target.value } })} className="h-8 w-full cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-1" />
         </label>
         <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
           Interlineado
@@ -109,7 +127,7 @@ export function TextProperties({ element, onPatch }: Props): React.ReactNode {
 
       <label className="flex items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300">
         Opacidad
-        <input type="range" min={0} max={1} step={0.05} value={props.opacity ?? 1} onChange={(e) => onPatch({ propsPatch: { opacity: Number(e.target.value) } })} className="flex-1 accent-zinc-900 dark:accent-white" />
+        <input type="range" min={0} max={1} step={0.05} value={props.opacity ?? 1} onChange={(e) => onPatch({ propsPatch: { opacity: Number(e.target.value) } })} className="flex-1 cursor-pointer accent-zinc-900 dark:accent-white" />
         <span className="w-8 text-right text-zinc-500 dark:text-zinc-400">{Math.round((props.opacity ?? 1) * 100)}%</span>
       </label>
     </div>
