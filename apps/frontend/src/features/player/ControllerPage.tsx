@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
-import { FiChevronLeft, FiChevronRight, FiTarget } from "react-icons/fi";
+import { useEffect, useMemo, useState } from "react";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useParams } from "react-router-dom";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getPresentation, getRoom } from "@/lib/api";
 import { parsePresentationData } from "@/types/presentation";
 import { useRoom } from "./useRoom";
+import { CodeControllerModal } from "./elements/code/CodeControllerModal";
+import { ElementControls } from "./controls/ElementControls";
 
 /**
  * Controller view (mobile): next/prev slide, highlight, trigger animation.
@@ -16,6 +18,17 @@ export function ControllerPage(): React.ReactNode {
   const [data, setData] = useState<ReturnType<typeof parsePresentationData> | null>(null);
 
   const room = useRoom(code ?? "", "controller");
+  const [codeControlId, setCodeControlId] = useState<string | null>(null);
+
+  const slide = useMemo(() => {
+    if (!data) return null;
+    return data.slides[room.currentSlide] ?? null;
+  }, [data, room.currentSlide]);
+
+  const selectedCodeElement = useMemo(() => {
+    if (!slide || !codeControlId) return null;
+    return slide.elements.find((e) => e.id === codeControlId && e.type === "code") ?? null;
+  }, [slide, codeControlId]);
 
   useEffect(() => {
     if (!code) return;
@@ -31,10 +44,12 @@ export function ControllerPage(): React.ReactNode {
       .catch(() => null);
   }, [presentationId]);
 
+  useEffect(() => {
+    if (selectedCodeElement === null && codeControlId !== null && slide !== null) setCodeControlId(null);
+  }, [selectedCodeElement, codeControlId, slide]);
+
   if (!code) return <div className="p-6 text-sm text-zinc-900 dark:text-zinc-100">Código no válido</div>;
   if (!data) return <div className="p-6 text-sm text-zinc-500 dark:text-zinc-400">Cargando...</div>;
-
-  const slide = data.slides[room.currentSlide] ?? null;
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">
@@ -75,25 +90,14 @@ export function ControllerPage(): React.ReactNode {
         </div>
 
         {slide && (
-          <div>
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Resaltar objeto</h2>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {slide.elements
-                .filter((e) => e.highlightable)
-                .map((el) => (
-                  <button
-                    key={el.id}
-                    type="button"
-                    onClick={() => room.send("HIGHLIGHT", { elementId: room.highlightedId === el.id ? null : el.id })}
-                    className={`flex items-center justify-center gap-2 rounded-xl border py-3 text-xs font-medium ${room.highlightedId === el.id ? "border-amber-400 dark:border-amber-600 bg-amber-50 dark:bg-amber-950 text-amber-900 dark:text-amber-200" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}
-                  >
-                    <FiTarget /> {el.type} {el.id.slice(0, 4)}
-                  </button>
-                ))}
-              {slide.elements.filter((e) => e.highlightable).length === 0 && (
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Sin objetos resaltables.</p>
-              )}
-            </div>
+          <>
+            <ElementControls
+              slide={slide}
+              codeOverlay={room.codeOverlay}
+              highlightedId={room.highlightedId}
+              onHighlight={(id) => room.send("HIGHLIGHT", { elementId: id })}
+              onOpenCode={(id) => setCodeControlId(id)}
+            />
 
             <button
               type="button"
@@ -103,8 +107,21 @@ export function ControllerPage(): React.ReactNode {
             >
               Activar animación
             </button>
-          </div>
+          </>
         )}
+
+        <CodeControllerModal
+          open={Boolean(selectedCodeElement)}
+          onClose={() => setCodeControlId(null)}
+          element={selectedCodeElement}
+          expanded={Boolean(room.codeOverlay.expanded && room.codeOverlay.elementId === selectedCodeElement?.id)}
+          highlightedLines={room.codeOverlay.elementId === selectedCodeElement?.id ? room.codeOverlay.highlightedLines : []}
+          scrollTop={room.codeOverlay.elementId === selectedCodeElement?.id ? room.codeOverlay.scrollTop : 0}
+          onExpand={(id) => room.send("CODE_EXPAND", { elementId: id })}
+          onCollapse={() => room.send("CODE_COLLAPSE", {})}
+          onHighlightChange={(id, lines) => room.send("CODE_HIGHLIGHT", { elementId: id, lines })}
+          onScrollChange={(id, top) => room.send("CODE_SCROLL", { elementId: id, scrollTop: top })}
+        />
       </main>
     </div>
   );
