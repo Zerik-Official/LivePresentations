@@ -30,14 +30,14 @@ export function EditorSidebar({ slide, selectedId, onSelect, onReorder, onSort }
         <button
           type="button"
           onClick={() => setTab("layers")}
-          className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors ${tab === "layers" ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"}`}
+          className={`flex-1 cursor-pointer rounded-md px-3 py-2 text-xs font-medium transition-colors ${tab === "layers" ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"}`}
         >
           Capas
         </button>
         <button
           type="button"
           onClick={() => setTab("help")}
-          className={`flex-1 rounded-md px-3 py-2 text-xs font-medium transition-colors ${tab === "help" ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"}`}
+          className={`flex-1 cursor-pointer rounded-md px-3 py-2 text-xs font-medium transition-colors ${tab === "help" ? "bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"}`}
         >
           Ayuda
         </button>
