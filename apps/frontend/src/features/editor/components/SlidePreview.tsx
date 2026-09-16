@@ -1,6 +1,7 @@
 import * as FaIcons from "react-icons/fa";
 
 import type { Slide } from "@/types/presentation";
+import { isYouTubeUrl, parseYouTubeId } from "../elements/video/youtube";
 
 /**
  * Miniature preview for a slide rendered at fixed aspect ratio.
@@ -28,6 +29,8 @@ export function SlidePreview({ slide, width = 1280, height = 720 }: { slide: Sli
               width: el.w,
               height: el.h,
               position: "absolute",
+              transform: el.rotation ? `rotate(${el.rotation}deg)` : undefined,
+              transformOrigin: "center",
             };
             if (el.type === "text") {
               const p = el.props as { text?: string; fontSize?: number; color?: string; align?: string; bold?: boolean; fontFamily?: string };
@@ -56,18 +59,19 @@ export function SlidePreview({ slide, width = 1280, height = 720 }: { slide: Sli
             }
             if (el.type === "shape") {
               const p = el.props as { fill?: string; radius?: number; variant?: string; borderColor?: string; borderWidth?: number };
-              const isCircle = p.variant === "circle";
-              return (
-                <div
-                  key={el.id}
-                  style={{
-                    ...baseStyle,
-                    background: p.fill ?? "#e4e4e7",
-                    borderRadius: isCircle ? "50%" : (p.radius ?? 8),
-                    border: p.borderWidth ? `${p.borderWidth}px solid ${p.borderColor ?? "#18181b"}` : undefined,
-                  }}
-                />
-              );
+              const variant = p.variant ?? "rect";
+              const s: React.CSSProperties = {
+                ...baseStyle,
+                background: p.fill ?? "#e4e4e7",
+                border: p.borderWidth ? `${p.borderWidth}px solid ${p.borderColor ?? "#18181b"}` : undefined,
+              };
+              if (variant === "circle") s.borderRadius = "50%";
+              else if (variant === "pill") s.borderRadius = 9999;
+              else if (variant === "triangle") s.clipPath = "polygon(50% 0%, 0% 100%, 100% 100%)";
+              else if (variant === "diamond") s.clipPath = "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)";
+              else if (variant === "hexagon") s.clipPath = "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)";
+              else s.borderRadius = p.radius ?? 8;
+              return <div key={el.id} style={s} />;
             }
             if (el.type === "icon") {
               const p = el.props as { name?: string; color?: string; size?: number };
@@ -89,9 +93,24 @@ export function SlidePreview({ slide, width = 1280, height = 720 }: { slide: Sli
               );
             }
             if (el.type === "video") {
+              const p = el.props as { src?: string };
+              if (p.src && isYouTubeUrl(p.src)) {
+                const id = parseYouTubeId(p.src);
+                const thumb = id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : "";
+                return (
+                  <div key={el.id} style={{ ...baseStyle, background: "#0f0f0f", borderRadius: 6, overflow: "hidden" }} className="relative flex items-center justify-center">
+                    {thumb ? <img src={thumb} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} draggable={false} /> : null}
+                    <div className="absolute flex h-6 w-6 items-center justify-center rounded-full bg-white/90 text-red-600">
+                      <FaIcons.FaPlay size={10} className="ml-0.5" />
+                    </div>
+                  </div>
+                );
+              }
               return (
                 <div key={el.id} style={{ ...baseStyle, background: "#0f0f0f", borderRadius: 6 }} className="flex items-center justify-center">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[10px] leading-none text-zinc-900">▶</div>
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-zinc-900">
+                    <FaIcons.FaPlay size={12} className="ml-0.5" />
+                  </div>
                 </div>
               );
             }
