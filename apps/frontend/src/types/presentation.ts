@@ -100,7 +100,7 @@ export function createDefaultElement(type: SlideElement["type"], id: string): Sl
         props: { code: "console.log('Hola mundo')", language: "javascript", theme: "vscDarkPlus", fontSize: 12 },
       };
     case "icon":
-      return { ...base, w: 80, h: 80, props: { name: "FaStar", color: "#f59e0b", size: 48 } };
+      return { ...base, w: 80, h: 80, props: { name: "FaStar", color: "#f59e0b", size: 48, bg: "transparent", bgColor: "#ffffff", rounded: 12 } };
     default:
       return { ...base, props: {} };
   }
