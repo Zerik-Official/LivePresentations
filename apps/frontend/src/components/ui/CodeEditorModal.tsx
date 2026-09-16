@@ -48,10 +48,10 @@ export function CodeEditorModal({ open, value, language, onClose, onSave }: Prop
         </div>
       </ModalBody>
       <ModalFooter>
-        <button type="button" onClick={onClose} className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2 text-sm text-zinc-700 dark:text-zinc-300">
+        <button type="button" onClick={onClose} className="cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700">
           Cancelar
         </button>
-        <button type="button" onClick={() => { onSave(draft, lang); onClose(); }} className="rounded-lg bg-zinc-900 dark:bg-white px-6 py-2 text-sm font-medium text-white dark:text-zinc-900">
+        <button type="button" onClick={() => { onSave(draft, lang); onClose(); }} className="cursor-pointer rounded-lg bg-zinc-900 dark:bg-white px-6 py-2 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100">
           Guardar
         </button>
       </ModalFooter>
