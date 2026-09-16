@@ -6,14 +6,27 @@ import { useEffect, useRef, useState } from "react";
  * @param role - Role
  * @returns Room state and send function
  */
+export interface CodeOverlayState {
+  /** Target code element id */
+  elementId: string | null;
+  /** Whether overlay is expanded */
+  expanded: boolean;
+  /** Highlighted lines (1-indexed) */
+  highlightedLines: number[];
+  /** Scroll top synchronized from controller */
+  scrollTop: number;
+}
+
 export function useRoom(code: string, role: "presenter" | "controller") {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [animTriggerId, setAnimTriggerId] = useState<string | null>(null);
+  const [codeOverlay, setCodeOverlay] = useState<CodeOverlayState>({ elementId: null, expanded: false, highlightedLines: [], scrollTop: 0 });
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
   useEffect(() => {
+    if (!code) return;
     let cancelled = false;
     let attempt = 0;
     let ws: WebSocket | null = null;
@@ -23,7 +36,7 @@ export function useRoom(code: string, role: "presenter" | "controller") {
      * Connect with exponential backoff.
      */
     function connect(): void {
-      if (cancelled) return;
+      if (cancelled || !code) return;
       const token = localStorage.getItem("access_token");
       const proto = window.location.protocol === "https:" ? "wss" : "ws";
       ws = new WebSocket(`${proto}://${window.location.host}/ws/room/${code}?token=${token}&role=${role}`);
@@ -47,14 +60,39 @@ export function useRoom(code: string, role: "presenter" | "controller") {
           if (msg.type === "ROOM_STATE") {
             setCurrentSlide((msg.payload.current_slide as number) ?? 0);
             setHighlightedId((msg.payload.highlighted_id as string | null) ?? null);
+            const overlay = msg.payload.code_overlay as { elementId?: string | null; expanded?: boolean; highlightedLines?: number[]; scrollTop?: number } | null | undefined;
+            if (overlay && typeof overlay === "object" && overlay.elementId) {
+              setCodeOverlay({
+                elementId: (overlay.elementId as string) ?? null,
+                expanded: Boolean(overlay.expanded),
+                highlightedLines: (overlay.highlightedLines as number[]) ?? [],
+                scrollTop: (overlay.scrollTop as number) ?? 0,
+              });
+            }
           } else if (msg.type === "SLIDE_CHANGED") {
             setCurrentSlide(msg.payload.index as number);
+            setCodeOverlay({ elementId: null, expanded: false, highlightedLines: [], scrollTop: 0 });
           } else if (msg.type === "HIGHLIGHT_CHANGED") {
             setHighlightedId((msg.payload.elementId as string | null) ?? null);
           } else if (msg.type === "ANIMATION_TRIGGERED") {
             const id = msg.payload.elementId as string | null;
             setAnimTriggerId(id ?? null);
             window.setTimeout(() => setAnimTriggerId(null), 50);
+          } else if (msg.type === "CODE_EXPANDED") {
+            setCodeOverlay({ elementId: msg.payload.elementId as string, expanded: true, highlightedLines: [], scrollTop: 0 });
+          } else if (msg.type === "CODE_COLLAPSED") {
+            setCodeOverlay({ elementId: null, expanded: false, highlightedLines: [], scrollTop: 0 });
+          } else if (msg.type === "CODE_HIGHLIGHT_CHANGED") {
+            const lines = (msg.payload.lines as number[]) ?? [];
+            setCodeOverlay((prev) => ({
+              elementId: (msg.payload.elementId as string) ?? prev.elementId,
+              expanded: true,
+              highlightedLines: lines,
+              scrollTop: prev.scrollTop,
+            }));
+          } else if (msg.type === "CODE_SCROLL_CHANGED") {
+            const top = (msg.payload.scrollTop as number) ?? 0;
+            setCodeOverlay((prev) => ({ ...prev, scrollTop: top }));
           }
         } catch {
           // ignore
@@ -80,5 +118,5 @@ export function useRoom(code: string, role: "presenter" | "controller") {
     wsRef.current?.send(JSON.stringify({ type, payload }));
   }
 
-  return { currentSlide, highlightedId, animTriggerId, connected, send };
+  return { currentSlide, highlightedId, animTriggerId, codeOverlay, connected, send };
 }
