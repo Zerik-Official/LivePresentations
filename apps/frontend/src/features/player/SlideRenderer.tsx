@@ -75,8 +75,18 @@ function ElementView({
         return <img src={p.src ?? ""} alt={p.alt ?? ""} className="h-full w-full object-cover rounded-md" draggable={false} />;
       }
       case "shape": {
-        const p = element.props as { variant?: string; fill?: string; radius?: number };
-        return <div style={{ background: p.fill ?? "#e4e4e7", borderRadius: p.radius ?? 12 }} className="h-full w-full" />;
+        const p = element.props as { variant?: string; fill?: string; radius?: number; borderColor?: string; borderWidth?: number };
+        const isCircle = p.variant === "circle";
+        return (
+          <div
+            style={{
+              background: p.fill ?? "#e4e4e7",
+              borderRadius: isCircle ? "50%" : (p.radius ?? 12),
+              border: p.borderWidth ? `${p.borderWidth}px solid ${p.borderColor ?? "#18181b"}` : undefined,
+            }}
+            className="h-full w-full"
+          />
+        );
       }
       case "icon": {
         const p = element.props as { name?: string; color?: string; size?: number; bg?: string; bgColor?: string; rounded?: number };
@@ -93,9 +103,9 @@ function ElementView({
         );
       }
       case "video": {
-        const p = element.props as { src?: string };
+        const p = element.props as { src?: string; poster?: string; autoplay?: boolean; loop?: boolean; muted?: boolean };
         if (!p.src) return <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-xs text-white">Sin video</div>;
-        return <video src={p.src} controls className="h-full w-full rounded-md bg-black" />;
+        return <video src={p.src} poster={p.poster} autoPlay={p.autoplay} loop={p.loop} muted={p.muted ?? true} controls className="h-full w-full rounded-md bg-black" />;
       }
       case "code": {
         const p = element.props as { code?: string; language?: string; lineNumbers?: boolean };
@@ -136,14 +146,22 @@ export function SlideRenderer({ slide, highlightedId, width, height, animTrigger
     );
   }
 
+  const t = slide.transition ?? "fade";
+  const slideVariants =
+    t === "slide"
+      ? { initial: { opacity: 0, x: 80 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -80 } }
+      : t === "zoom"
+        ? { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 1.06 } }
+        : { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
         key={slide.id}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.25 }}
+        initial={slideVariants.initial}
+        animate={slideVariants.animate}
+        exit={slideVariants.exit}
+        transition={{ duration: 0.3, ease: "easeOut" }}
         style={{ width, height, background: slide.background }}
         className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm"
       >
