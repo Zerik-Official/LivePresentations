@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { FiTrash2 } from "react-icons/fi";
+import { FiTrash2, FiUpload } from "react-icons/fi";
 
+import { Select } from "../../../components/ui/Select";
+import { uploadFile } from "../../../lib/api";
 import type { SlideElement } from "../../../types/presentation";
 import { LANGUAGES, resolveLang } from "../../../lib/prism";
 
@@ -18,6 +20,8 @@ interface Props {
  */
 export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.ReactNode {
   const [iconOpen, setIconOpen] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   if (!selected) return <p className="text-xs text-zinc-500">Selecciona un elemento en el canvas o en capas.</p>;
 
@@ -64,9 +68,76 @@ export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.R
       )}
 
       {selected.type === "image" && (
-        <label className="block text-xs">
-          URL imagen <input value={(selected.props as { src?: string }).src ?? ""} onChange={(e) => onPatch({ propsPatch: { src: e.target.value } })} className="mt-1 w-full rounded border px-2 py-1" />
-        </label>
+        <div className="space-y-2">
+          <label className="block text-xs">
+            URL imagen <input value={(selected.props as { src?: string }).src ?? ""} onChange={(e) => onPatch({ propsPatch: { src: e.target.value } })} className="mt-1 w-full rounded border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-1" />
+          </label>
+          <label className="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700">
+            <FiUpload /> {uploading ? "Subiendo..." : "Subir imagen (max 100MB)"}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 100 * 1024 * 1024) {
+                  setUploadError("Archivo excede 100MB");
+                  return;
+                }
+                setUploading(true);
+                setUploadError(null);
+                try {
+                  const { url } = await uploadFile(file);
+                  onPatch({ propsPatch: { src: url } });
+                } catch (err) {
+                  setUploadError(err instanceof Error ? err.message : "Error al subir");
+                } finally {
+                  setUploading(false);
+                  e.target.value = "";
+                }
+              }}
+            />
+          </label>
+          {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
+          {(selected.props as { src?: string }).src && <img src={(selected.props as { src: string }).src} alt="" className="mt-1 max-h-32 w-full rounded border object-cover" />}
+        </div>
+      )}
+
+      {selected.type === "video" && (
+        <div className="space-y-2">
+          <label className="block text-xs">
+            URL video <input value={(selected.props as { src?: string }).src ?? ""} onChange={(e) => onPatch({ propsPatch: { src: e.target.value } })} className="mt-1 w-full rounded border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-1" />
+          </label>
+          <label className="flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-700">
+            <FiUpload /> {uploading ? "Subiendo..." : "Subir video (max 100MB)"}
+            <input
+              type="file"
+              accept="video/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                if (file.size > 100 * 1024 * 1024) {
+                  setUploadError("Archivo excede 100MB");
+                  return;
+                }
+                setUploading(true);
+                setUploadError(null);
+                try {
+                  const { url } = await uploadFile(file);
+                  onPatch({ propsPatch: { src: url } });
+                } catch (err) {
+                  setUploadError(err instanceof Error ? err.message : "Error al subir");
+                } finally {
+                  setUploading(false);
+                  e.target.value = "";
+                }
+              }}
+            />
+          </label>
+          {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
+        </div>
       )}
 
       {selected.type === "icon" && (
@@ -84,10 +155,7 @@ export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.R
             </label>
             <label className="text-xs">
               Fondo
-              <select value={(selected.props as { bg?: string }).bg ?? "transparent"} onChange={(e) => onPatch({ propsPatch: { bg: e.target.value } })} className="mt-1 w-full rounded border px-2 py-1">
-                <option value="transparent">Sin fondo</option>
-                <option value="solid">Con fondo</option>
-              </select>
+              <Select value={(selected.props as { bg?: string }).bg ?? "transparent"} options={[{ value: "transparent", label: "Sin fondo" },{ value: "solid", label: "Con fondo" }]} onChange={(v) => onPatch({ propsPatch: { bg: v } })} placeholder="Fondo" />
             </label>
             {(selected.props as { bg?: string }).bg !== "transparent" && (
               <label className="text-xs">
@@ -102,17 +170,7 @@ export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.R
         <div className="space-y-2">
           <label className="block text-xs">
             Lenguaje
-            <select
-              value={resolveLang((selected.props as { language?: string }).language)}
-              onChange={(e) => onPatch({ propsPatch: { language: e.target.value } })}
-              className="mt-1 w-full rounded border px-2 py-1"
-            >
-              {LANGUAGES.map((l) => (
-                <option key={l.value} value={l.value}>
-                  {l.label}
-                </option>
-              ))}
-            </select>
+            <Select value={resolveLang((selected.props as { language?: string }).language)} options={LANGUAGES} onChange={(v) => onPatch({ propsPatch: { language: v } })} placeholder="Lenguaje" />
           </label>
           <label className="flex items-center gap-2 text-xs">
             <input
