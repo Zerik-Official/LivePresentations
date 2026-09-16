@@ -1,0 +1,144 @@
+import { useDraggable } from "@dnd-kit/core";
+import { CSS } from "@dnd-kit/utilities";
+import * as FaIcons from "react-icons/fa";
+
+import type { SlideElement } from "../../types/presentation";
+
+interface Props {
+  element: SlideElement;
+  selected: boolean;
+  onSelect: (id: string) => void;
+  onResize: (id: string, w: number, h: number) => void;
+}
+
+/**
+ * Draggable wrapper for a slide element in the editor with resize handles.
+ * @param element - Slide element
+ * @param selected - Whether selected
+ * @param onSelect - Selection handler
+ * @param onResize - Resize handler
+ */
+export function DraggableElement({ element, selected, onSelect, onResize }: Props): React.ReactNode {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: element.id });
+
+  const style: React.CSSProperties = {
+    left: element.x,
+    top: element.y,
+    width: element.w,
+    height: element.h,
+    transform: CSS.Translate.toString(transform),
+    zIndex: element.zIndex,
+    opacity: isDragging ? 0.85 : 1,
+  };
+
+  /**
+   * Begin resize interaction.
+   * @param e - Pointer event
+   * @param dir - Resize direction
+   */
+  function startResize(e: React.PointerEvent, dir: "se" | "sw" | "ne" | "nw" | "e" | "s"): void {
+    e.preventDefault();
+    e.stopPropagation();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const startW = element.w;
+    const startH = element.h;
+
+    /**
+     * Handle pointer move.
+     * @param ev - Pointer event
+     */
+    function onMove(ev: PointerEvent): void {
+      const dx = ev.clientX - startX;
+      const dy = ev.clientY - startY;
+      let w = startW;
+      let h = startH;
+      if (dir.includes("e")) w = Math.max(40, startW + dx);
+      if (dir.includes("s")) h = Math.max(40, startH + dy);
+      if (dir === "e") h = startH;
+      if (dir === "s") w = startW;
+      if (dir === "se") {
+        w = Math.max(40, startW + dx);
+        h = Math.max(40, startH + dy);
+      }
+      onResize(element.id, w, h);
+    }
+
+    /**
+     * Handle pointer up.
+     */
+    function onUp(): void {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    }
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
+  const content = (() => {
+    switch (element.type) {
+      case "text": {
+        const p = element.props as { text?: string; fontSize?: number; color?: string; bold?: boolean };
+        return (
+          <div style={{ fontSize: p.fontSize ?? 24, color: p.color ?? "#18181b", fontWeight: p.bold ? 700 : 400 }} className="h-full w-full overflow-hidden p-2 text-sm">
+            {p.text ?? ""}
+          </div>
+        );
+      }
+      case "image": {
+        const p = element.props as { src?: string };
+        return <img src={p.src ?? ""} alt="" className="h-full w-full object-cover rounded-md" draggable={false} />;
+      }
+      case "shape": {
+        const p = element.props as { fill?: string; radius?: number };
+        return <div style={{ background: p.fill ?? "#e4e4e7", borderRadius: p.radius ?? 8 }} className="h-full w-full" />;
+      }
+      case "icon": {
+        const p = element.props as { name?: string; color?: string; size?: number };
+        const IconComp = (FaIcons as unknown as Record<string, React.ComponentType<{ size?: number; color?: string }>>)[p.name ?? "FaStar"] ?? FaIcons.FaStar;
+        return (
+          <div className="flex h-full w-full items-center justify-center">
+            <IconComp size={p.size ?? 48} color={p.color ?? "#18181b"} />
+          </div>
+        );
+      }
+      case "code": {
+        const p = element.props as { code?: string; language?: string };
+        return (
+          <pre className="h-full w-full overflow-auto rounded-md bg-zinc-900 p-2 text-[11px] leading-relaxed text-zinc-100">
+            <code>{p.code ?? ""}</code>
+            <span className="absolute right-1 top-1 rounded bg-zinc-700 px-1 text-[9px] uppercase">{p.language ?? "code"}</span>
+          </pre>
+        );
+      }
+      case "video":
+        return <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-xs text-white">Video</div>;
+      default:
+        return null;
+    }
+  })();
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`absolute select-none rounded-md border bg-white ${selected ? "border-zinc-900 ring-2 ring-zinc-900" : "border-zinc-200"} ${isDragging ? "shadow-lg" : ""}`}
+      onPointerDown={() => onSelect(element.id)}
+      {...attributes}
+      {...listeners}
+    >
+      {content}
+      {selected && (
+        <>
+          <span
+            onPointerDown={(e) => startResize(e, "se")}
+            className="absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded-sm border border-white bg-zinc-900"
+          />
+          <span onPointerDown={(e) => startResize(e, "e")} className="absolute -right-1 top-1/2 h-4 w-1.5 -translate-y-1/2 cursor-e-resize rounded bg-zinc-900" />
+          <span onPointerDown={(e) => startResize(e, "s")} className="absolute -bottom-1 left-1/2 h-1.5 w-4 -translate-x-1/2 cursor-s-resize rounded bg-zinc-900" />
+        </>
+      )}
+    </div>
+  );
+}
