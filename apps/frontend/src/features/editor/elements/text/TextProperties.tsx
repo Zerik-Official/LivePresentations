@@ -130,6 +130,29 @@ export function TextProperties({ element, onPatch }: Props): React.ReactNode {
         <input type="range" min={0} max={1} step={0.05} value={props.opacity ?? 1} onChange={(e) => onPatch({ propsPatch: { opacity: Number(e.target.value) } })} className="flex-1 cursor-pointer accent-zinc-900 dark:accent-white" />
         <span className="w-8 text-right text-zinc-500 dark:text-zinc-400">{Math.round((props.opacity ?? 1) * 100)}%</span>
       </label>
+
+      <div className="space-y-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800/50 p-3">
+        <label className="flex cursor-pointer items-center gap-2 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+          <input type="checkbox" checked={Boolean(props.backgroundEnabled)} onChange={(e) => onPatch({ propsPatch: { backgroundEnabled: e.target.checked } })} className="cursor-pointer accent-zinc-900 dark:accent-white" />
+          Añadir fondo
+        </label>
+        {props.backgroundEnabled && (
+          <div className="grid grid-cols-3 gap-2">
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              Color fondo
+              <input type="color" value={props.backgroundColor ?? "#ffffff"} onChange={(e) => onPatch({ propsPatch: { backgroundColor: e.target.value } })} className="h-8 w-full cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-1" />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              Radio
+              <input type="number" min={0} max={32} value={props.backgroundRadius ?? 8} onChange={(e) => onPatch({ propsPatch: { backgroundRadius: Number(e.target.value) } })} className="rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-1.5 text-xs outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
+            </label>
+            <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+              Padding
+              <input type="number" min={0} max={32} value={props.backgroundPadding ?? 8} onChange={(e) => onPatch({ propsPatch: { backgroundPadding: Number(e.target.value) } })} className="rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-1.5 text-xs outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
+            </label>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
