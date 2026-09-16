@@ -4,6 +4,7 @@ import * as FaIcons from "react-icons/fa";
 import { CodeBlock } from "@/components/CodeBlock";
 import { buildYouTubeEmbedUrl, isYouTubeUrl, parseYouTubeId } from "@/features/editor/elements/video/youtube";
 import type { Slide, SlideElement } from "@/types/presentation";
+import { CodeExpandedOverlay } from "./elements/code/CodeExpandedOverlay";
 
 interface Props {
   slide: Slide | null;
@@ -11,6 +12,10 @@ interface Props {
   width: number;
   height: number;
   animTriggerId?: string | null;
+  codeExpandedId?: string | null;
+  codeHighlightedLines?: number[];
+  codeScrollTop?: number;
+  onCollapseCode?: () => void;
 }
 
 /**
@@ -68,7 +73,12 @@ function ElementView({
           lineHeight?: number;
           letterSpacing?: number;
           opacity?: number;
+          backgroundEnabled?: boolean;
+          backgroundColor?: string;
+          backgroundRadius?: number;
+          backgroundPadding?: number;
         };
+        const hasBg = Boolean(p.backgroundEnabled);
         return (
           <div
             style={{
@@ -82,8 +92,11 @@ function ElementView({
               lineHeight: p.lineHeight ?? 1.2,
               letterSpacing: p.letterSpacing ? `${p.letterSpacing}px` : undefined,
               opacity: p.opacity ?? 1,
+              backgroundColor: hasBg ? (p.backgroundColor ?? "#ffffff") : "transparent",
+              borderRadius: hasBg ? (p.backgroundRadius ?? 8) : undefined,
+              padding: hasBg ? (p.backgroundPadding ?? 8) : 8,
             }}
-            className="h-full w-full overflow-hidden p-2"
+            className="h-full w-full overflow-hidden"
           >
             {p.text ?? ""}
           </div>
@@ -123,12 +136,13 @@ function ElementView({
         );
       }
       case "video": {
-        const p = element.props as { src?: string; poster?: string; autoplay?: boolean; loop?: boolean; muted?: boolean };
+        const p = element.props as { src?: string; poster?: string; autoplay?: boolean; loop?: boolean; muted?: boolean; controls?: boolean };
+        const showControls = p.controls ?? true;
         if (!p.src) return <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-xs text-white">Sin video</div>;
         if (isYouTubeUrl(p.src)) {
           const id = parseYouTubeId(p.src);
           if (!id) return <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-xs text-white">YouTube inválido</div>;
-          const embed = buildYouTubeEmbedUrl(id, Boolean(p.autoplay));
+          const embed = buildYouTubeEmbedUrl(id, Boolean(p.autoplay), showControls);
           return (
             <iframe
               src={embed}
@@ -141,7 +155,7 @@ function ElementView({
             />
           );
         }
-        return <video src={p.src} poster={p.poster} autoPlay={p.autoplay} loop={p.loop} muted={p.muted ?? true} controls playsInline className="h-full w-full rounded-md bg-black" />;
+        return <video src={p.src} poster={p.poster} autoPlay={p.autoplay} loop={p.loop} muted={p.muted ?? true} controls={showControls} playsInline className="h-full w-full rounded-md bg-black" />;
       }
       case "code": {
         const p = element.props as { code?: string; language?: string; lineNumbers?: boolean };
@@ -172,8 +186,22 @@ function ElementView({
  * @param slide - Slide to render
  * @param highlightedId - Currently highlighted element id
  * @param animTriggerId - Element id whose animation was triggered
+ * @param codeExpandedId - Expanded code element id
+ * @param codeHighlightedLines - Highlighted lines for expanded code
+ * @param codeScrollTop - Scroll top for expanded code
+ * @param onCollapseCode - Collapse handler
  */
-export function SlideRenderer({ slide, highlightedId, width, height, animTriggerId }: Props): React.ReactNode {
+export function SlideRenderer({
+  slide,
+  highlightedId,
+  width,
+  height,
+  animTriggerId,
+  codeExpandedId,
+  codeHighlightedLines,
+  codeScrollTop,
+  onCollapseCode,
+}: Props): React.ReactNode {
   if (!slide) {
     return (
       <div style={{ width, height }} className="flex items-center justify-center rounded-xl border border-dashed bg-white text-sm text-zinc-500">
@@ -189,6 +217,9 @@ export function SlideRenderer({ slide, highlightedId, width, height, animTrigger
       : t === "zoom"
         ? { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 1.06 } }
         : { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
+
+  const expandedElement = codeExpandedId ? (slide.elements.find((e) => e.id === codeExpandedId) ?? null) : null;
+  const isCodeExpanded = Boolean(expandedElement && expandedElement.type === "code");
 
   return (
     <AnimatePresence mode="wait">
@@ -207,6 +238,9 @@ export function SlideRenderer({ slide, highlightedId, width, height, animTrigger
           .map((el) => (
             <ElementView key={el.id} element={el} highlighted={highlightedId === el.id} isTriggered={animTriggerId === el.id} />
           ))}
+        {isCodeExpanded && (
+          <CodeExpandedOverlay element={expandedElement} expanded={isCodeExpanded} highlightedLines={codeHighlightedLines ?? []} scrollTop={codeScrollTop ?? 0} onCollapse={onCollapseCode} />
+        )}
       </motion.div>
     </AnimatePresence>
   );
