@@ -21,6 +21,7 @@ interface Props {
  */
 export function DraggableElement({ element, selected, onSelect, onResize }: Props): React.ReactNode {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: element.id });
+  const rawListeners = listeners as Record<string, unknown> | undefined;
 
   const style: React.CSSProperties = {
     left: element.x,
@@ -121,14 +122,25 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
 
   const isIconTransparent = element.type === "icon" && (element.props as { bg?: string }).bg === "transparent";
 
+  /**
+   * Handle pointer down to select element and forward to dnd-kit.
+   * @param e - Pointer event
+   */
+  function handlePointerDown(e: React.PointerEvent<HTMLDivElement>): void {
+    onSelect(element.id);
+    const l = rawListeners?.onPointerDown as ((ev: unknown) => void) | undefined;
+    if (l) l(e);
+  }
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={`absolute select-none rounded-md border ${isIconTransparent ? "bg-transparent border-dashed border-zinc-300" : "bg-white"} ${selected ? "border-zinc-900 ring-2 ring-zinc-900" : isIconTransparent ? "" : "border-zinc-200"} ${isDragging ? "shadow-lg" : ""}`}
-      onPointerDown={() => onSelect(element.id)}
+      onPointerDown={handlePointerDown}
+      onClick={() => onSelect(element.id)}
       {...attributes}
-      {...listeners}
+      {...(rawListeners ? Object.fromEntries(Object.entries(rawListeners).filter(([k]) => k !== "onPointerDown")) : {})}
     >
       {content}
       {selected && (
