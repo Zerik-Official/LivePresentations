@@ -7,7 +7,7 @@ import { TooltipSimple } from "../components/ui/Tooltip";
 
 import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { RoomCreatedModal } from "../features/room/RoomCreatedModal";
-import { createPresentation, createRoom, deletePresentation, getRoom, listPresentations, listRooms, type Presentation, type Room } from "../lib/api";
+import { createPresentation, createRoom, deletePresentation, deleteRoom, getRoom, listPresentations, listRooms, type Presentation, type Room } from "../lib/api";
 import { useAuthStore } from "../stores/authStore";
 
 /**
@@ -81,10 +81,30 @@ export function DashboardPage(): React.ReactNode {
     try {
       await deletePresentation(id);
       setPresentations((prev) => prev.filter((p) => p.id !== id));
+      const r = await listRooms();
+      setRooms(r);
+      if (roomCode) {
+        const still = r.find((x) => x.code === roomCode);
+        if (!still) setRoomCode(null);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al borrar");
     } finally {
       setDeleteId(null);
+    }
+  }
+
+  /**
+   * Delete a room individually.
+   * @param code - Room code
+   */
+  async function handleDeleteRoom(code: string): Promise<void> {
+    try {
+      await deleteRoom(code);
+      setRooms((prev) => prev.filter((r) => r.code !== code));
+      if (roomCode === code) setRoomCode(null);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al borrar sala");
     }
   }
 
@@ -277,6 +297,9 @@ export function DashboardPage(): React.ReactNode {
                     </button>
                     <button type="button" onClick={() => navigate(`/control/${r.code}`)} className="rounded border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-3 py-1 text-xs">
                       Control
+                    </button>
+                    <button type="button" onClick={() => void handleDeleteRoom(r.code)} className="rounded border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-2 py-1 text-xs text-red-600 dark:text-red-400">
+                      Borrar
                     </button>
                   </div>
                 </li>
