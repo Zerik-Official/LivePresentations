@@ -3,8 +3,10 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FiArrowLeft, FiDownload, FiSave, FiUpload } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
+import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Select } from "@/components/ui/Select";
+import { TooltipSimple } from "@/components/ui/Tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { getPresentation, updatePresentation } from "@/lib/api";
 import { parsePresentationData, type PresentationData, type Slide } from "@/types/presentation";
@@ -110,21 +112,29 @@ export function EditorPage(): React.ReactNode {
   return (
     <div className="flex h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
       <header className="flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3">
-        <Link to="/dashboard" className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800">
-          <FiArrowLeft />
-        </Link>
+        <TooltipSimple content="Volver al dashboard" side="bottom">
+          <Link to="/dashboard" className="inline-flex cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 p-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800">
+            <FiArrowLeft />
+          </Link>
+        </TooltipSimple>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
         <ThemeToggle />
         <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={(e) => void handleImport(e)} />
-        <button type="button" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700">
-          <FiUpload /> Importar
-        </button>
-        <button type="button" onClick={handleExport} className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700">
-          <FiDownload /> Exportar
-        </button>
-        <button type="button" onClick={() => void handleSave()} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 disabled:opacity-50">
-          <FiSave /> {saving ? "Guardando..." : "Guardar"}
-        </button>
+        <TooltipSimple content="Importar JSON" side="bottom">
+          <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} className="cursor-pointer">
+            <FiUpload /> Importar
+          </Button>
+        </TooltipSimple>
+        <TooltipSimple content="Exportar JSON" side="bottom">
+          <Button variant="secondary" size="sm" onClick={handleExport} className="cursor-pointer">
+            <FiDownload /> Exportar
+          </Button>
+        </TooltipSimple>
+        <TooltipSimple content="Guardar presentación" side="bottom">
+          <Button variant="primary" size="md" onClick={() => void handleSave()} disabled={saving} className="cursor-pointer">
+            <FiSave /> {saving ? "Guardando..." : "Guardar"}
+          </Button>
+        </TooltipSimple>
       </header>
 
       {error && <div className="mx-4 mt-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</div>}
