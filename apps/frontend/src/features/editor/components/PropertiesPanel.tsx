@@ -1,6 +1,9 @@
+import { useState } from "react";
 import { FiTrash2 } from "react-icons/fi";
 
 import type { SlideElement } from "../../../types/presentation";
+
+import { IconPickerModal } from "./IconPickerModal";
 
 interface Props {
   selected: SlideElement | null;
@@ -13,6 +16,8 @@ interface Props {
  * @param selected - Selected element
  */
 export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.ReactNode {
+  const [iconOpen, setIconOpen] = useState(false);
+
   if (!selected) return <p className="text-xs text-zinc-500">Selecciona un elemento en el canvas o en capas.</p>;
 
   return (
@@ -64,16 +69,31 @@ export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.R
       )}
 
       {selected.type === "icon" && (
-        <div className="grid grid-cols-2 gap-2">
-          <label className="text-xs">
-            Nombre (react-icons/fa) <input value={(selected.props as { name?: string }).name ?? "FaStar"} onChange={(e) => onPatch({ propsPatch: { name: e.target.value } })} placeholder="FaStar, FaHeart..." className="mt-1 w-full rounded border px-2 py-1" />
-          </label>
-          <label className="text-xs">
-            Color <input type="color" value={(selected.props as { color?: string }).color ?? "#f59e0b"} onChange={(e) => onPatch({ propsPatch: { color: e.target.value } })} className="mt-1 h-8 w-full rounded border" />
-          </label>
-          <label className="text-xs">
-            Tamaño <input type="number" value={(selected.props as { size?: number }).size ?? 48} onChange={(e) => onPatch({ propsPatch: { size: Number(e.target.value) } })} className="mt-1 w-full rounded border px-2 py-1" />
-          </label>
+        <div className="space-y-2">
+          <button type="button" onClick={() => setIconOpen(true)} className="w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs">
+            Icono: {(selected.props as { name?: string }).name ?? "FaStar"} — clic para cambiar
+          </button>
+          <IconPickerModal open={iconOpen} onClose={() => setIconOpen(false)} onSelect={(name) => onPatch({ propsPatch: { name } })} />
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-xs">
+              Color <input type="color" value={(selected.props as { color?: string }).color ?? "#f59e0b"} onChange={(e) => onPatch({ propsPatch: { color: e.target.value } })} className="mt-1 h-8 w-full rounded border" />
+            </label>
+            <label className="text-xs">
+              Tamaño <input type="number" value={(selected.props as { size?: number }).size ?? 48} onChange={(e) => onPatch({ propsPatch: { size: Number(e.target.value) } })} className="mt-1 w-full rounded border px-2 py-1" />
+            </label>
+            <label className="text-xs">
+              Fondo
+              <select value={(selected.props as { bg?: string }).bg ?? "transparent"} onChange={(e) => onPatch({ propsPatch: { bg: e.target.value } })} className="mt-1 w-full rounded border px-2 py-1">
+                <option value="transparent">Sin fondo</option>
+                <option value="solid">Con fondo</option>
+              </select>
+            </label>
+            {(selected.props as { bg?: string }).bg !== "transparent" && (
+              <label className="text-xs">
+                Color fondo <input type="color" value={(selected.props as { bgColor?: string }).bgColor ?? "#ffffff"} onChange={(e) => onPatch({ propsPatch: { bgColor: e.target.value } })} className="mt-1 h-8 w-full rounded border" />
+              </label>
+            )}
+          </div>
         </div>
       )}
 
