@@ -71,6 +71,7 @@ async def ws_room(
                     "presentation_id": room.presentation_id,
                     "current_slide": room.current_slide,
                     "highlighted_id": room.highlighted_id,
+                    "code_overlay": room.code_overlay,
                 },
             }
         )
@@ -118,6 +119,41 @@ async def ws_room(
             elif mtype == "ANIMATION_TRIGGER":
                 element_id = payload.get("elementId")
                 await ws_manager.broadcast(code, {"type": "ANIMATION_TRIGGERED", "payload": {"elementId": element_id, "by": role}})
+
+            elif mtype == "CODE_EXPAND":
+                element_id = payload.get("elementId")
+                if isinstance(element_id, str):
+                    room.code_overlay = {"elementId": element_id, "expanded": True, "highlightedLines": [], "scrollTop": 0}
+                    await ws_manager.broadcast(code, {"type": "CODE_EXPANDED", "payload": {"elementId": element_id, "by": role}})
+
+            elif mtype == "CODE_COLLAPSE":
+                if room.code_overlay is not None:
+                    element_id = room.code_overlay.get("elementId")
+                    room.code_overlay = None
+                    await ws_manager.broadcast(code, {"type": "CODE_COLLAPSED", "payload": {"elementId": element_id, "by": role}})
+
+            elif mtype == "CODE_HIGHLIGHT":
+                element_id = payload.get("elementId")
+                lines = payload.get("lines", [])
+                if isinstance(element_id, str) and isinstance(lines, list):
+                    clean = [int(x) for x in lines if isinstance(x, int) or (isinstance(x, str) and str(x).isdigit())]
+                    if room.code_overlay and room.code_overlay.get("elementId") == element_id:
+                        room.code_overlay["highlightedLines"] = clean
+                    else:
+                        room.code_overlay = {"elementId": element_id, "expanded": True, "highlightedLines": clean, "scrollTop": 0}
+                    await ws_manager.broadcast(code, {"type": "CODE_HIGHLIGHT_CHANGED", "payload": {"elementId": element_id, "lines": clean, "by": role}})
+
+            elif mtype == "CODE_SCROLL":
+                element_id = payload.get("elementId")
+                scroll_top = payload.get("scrollTop", 0)
+                try:
+                    top = int(scroll_top)
+                except Exception:
+                    top = 0
+                if isinstance(element_id, str):
+                    if room.code_overlay and room.code_overlay.get("elementId") == element_id:
+                        room.code_overlay["scrollTop"] = top
+                    await ws_manager.broadcast(code, {"type": "CODE_SCROLL_CHANGED", "payload": {"elementId": element_id, "scrollTop": top, "by": role}})
 
     except WebSocketDisconnect:
         pass
