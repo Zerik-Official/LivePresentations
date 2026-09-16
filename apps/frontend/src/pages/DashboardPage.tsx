@@ -5,8 +5,9 @@ import { useNavigate } from "react-router-dom";
 import { ThemeToggle } from "../components/ThemeToggle";
 import { TooltipSimple } from "../components/ui/Tooltip";
 
+import { ConfirmDialog } from "../components/ui/ConfirmDialog";
 import { RoomCreatedModal } from "../features/room/RoomCreatedModal";
-import { createPresentation, createRoom, getRoom, listPresentations, type Presentation } from "../lib/api";
+import { createPresentation, createRoom, deletePresentation, getRoom, listPresentations, listRooms, type Presentation, type Room } from "../lib/api";
 import { useAuthStore } from "../stores/authStore";
 
 /**
@@ -20,6 +21,8 @@ export function DashboardPage(): React.ReactNode {
   const [joinCode, setJoinCode] = useState("");
   const [roomCode, setRoomCode] = useState<string | null>(null);
   const [roomModalOpen, setRoomModalOpen] = useState(false);
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
 
@@ -27,6 +30,9 @@ export function DashboardPage(): React.ReactNode {
     void listPresentations()
       .then(setPresentations)
       .catch(() => setError("No se pudieron cargar las presentaciones"));
+    void listRooms()
+      .then(setRooms)
+      .catch(() => null);
   }, []);
 
   /**
@@ -60,8 +66,25 @@ export function DashboardPage(): React.ReactNode {
       const room = await createRoom(id);
       setRoomCode(room.code);
       setRoomModalOpen(true);
+      const r = await listRooms();
+      setRooms(r);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al crear sala");
+    }
+  }
+
+  /**
+   * Delete presentation with confirmation.
+   * @param id - Presentation id
+   */
+  async function handleDelete(id: string): Promise<void> {
+    try {
+      await deletePresentation(id);
+      setPresentations((prev) => prev.filter((p) => p.id !== id));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Error al borrar");
+    } finally {
+      setDeleteId(null);
     }
   }
 
@@ -199,6 +222,13 @@ export function DashboardPage(): React.ReactNode {
                     </button>
                     <button
                       type="button"
+                      onClick={() => setDeleteId(p.id)}
+                      className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-2 py-1 text-xs text-red-600 dark:text-red-400"
+                    >
+                      Borrar
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => void handleCreateRoom(p.id)}
                       className="rounded-lg bg-zinc-900 dark:bg-white px-3 py-1 text-xs text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
                     >
@@ -232,8 +262,31 @@ export function DashboardPage(): React.ReactNode {
             {roomCode && <p className="mt-3 text-xs text-zinc-600 dark:text-zinc-400">Última sala: {roomCode}</p>}
           </section>
         </div>
+
+        {rooms.length > 0 && (
+          <section className="mt-6 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6">
+            <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Salas activas</h3>
+            <ul className="mt-3 space-y-2">
+              {rooms.map((r) => (
+                <li key={r.code} className="flex items-center justify-between rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2 text-xs">
+                  <span className="font-mono tracking-widest text-zinc-900 dark:text-zinc-100">{r.code}</span>
+                  <span className="text-zinc-500 dark:text-zinc-400">Slide {r.current_slide + 1}</span>
+                  <div className="flex gap-2">
+                    <button type="button" onClick={() => navigate(`/present/${r.code}`)} className="rounded bg-zinc-900 dark:bg-white px-3 py-1 text-xs text-white dark:text-zinc-900">
+                      Presentar
+                    </button>
+                    <button type="button" onClick={() => navigate(`/control/${r.code}`)} className="rounded border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-3 py-1 text-xs">
+                      Control
+                    </button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </main>
       <RoomCreatedModal open={roomModalOpen} code={roomCode} onClose={() => setRoomModalOpen(false)} />
+      <ConfirmDialog open={deleteId !== null} title="Borrar presentación" description="¿Seguro que quieres borrar esta presentación? Se perderán todas sus diapositivas." confirmLabel="Borrar" cancelLabel="Cancelar" onCancel={() => setDeleteId(null)} onConfirm={() => deleteId && void handleDelete(deleteId)} />
     </div>
   );
 }
