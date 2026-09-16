@@ -93,8 +93,18 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
         return <img src={p.src ?? ""} alt="" className="h-full w-full object-cover rounded-md" draggable={false} />;
       }
       case "shape": {
-        const p = element.props as { fill?: string; radius?: number };
-        return <div style={{ background: p.fill ?? "#e4e4e7", borderRadius: p.radius ?? 8 }} className="h-full w-full" />;
+        const p = element.props as { fill?: string; radius?: number; borderColor?: string; borderWidth?: number; variant?: string };
+        const isCircle = p.variant === "circle";
+        return (
+          <div
+            style={{
+              background: p.fill ?? "#e4e4e7",
+              borderRadius: isCircle ? "50%" : (p.radius ?? 8),
+              border: p.borderWidth ? `${p.borderWidth}px solid ${p.borderColor ?? "#18181b"}` : undefined,
+            }}
+            className="h-full w-full"
+          />
+        );
       }
       case "icon": {
         const p = element.props as { name?: string; color?: string; size?: number; bg?: string; bgColor?: string; rounded?: number };
