@@ -4,6 +4,7 @@ import * as FaIcons from "react-icons/fa";
 
 import { CodeBlock } from "@/components/CodeBlock";
 import type { SlideElement } from "@/types/presentation";
+import { isYouTubeUrl, parseYouTubeId } from "./elements/video/youtube";
 
 interface Props {
   element: SlideElement;
@@ -23,12 +24,17 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: element.id });
   const rawListeners = listeners as Record<string, unknown> | undefined;
 
+  const translate = CSS.Translate.toString(transform);
+  const rotate = element.rotation ? ` rotate(${element.rotation}deg)` : "";
+  const combinedTransform = `${translate ?? ""}${rotate}`.trim() || undefined;
+
   const style: React.CSSProperties = {
     left: element.x,
     top: element.y,
     width: element.w,
     height: element.h,
-    transform: CSS.Translate.toString(transform),
+    transform: combinedTransform,
+    transformOrigin: "center",
     zIndex: element.zIndex,
     opacity: isDragging ? 0.85 : 1,
   };
@@ -120,17 +126,18 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
       }
       case "shape": {
         const p = element.props as { fill?: string; radius?: number; borderColor?: string; borderWidth?: number; variant?: string };
-        const isCircle = p.variant === "circle";
-        return (
-          <div
-            style={{
-              background: p.fill ?? "#e4e4e7",
-              borderRadius: isCircle ? "50%" : (p.radius ?? 8),
-              border: p.borderWidth ? `${p.borderWidth}px solid ${p.borderColor ?? "#18181b"}` : undefined,
-            }}
-            className="h-full w-full"
-          />
-        );
+        const variant = p.variant ?? "rect";
+        const shapeStyle: React.CSSProperties = {
+          background: p.fill ?? "#e4e4e7",
+          border: p.borderWidth ? `${p.borderWidth}px solid ${p.borderColor ?? "#18181b"}` : undefined,
+        };
+        if (variant === "circle") shapeStyle.borderRadius = "50%";
+        else if (variant === "pill") shapeStyle.borderRadius = 9999;
+        else if (variant === "triangle") shapeStyle.clipPath = "polygon(50% 0%, 0% 100%, 100% 100%)";
+        else if (variant === "diamond") shapeStyle.clipPath = "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)";
+        else if (variant === "hexagon") shapeStyle.clipPath = "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)";
+        else shapeStyle.borderRadius = p.radius ?? 12;
+        return <div style={shapeStyle} className="h-full w-full" />;
       }
       case "icon": {
         const p = element.props as { name?: string; color?: string; size?: number; bg?: string; bgColor?: string; rounded?: number };
@@ -149,8 +156,23 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
         const p = element.props as { code?: string; language?: string; lineNumbers?: boolean };
         return <CodeBlock code={p.code} language={p.language} lineNumbers={p.lineNumbers ?? false} className="text-[11px]" />;
       }
-      case "video":
-        return <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-xs text-white">Video</div>;
+      case "video": {
+        const p = element.props as { src?: string };
+        if (!p.src) return <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-xs text-white">Sin video</div>;
+        if (isYouTubeUrl(p.src)) {
+          const id = parseYouTubeId(p.src);
+          const thumb = id ? `https://img.youtube.com/vi/${id}/hqdefault.jpg` : "";
+          return (
+            <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-md bg-zinc-900">
+              {thumb ? <img src={thumb} alt="" className="h-full w-full object-cover" draggable={false} /> : null}
+              <span className="absolute flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-red-600">
+                <FaIcons.FaPlay size={12} className="ml-0.5" />
+              </span>
+            </div>
+          );
+        }
+        return <div className="flex h-full w-full items-center justify-center rounded-md bg-zinc-900 text-xs text-white">Video</div>;
+      }
       default:
         return null;
     }
