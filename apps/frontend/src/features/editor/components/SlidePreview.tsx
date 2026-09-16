@@ -33,7 +33,18 @@ export function SlidePreview({ slide, width = 1280, height = 720 }: { slide: Sli
               transformOrigin: "center",
             };
             if (el.type === "text") {
-              const p = el.props as { text?: string; fontSize?: number; color?: string; align?: string; bold?: boolean; fontFamily?: string };
+              const p = el.props as {
+                text?: string;
+                fontSize?: number;
+                color?: string;
+                align?: string;
+                bold?: boolean;
+                fontFamily?: string;
+                backgroundEnabled?: boolean;
+                backgroundColor?: string;
+                backgroundRadius?: number;
+              };
+              const hasBg = Boolean(p.backgroundEnabled);
               return (
                 <div
                   key={el.id}
@@ -46,6 +57,8 @@ export function SlidePreview({ slide, width = 1280, height = 720 }: { slide: Sli
                     fontFamily: p.fontFamily ? `"${p.fontFamily}", sans-serif` : undefined,
                     overflow: "hidden",
                     lineHeight: 1.2,
+                    backgroundColor: hasBg ? (p.backgroundColor ?? "#ffffff") : "transparent",
+                    borderRadius: hasBg ? (p.backgroundRadius ?? 4) : undefined,
                   }}
                   className="p-1"
                 >
