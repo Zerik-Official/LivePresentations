@@ -31,16 +31,25 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
 
     UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-    data = await file.read()
-    if len(data) > MAX_SIZE:
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Archivo excede 100MB")
-
     ext = Path(file.filename or "file").suffix or ""
     if not ext:
         ext = ".bin"
     filename = f"{uuid.uuid4().hex}{ext}"
     dest = UPLOAD_DIR / filename
-    dest.write_bytes(data)
+
+    size = 0
+    chunk_size = 1024 * 1024
+    with dest.open("wb") as out:
+        while True:
+            chunk = await file.read(chunk_size)
+            if not chunk:
+                break
+            size += len(chunk)
+            if size > MAX_SIZE:
+                out.close()
+                dest.unlink(missing_ok=True)
+                raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail="Archivo excede 100MB")
+            out.write(chunk)
 
     # URL served via static mount /static/uploads/{filename}
     url = f"/static/uploads/{filename}"
