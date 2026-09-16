@@ -3,16 +3,16 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { FiArrowLeft, FiDownload, FiSave, FiUpload } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
-import { Select } from "../../components/ui/Select";
-import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
-import { ThemeToggle } from "../../components/ThemeToggle";
-import { getPresentation, updatePresentation } from "../../lib/api";
-import { parsePresentationData, type PresentationData, type Slide } from "../../types/presentation";
-import { Layers } from "./components/Layers";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { Select } from "@/components/ui/Select";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { getPresentation, updatePresentation } from "@/lib/api";
+import { parsePresentationData, type PresentationData, type Slide } from "@/types/presentation";
+import { DraggableElement } from "./DraggableElement";
+import { EditorSidebar } from "./components/EditorSidebar";
 import { PropertiesOverlay } from "./components/PropertiesOverlay";
 import { SlidesList } from "./components/SlidesList";
 import { Toolbar } from "./components/Toolbar";
-import { DraggableElement } from "./DraggableElement";
 import { useCanvasDrop } from "./hooks/useCanvasDrop";
 import { useElements } from "./hooks/useElements";
 import { useKeyboardDelete } from "./hooks/useKeyboardDelete";
@@ -36,7 +36,7 @@ export function EditorPage(): React.ReactNode {
   const slide = useMemo(() => (data ? (data.slides[activeSlide] ?? null) : null), [data, activeSlide]);
   const selected = useMemo(() => slide?.elements.find((e) => e.id === selectedId) ?? null, [slide, selectedId]);
 
-  const { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition } = useSlides(data, setData, activeSlide, setActiveSlide, setSelectedId);
+  const { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition, reorderSlides } = useSlides(data, setData, activeSlide, setActiveSlide, setSelectedId);
   const { addElement, patchSelected, deleteSelected, handleDragEnd, handleResize, handleReorder, handleSortLayer } = useElements(data, setData, activeSlide, selectedId, setSelectedId);
   const { handleCanvasDrop } = useCanvasDrop(data, activeSlide, setData, setSelectedId, setError);
 
@@ -127,10 +127,21 @@ export function EditorPage(): React.ReactNode {
         </button>
       </header>
 
-      {error && <div className="mx-4 mt-3 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</div>}
+      {error && <div className="mx-4 mt-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</div>}
 
       <div className="flex flex-1 overflow-hidden">
-        <SlidesList data={data} activeSlide={activeSlide} onSelect={(i) => { setActiveSlide(i); setSelectedId(null); }} onAdd={addSlide} onDelete={(idx) => setConfirmSlideIdx(idx)} onDuplicate={duplicateSlide} />
+        <SlidesList
+          data={data}
+          activeSlide={activeSlide}
+          onSelect={(i) => {
+            setActiveSlide(i);
+            setSelectedId(null);
+          }}
+          onAdd={addSlide}
+          onDelete={(idx) => setConfirmSlideIdx(idx)}
+          onDuplicate={duplicateSlide}
+          onReorder={reorderSlides}
+        />
 
         <main className="flex flex-1 flex-col items-center overflow-auto p-4 bg-zinc-50 dark:bg-zinc-950">
           <Toolbar onAdd={addElement} disabled={!slide} />
@@ -165,23 +176,9 @@ export function EditorPage(): React.ReactNode {
           </DndContext>
 
           <PropertiesOverlay selected={selected} onPatch={patchSelected} onDelete={() => setConfirmElementOpen(true)} />
-
-          <div className="mt-4 w-full max-w-160">
-            <Layers slide={slide} selectedId={selectedId} onSelect={setSelectedId} onReorder={handleReorder} onSort={handleSortLayer} />
-          </div>
         </main>
 
-        <aside className="hidden w-64 border-l border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 lg:block">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Consejos</h3>
-          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-zinc-600 dark:text-zinc-400">
-            <li>Arrastra desde el centro para mover.</li>
-            <li>Usa los tiradores de borde para redimensionar.</li>
-            <li>Texto: elige fuente, alineación, negrita/cursiva/subrayado.</li>
-            <li>Iconos: usa el selector con fondo opcional.</li>
-            <li>Código: elige lenguaje para resaltado Prism.</li>
-            <li>Pulsa Supr para borrar elemento seleccionado.</li>
-          </ul>
-        </aside>
+        <EditorSidebar slide={slide} selectedId={selectedId} onSelect={setSelectedId} onReorder={handleReorder} onSort={handleSortLayer} />
       </div>
 
       <ConfirmDialog
