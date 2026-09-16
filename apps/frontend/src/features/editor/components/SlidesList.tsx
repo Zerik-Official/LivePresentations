@@ -18,10 +18,10 @@ interface Props {
  */
 export function SlidesList({ data, activeSlide, onSelect, onAdd, onDelete, onDuplicate }: Props): React.ReactNode {
   return (
-    <aside className="w-56 border-r border-zinc-200 bg-white p-3">
+    <aside className="w-56 border-r border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3">
       <div className="mb-3 flex items-center justify-between">
-        <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Diapositivas</h3>
-        <button type="button" onClick={onAdd} className="rounded-md border border-zinc-200 p-1.5 hover:bg-zinc-50">
+        <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Diapositivas</h3>
+        <button type="button" onClick={onAdd} className="rounded-md border border-zinc-200 dark:border-zinc-700 p-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
           <FiPlus />
         </button>
       </div>
@@ -29,7 +29,7 @@ export function SlidesList({ data, activeSlide, onSelect, onAdd, onDelete, onDup
         {data.slides.map((s, idx) => (
           <div
             key={s.id}
-            className={`rounded-lg border p-2 text-xs ${idx === activeSlide ? "border-zinc-900 bg-zinc-900 text-white" : "border-zinc-200 bg-zinc-50"}`}
+            className={`rounded-lg border p-2 text-xs ${idx === activeSlide ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"}`}
           >
             <button type="button" onClick={() => onSelect(idx)} className="w-full text-left">
               <div className="font-medium">Diapositiva {idx + 1}</div>
