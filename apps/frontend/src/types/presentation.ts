@@ -76,6 +76,23 @@ export function createEmptySlide(id: string): Slide {
 }
 
 /**
+ * Text element props typing helper.
+ */
+export interface TextElementProps {
+  text: string;
+  fontSize: number;
+  color: string;
+  align: "left" | "center" | "right" | "justify";
+  bold: boolean;
+  italic: boolean;
+  underline: boolean;
+  fontFamily: string;
+  lineHeight: number;
+  letterSpacing: number;
+  opacity: number;
+}
+
+/**
  * Create a default element of a given type.
  * @param type - Element type
  * @param id - Element id
@@ -85,7 +102,22 @@ export function createDefaultElement(type: SlideElement["type"], id: string): Sl
   const base = { id, type, x: 80, y: 80, w: 300, h: 80, rotation: 0, zIndex: 1, highlightable: true } as const;
   switch (type) {
     case "text":
-      return { ...base, props: { text: "Texto de ejemplo", fontSize: 32, color: "#18181b", align: "left", bold: false } };
+      return {
+        ...base,
+        props: {
+          text: "Texto de ejemplo",
+          fontSize: 32,
+          color: "#18181b",
+          align: "left",
+          bold: false,
+          italic: false,
+          underline: false,
+          fontFamily: "Inter",
+          lineHeight: 1.2,
+          letterSpacing: 0,
+          opacity: 1,
+        } satisfies TextElementProps as unknown as Record<string, unknown>,
+      };
     case "image":
       return { ...base, w: 400, h: 250, props: { src: "https://picsum.photos/400/250", alt: "Imagen" } };
     case "shape":
