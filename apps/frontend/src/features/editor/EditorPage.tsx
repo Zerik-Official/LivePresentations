@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { FiArrowLeft, FiDownload, FiSave, FiUpload } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
+import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { ThemeToggle } from "../../components/ThemeToggle";
 
 import { getPresentation, updatePresentation } from "../../lib/api";
@@ -27,6 +28,8 @@ export function EditorPage(): React.ReactNode {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const [confirmSlideIdx, setConfirmSlideIdx] = useState<number | null>(null);
+  const [confirmElementOpen, setConfirmElementOpen] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -37,6 +40,23 @@ export function EditorPage(): React.ReactNode {
       })
       .catch(() => setError("No se pudo cargar la presentación"));
   }, [id]);
+
+  useEffect(() => {
+    /**
+     * Handle Delete/Sup key for selected element.
+     * @param e - Keyboard event
+     */
+    function handleKey(e: KeyboardEvent): void {
+      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
+        const target = e.target as HTMLElement;
+        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+        e.preventDefault();
+        setConfirmElementOpen(true);
+      }
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [selectedId]);
 
   const slide = useMemo(() => (data ? (data.slides[activeSlide] ?? null) : null), [data, activeSlide]);
   const selected = useMemo(() => slide?.elements.find((e) => e.id === selectedId) ?? null, [slide, selectedId]);
@@ -256,7 +276,7 @@ export function EditorPage(): React.ReactNode {
       {error && <div className="mx-4 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
 
       <div className="flex flex-1 overflow-hidden">
-        <SlidesList data={data} activeSlide={activeSlide} onSelect={(i) => { setActiveSlide(i); setSelectedId(null); }} onAdd={addSlide} onDelete={deleteSlide} onDuplicate={duplicateSlide} />
+        <SlidesList data={data} activeSlide={activeSlide} onSelect={(i) => { setActiveSlide(i); setSelectedId(null); }} onAdd={addSlide} onDelete={(idx) => setConfirmSlideIdx(idx)} onDuplicate={duplicateSlide} />
 
         <main className="flex flex-1 flex-col items-center overflow-auto p-4 bg-zinc-50 dark:bg-zinc-950">
           <Toolbar onAdd={addElement} disabled={!slide} />
@@ -281,7 +301,7 @@ export function EditorPage(): React.ReactNode {
             </div>
           </DndContext>
 
-          <PropertiesOverlay selected={selected} onPatch={patchSelected} onDelete={deleteSelected} />
+          <PropertiesOverlay selected={selected} onPatch={patchSelected} onDelete={() => setConfirmElementOpen(true)} />
 
           <div className="mt-4 w-full max-w-160">
             <Layers slide={slide} selectedId={selectedId} onSelect={setSelectedId} onReorder={handleReorder} />
@@ -293,11 +313,36 @@ export function EditorPage(): React.ReactNode {
           <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-zinc-600">
             <li>Arrastra desde el centro para mover.</li>
             <li>Usa los tiradores de borde para redimensionar (esquina y laterales).</li>
-            <li>Iconos: escribe nombre de `react-icons/fa` (ej. `FaStar`, `FaRocket`).</li>
+            <li>Iconos: usa el selector con fondo opcional.</li>
             <li>Código: elige lenguaje para resaltado Prism (js, python, css...).</li>
+            <li>Pulsa Supr para borrar elemento seleccionado.</li>
           </ul>
         </aside>
       </div>
+      <ConfirmDialog
+        open={confirmSlideIdx !== null}
+        title="Eliminar diapositiva"
+        description={`¿Seguro que quieres borrar la diapositiva ${confirmSlideIdx !== null ? confirmSlideIdx + 1 : ""}? Se eliminarán todos sus elementos.`}
+        confirmLabel="Borrar"
+        cancelLabel="Cancelar"
+        onCancel={() => setConfirmSlideIdx(null)}
+        onConfirm={() => {
+          if (confirmSlideIdx !== null) deleteSlide(confirmSlideIdx);
+          setConfirmSlideIdx(null);
+        }}
+      />
+      <ConfirmDialog
+        open={confirmElementOpen}
+        title="Eliminar elemento"
+        description={`¿Seguro que quieres borrar el elemento ${selected?.type ?? ""}? Esta acción no se puede deshacer.`}
+        confirmLabel="Borrar"
+        cancelLabel="Cancelar"
+        onCancel={() => setConfirmElementOpen(false)}
+        onConfirm={() => {
+          deleteSelected();
+          setConfirmElementOpen(false);
+        }}
+      />
     </div>
   );
 }
