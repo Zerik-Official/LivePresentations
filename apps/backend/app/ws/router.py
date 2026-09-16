@@ -6,9 +6,10 @@ from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.rooms import room_manager
+from app.core.rooms import RoomState, room_manager
 from app.core.security import decode_access_token
 from app.db.session import async_session_factory
+from app.models.room import Room
 from app.models.user import User
 from app.ws.manager import ws_manager
 
@@ -50,12 +51,17 @@ async def ws_room(
 
     room = room_manager.get(code)
     if room is None:
-        await websocket.close(code=4404, reason="Sala no encontrada")
-        return
+        async with async_session_factory() as db_check:
+            r = await db_check.execute(select(Room).where(Room.code == code.upper()))
+            db_room = r.scalar_one_or_none()
+            if db_room is None:
+                await websocket.close(code=4404, reason="Sala no encontrada")
+                return
+            room = RoomState(code=db_room.code, presentation_id=db_room.presentation_id, owner_id=db_room.owner_id, current_slide=db_room.current_slide, highlighted_id=db_room.highlighted_id, expires_at=db_room.expires_at)
+            room_manager._rooms[code.upper()] = room
 
     await ws_manager.connect(code, websocket)
 
-    # Send initial state
     await websocket.send_text(
         json.dumps(
             {
@@ -70,7 +76,6 @@ async def ws_room(
         )
     )
 
-    # Notify others someone joined (optional)
     await ws_manager.broadcast(
         code,
         {"type": "USER_JOINED", "payload": {"role": role, "user_id": user.id}},
@@ -88,15 +93,26 @@ async def ws_room(
             mtype = msg.get("type")
             payload = msg.get("payload", {})
 
-            # Only controller and presenter can drive changes; validate
             if mtype == "SLIDE_CHANGE":
                 idx = int(payload.get("index", 0))
                 room.current_slide = max(0, idx)
+                async with async_session_factory() as _db:
+                    res = await _db.execute(select(Room).where(Room.code == code.upper()))
+                    db_r = res.scalar_one_or_none()
+                    if db_r:
+                        db_r.current_slide = room.current_slide
+                        await _db.commit()
                 await ws_manager.broadcast(code, {"type": "SLIDE_CHANGED", "payload": {"index": room.current_slide, "by": role}})
 
             elif mtype == "HIGHLIGHT":
                 element_id = payload.get("elementId")
                 room.highlighted_id = element_id if isinstance(element_id, str) else None
+                async with async_session_factory() as _db:
+                    res = await _db.execute(select(Room).where(Room.code == code.upper()))
+                    db_r = res.scalar_one_or_none()
+                    if db_r:
+                        db_r.highlighted_id = room.highlighted_id
+                        await _db.commit()
                 await ws_manager.broadcast(code, {"type": "HIGHLIGHT_CHANGED", "payload": {"elementId": room.highlighted_id, "by": role}})
 
             elif mtype == "ANIMATION_TRIGGER":
