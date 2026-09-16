@@ -185,6 +185,15 @@ export async function deletePresentation(id: string): Promise<void> {
 }
 
 /**
+ * Delete a room by code.
+ * @param code - Room code
+ */
+export async function deleteRoom(code: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/rooms/${code}`, { method: "DELETE", headers: { ...getAuthHeader() } });
+  if (!res.ok) throw new Error("Error al borrar sala");
+}
+
+/**
  * Upload an image or video (max 100MB).
  * @param file - File to upload
  * @returns URL of uploaded file
