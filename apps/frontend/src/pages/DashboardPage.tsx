@@ -175,14 +175,14 @@ export function DashboardPage(): React.ReactNode {
         {error && <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>}
 
         {roomCode && (
-          <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-            <span className="text-sm font-medium">Código de sala: {roomCode}</span>
+          <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/50 px-4 py-3">
+            <span className="text-sm font-medium text-emerald-900 dark:text-emerald-100">Código de sala: {roomCode}</span>
             <TooltipSimple content="Copiar código" side="top">
-              <Button variant="secondary" size="sm" onClick={() => void navigator.clipboard.writeText(roomCode)} className="cursor-pointer bg-white dark:bg-white text-zinc-900 shadow-sm hover:bg-zinc-50 px-2 py-1 text-xs">
+              <Button variant="secondary" size="sm" onClick={() => void navigator.clipboard.writeText(roomCode)} className="cursor-pointer bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 shadow-sm hover:bg-zinc-50 dark:hover:bg-zinc-700 px-2 py-1 text-xs">
                 <FiCopy /> Copiar
               </Button>
             </TooltipSimple>
-            <span className="ml-auto text-xs text-zinc-600">Comparte este código con el controlador</span>
+            <span className="ml-auto text-xs text-emerald-700 dark:text-emerald-300">Comparte este código con el controlador</span>
           </div>
         )}
 
