@@ -99,7 +99,12 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
           lineHeight?: number;
           letterSpacing?: number;
           opacity?: number;
+          backgroundEnabled?: boolean;
+          backgroundColor?: string;
+          backgroundRadius?: number;
+          backgroundPadding?: number;
         };
+        const hasBg = Boolean(p.backgroundEnabled);
         return (
           <div
             style={{
@@ -113,8 +118,11 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
               lineHeight: p.lineHeight ?? 1.2,
               letterSpacing: p.letterSpacing ? `${p.letterSpacing}px` : undefined,
               opacity: p.opacity ?? 1,
+              backgroundColor: hasBg ? (p.backgroundColor ?? "#ffffff") : "transparent",
+              borderRadius: hasBg ? (p.backgroundRadius ?? 8) : undefined,
+              padding: hasBg ? (p.backgroundPadding ?? 8) : 8,
             }}
-            className="h-full w-full overflow-hidden p-2 text-sm"
+            className="h-full w-full overflow-hidden text-sm"
           >
             {p.text ?? ""}
           </div>
@@ -157,7 +165,7 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
         return <CodeBlock code={p.code} language={p.language} lineNumbers={p.lineNumbers ?? false} className="text-[11px]" />;
       }
       case "video": {
-        const p = element.props as { src?: string };
+        const p = element.props as { src?: string; poster?: string; autoplay?: boolean; loop?: boolean; muted?: boolean; controls?: boolean };
         if (!p.src) return <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-xs text-white">Sin video</div>;
         if (isYouTubeUrl(p.src)) {
           const id = parseYouTubeId(p.src);
@@ -171,7 +179,19 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
             </div>
           );
         }
-        return <div className="flex h-full w-full items-center justify-center rounded-md bg-zinc-900 text-xs text-white">Video</div>;
+        return (
+          <video
+            src={p.src}
+            poster={p.poster}
+            autoPlay={p.autoplay}
+            loop={p.loop}
+            muted={p.muted ?? true}
+            controls={p.controls ?? true}
+            playsInline
+            preload="metadata"
+            className="h-full w-full rounded-md bg-black object-contain"
+          />
+        );
       }
       default:
         return null;
@@ -179,6 +199,7 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
   })();
 
   const isIconTransparent = element.type === "icon" && (element.props as { bg?: string }).bg === "transparent";
+  const isTextTransparent = element.type === "text" && !(element.props as { backgroundEnabled?: boolean }).backgroundEnabled;
 
   /**
    * Handle pointer down to select element and forward to dnd-kit.
@@ -194,7 +215,7 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
     <div
       ref={setNodeRef}
       style={style}
-      className={`absolute select-none rounded-md border ${isIconTransparent ? "bg-transparent border-dashed border-zinc-300" : "bg-white"} ${selected ? "border-zinc-900 ring-2 ring-zinc-900" : isIconTransparent ? "" : "border-zinc-200"} ${isDragging ? "shadow-lg" : ""}`}
+      className={`absolute select-none rounded-md border ${isIconTransparent || isTextTransparent ? "bg-transparent" : "bg-white"} ${selected ? "border-zinc-900 ring-2 ring-zinc-900" : isIconTransparent ? "border-dashed border-zinc-300" : isTextTransparent ? "border-transparent" : "border-zinc-200"} ${isDragging ? "shadow-lg" : ""}`}
       onPointerDown={handlePointerDown}
       onClick={() => onSelect(element.id)}
       {...attributes}
