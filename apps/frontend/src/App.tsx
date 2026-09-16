@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
+import { TooltipProvider } from "./components/ui/Tooltip";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { EditorPage } from "./features/editor/EditorPage";
 import { ControllerPage } from "./features/player/ControllerPage";
@@ -30,45 +31,47 @@ export default function App(): React.ReactNode {
   }
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/editor/:id"
-          element={
-            <ProtectedRoute>
-              <EditorPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/present/:code"
-          element={
-            <ProtectedRoute>
-              <PresenterPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/control/:code"
-          element={
-            <ProtectedRoute>
-              <ControllerPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <TooltipProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route
+            path="/dashboard"
+            element={
+              <ProtectedRoute>
+                <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/editor/:id"
+            element={
+              <ProtectedRoute>
+                <EditorPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/present/:code"
+            element={
+              <ProtectedRoute>
+                <PresenterPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/control/:code"
+            element={
+              <ProtectedRoute>
+                <ControllerPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </TooltipProvider>
   );
 }
