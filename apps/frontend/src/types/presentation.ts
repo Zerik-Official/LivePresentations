@@ -90,6 +90,10 @@ export interface TextElementProps {
   lineHeight: number;
   letterSpacing: number;
   opacity: number;
+  backgroundEnabled: boolean;
+  backgroundColor: string;
+  backgroundRadius: number;
+  backgroundPadding: number;
 }
 
 /**
@@ -116,6 +120,10 @@ export function createDefaultElement(type: SlideElement["type"], id: string): Sl
           lineHeight: 1.2,
           letterSpacing: 0,
           opacity: 1,
+          backgroundEnabled: false,
+          backgroundColor: "#ffffff",
+          backgroundRadius: 8,
+          backgroundPadding: 8,
         } satisfies TextElementProps as unknown as Record<string, unknown>,
       };
     case "image":
@@ -123,7 +131,7 @@ export function createDefaultElement(type: SlideElement["type"], id: string): Sl
     case "shape":
       return { ...base, w: 200, h: 120, props: { variant: "rect", fill: "#e4e4e7", radius: 12, borderColor: "#18181b", borderWidth: 0 } };
     case "video":
-      return { ...base, w: 480, h: 270, props: { src: "" } };
+      return { ...base, w: 480, h: 270, props: { src: "", poster: "", autoplay: false, loop: false, muted: true, controls: true } };
     case "code":
       return {
         ...base,
