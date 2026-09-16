@@ -1,5 +1,5 @@
-import type { PresentationData, Slide } from "../../../types/presentation";
-import { createEmptySlide } from "../../../types/presentation";
+import type { PresentationData, Slide } from "@/types/presentation";
+import { createEmptySlide } from "@/types/presentation";
 
 /**
  * Slide operations derived from editor data.
@@ -21,6 +21,7 @@ export function useSlides(
   duplicateSlide: (idx: number) => void;
   updateBackground: (color: string) => void;
   updateTransition: (transition: Slide["transition"]) => void;
+  reorderSlides: (activeId: string, overId: string) => void;
 } {
   /**
    * Add a new slide.
@@ -88,5 +89,29 @@ export function useSlides(
     setData({ ...data, slides });
   }
 
-  return { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition };
+  /**
+   * Reorder slides via drag and drop.
+   * @param activeId - Dragged slide id
+   * @param overId - Target slide id
+   */
+  function reorderSlides(activeId: string, overId: string): void {
+    if (!data) return;
+    const oldIndex = data.slides.findIndex((s) => s.id === activeId);
+    const newIndex = data.slides.findIndex((s) => s.id === overId);
+    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
+    const slides = [...data.slides];
+    const [moved] = slides.splice(oldIndex, 1);
+    if (!moved) return;
+    slides.splice(newIndex, 0, moved);
+    const activeIdValue = data.slides[activeSlide]?.id;
+    let nextActive = activeSlide;
+    if (activeIdValue) {
+      const relocated = slides.findIndex((s) => s.id === activeIdValue);
+      if (relocated !== -1) nextActive = relocated;
+    }
+    setData({ ...data, slides });
+    setActiveSlide(nextActive);
+  }
+
+  return { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition, reorderSlides };
 }
