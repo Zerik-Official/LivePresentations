@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import * as FaIcons from "react-icons/fa";
 
 import { CodeBlock } from "@/components/CodeBlock";
+import { buildYouTubeEmbedUrl, isYouTubeUrl, parseYouTubeId } from "@/features/editor/elements/video/youtube";
 import type { Slide, SlideElement } from "@/types/presentation";
 
 interface Props {
@@ -94,17 +95,18 @@ function ElementView({
       }
       case "shape": {
         const p = element.props as { variant?: string; fill?: string; radius?: number; borderColor?: string; borderWidth?: number };
-        const isCircle = p.variant === "circle";
-        return (
-          <div
-            style={{
-              background: p.fill ?? "#e4e4e7",
-              borderRadius: isCircle ? "50%" : (p.radius ?? 12),
-              border: p.borderWidth ? `${p.borderWidth}px solid ${p.borderColor ?? "#18181b"}` : undefined,
-            }}
-            className="h-full w-full"
-          />
-        );
+        const variant = p.variant ?? "rect";
+        const shapeStyle: React.CSSProperties = {
+          background: p.fill ?? "#e4e4e7",
+          border: p.borderWidth ? `${p.borderWidth}px solid ${p.borderColor ?? "#18181b"}` : undefined,
+        };
+        if (variant === "circle") shapeStyle.borderRadius = "50%";
+        else if (variant === "pill") shapeStyle.borderRadius = 9999;
+        else if (variant === "triangle") shapeStyle.clipPath = "polygon(50% 0%, 0% 100%, 100% 100%)";
+        else if (variant === "diamond") shapeStyle.clipPath = "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)";
+        else if (variant === "hexagon") shapeStyle.clipPath = "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)";
+        else shapeStyle.borderRadius = p.radius ?? 12;
+        return <div style={shapeStyle} className="h-full w-full" />;
       }
       case "icon": {
         const p = element.props as { name?: string; color?: string; size?: number; bg?: string; bgColor?: string; rounded?: number };
@@ -123,7 +125,23 @@ function ElementView({
       case "video": {
         const p = element.props as { src?: string; poster?: string; autoplay?: boolean; loop?: boolean; muted?: boolean };
         if (!p.src) return <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-xs text-white">Sin video</div>;
-        return <video src={p.src} poster={p.poster} autoPlay={p.autoplay} loop={p.loop} muted={p.muted ?? true} controls className="h-full w-full rounded-md bg-black" />;
+        if (isYouTubeUrl(p.src)) {
+          const id = parseYouTubeId(p.src);
+          if (!id) return <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-xs text-white">YouTube inválido</div>;
+          const embed = buildYouTubeEmbedUrl(id, Boolean(p.autoplay));
+          return (
+            <iframe
+              src={embed}
+              title="YouTube video"
+              loading="lazy"
+              referrerPolicy="strict-origin-when-cross-origin"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              className="h-full w-full rounded-md bg-black"
+            />
+          );
+        }
+        return <video src={p.src} poster={p.poster} autoPlay={p.autoplay} loop={p.loop} muted={p.muted ?? true} controls playsInline className="h-full w-full rounded-md bg-black" />;
       }
       case "code": {
         const p = element.props as { code?: string; language?: string; lineNumbers?: boolean };
