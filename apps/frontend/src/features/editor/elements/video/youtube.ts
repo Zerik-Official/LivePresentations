@@ -42,14 +42,16 @@ export function isYouTubeUrl(url: string): boolean {
  * Build privacy-enhanced embed URL without tracking cookies.
  * @param id - YouTube video ID
  * @param autoplay - Whether to autoplay (muted required for browsers)
+ * @param showControls - Whether to show player controls
  * @returns Embed URL
  */
-export function buildYouTubeEmbedUrl(id: string, autoplay = false): string {
+export function buildYouTubeEmbedUrl(id: string, autoplay = false, showControls = true): string {
   const params = new URLSearchParams({
     rel: "0",
     modestbranding: "1",
     playsinline: "1",
     enablejsapi: "0",
+    controls: showControls ? "1" : "0",
   });
   if (autoplay) {
     params.set("autoplay", "1");
