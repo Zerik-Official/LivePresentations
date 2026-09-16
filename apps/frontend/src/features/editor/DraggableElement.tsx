@@ -2,6 +2,7 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import * as FaIcons from "react-icons/fa";
 
+import { CodeBlock } from "../../components/CodeBlock";
 import type { SlideElement } from "../../types/presentation";
 
 interface Props {
@@ -108,13 +109,8 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
         );
       }
       case "code": {
-        const p = element.props as { code?: string; language?: string };
-        return (
-          <pre className="h-full w-full overflow-auto rounded-md bg-[#2d2d2d] p-2 text-[11px] leading-relaxed text-zinc-100">
-            <code className="language-javascript">{p.code ?? ""}</code>
-            <span className="absolute right-1 top-1 rounded bg-zinc-700 px-1 text-[9px] uppercase">{p.language ?? "code"}</span>
-          </pre>
-        );
+        const p = element.props as { code?: string; language?: string; lineNumbers?: boolean };
+        return <CodeBlock code={p.code} language={p.language} lineNumbers={p.lineNumbers ?? false} className="text-[11px]" />;
       }
       case "video":
         return <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-xs text-white">Video</div>;
