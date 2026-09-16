@@ -1,26 +1,25 @@
-import { DndContext, type DragEndEvent } from "@dnd-kit/core";
-import { useEffect, useMemo, useState } from "react";
-import { useRef } from "react";
+import { DndContext } from "@dnd-kit/core";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { FiArrowLeft, FiDownload, FiSave, FiUpload } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
 import { Select } from "../../components/ui/Select";
-import { uploadFile } from "../../lib/api";
-
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { ThemeToggle } from "../../components/ThemeToggle";
-
 import { getPresentation, updatePresentation } from "../../lib/api";
-import { createDefaultElement, createEmptySlide, parsePresentationData, type PresentationData, type Slide, type SlideElement } from "../../types/presentation";
-
+import { parsePresentationData, type PresentationData, type Slide } from "../../types/presentation";
 import { Layers } from "./components/Layers";
 import { PropertiesOverlay } from "./components/PropertiesOverlay";
 import { SlidesList } from "./components/SlidesList";
 import { Toolbar } from "./components/Toolbar";
 import { DraggableElement } from "./DraggableElement";
+import { useCanvasDrop } from "./hooks/useCanvasDrop";
+import { useElements } from "./hooks/useElements";
+import { useKeyboardDelete } from "./hooks/useKeyboardDelete";
+import { useSlides } from "./hooks/useSlides";
 
 /**
- * Modular editor with drag, resize and code/icon support.
+ * Modular editor with drag, resize, code/icon support and per-type property editors.
  */
 export function EditorPage(): React.ReactNode {
   const { id } = useParams<{ id: string }>();
@@ -34,6 +33,15 @@ export function EditorPage(): React.ReactNode {
   const [confirmSlideIdx, setConfirmSlideIdx] = useState<number | null>(null);
   const [confirmElementOpen, setConfirmElementOpen] = useState(false);
 
+  const slide = useMemo(() => (data ? (data.slides[activeSlide] ?? null) : null), [data, activeSlide]);
+  const selected = useMemo(() => slide?.elements.find((e) => e.id === selectedId) ?? null, [slide, selectedId]);
+
+  const { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition } = useSlides(data, setData, activeSlide, setActiveSlide, setSelectedId);
+  const { addElement, patchSelected, deleteSelected, handleDragEnd, handleResize, handleReorder, handleSortLayer } = useElements(data, setData, activeSlide, selectedId, setSelectedId);
+  const { handleCanvasDrop } = useCanvasDrop(data, activeSlide, setData, setSelectedId, setError);
+
+  useKeyboardDelete(selectedId, () => setConfirmElementOpen(true));
+
   useEffect(() => {
     if (!id) return;
     void getPresentation(id)
@@ -43,26 +51,6 @@ export function EditorPage(): React.ReactNode {
       })
       .catch(() => setError("No se pudo cargar la presentación"));
   }, [id]);
-
-  useEffect(() => {
-    /**
-     * Handle Delete/Sup key for selected element.
-     * @param e - Keyboard event
-     */
-    function handleKey(e: KeyboardEvent): void {
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedId) {
-        const target = e.target as HTMLElement;
-        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
-        e.preventDefault();
-        setConfirmElementOpen(true);
-      }
-    }
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [selectedId]);
-
-  const slide = useMemo(() => (data ? (data.slides[activeSlide] ?? null) : null), [data, activeSlide]);
-  const selected = useMemo(() => slide?.elements.find((e) => e.id === selectedId) ?? null, [slide, selectedId]);
 
   /**
    * Persist presentation.
@@ -77,205 +65,6 @@ export function EditorPage(): React.ReactNode {
       setError(e instanceof Error ? e.message : "Error al guardar");
     } finally {
       setSaving(false);
-    }
-  }
-
-  /**
-   * Add a new slide.
-   */
-  function addSlide(): void {
-    if (!data) return;
-    const s = createEmptySlide(`slide-${Date.now()}`);
-    setData({ ...data, slides: [...data.slides, s] });
-    setActiveSlide(data.slides.length);
-  }
-
-  /**
-   * Delete a slide by index.
-   * @param idx - Slide index
-   */
-  function deleteSlide(idx: number): void {
-    if (!data) return;
-    const slides = data.slides.filter((_, i) => i !== idx);
-    setData({ ...data, slides });
-    setActiveSlide(Math.max(0, Math.min(activeSlide, slides.length - 1)));
-    setSelectedId(null);
-  }
-
-  /**
-   * Duplicate a slide.
-   * @param idx - Slide index
-   */
-  function duplicateSlide(idx: number): void {
-    if (!data) return;
-    const src = data.slides[idx];
-    if (!src) return;
-    const copy = { ...src, id: `slide-${Date.now()}`, elements: src.elements.map((e) => ({ ...e, id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` })) };
-    const slides = [...data.slides];
-    slides.splice(idx + 1, 0, copy);
-    setData({ ...data, slides });
-  }
-
-  /**
-   * Add element to current slide.
-   * @param type - Element type
-   */
-  function addElement(type: SlideElement["type"]): void {
-    if (!data || !slide) return;
-    const el = createDefaultElement(type, `el-${Date.now()}`);
-    const slides = [...data.slides];
-    slides[activeSlide] = { ...slide, elements: [...slide.elements, el] };
-    setData({ ...data, slides });
-    setSelectedId(el.id);
-  }
-
-  /**
-   * Patch selected element.
-   * @param patch - Patch object
-   */
-  function patchSelected(patch: Partial<SlideElement> & { propsPatch?: Record<string, unknown> }): void {
-    if (!data || !slide || !selected) return;
-    const elements = slide.elements.map((e) => {
-      if (e.id !== selected.id) return e;
-      const next = { ...e, ...patch } as SlideElement;
-      if (patch.propsPatch) next.props = { ...e.props, ...patch.propsPatch };
-      delete (next as unknown as { propsPatch?: unknown }).propsPatch;
-      return next;
-    });
-    const slides = [...data.slides];
-    slides[activeSlide] = { ...slide, elements };
-    setData({ ...data, slides });
-  }
-
-  /**
-   * Delete selected element.
-   */
-  function deleteSelected(): void {
-    if (!data || !slide || !selected) return;
-    const slides = [...data.slides];
-    slides[activeSlide] = { ...slide, elements: slide.elements.filter((e) => e.id !== selected.id) };
-    setData({ ...data, slides });
-    setSelectedId(null);
-  }
-
-  /**
-   * Handle drag end for @dnd-kit.
-   * @param event - Drag end event
-   */
-  function handleDragEnd(event: DragEndEvent): void {
-    const { active, delta } = event;
-    if (!data || !slide || !delta) return;
-    const elements = slide.elements.map((el) => (el.id === active.id ? { ...el, x: Math.round(el.x + delta.x), y: Math.round(el.y + delta.y) } : el));
-    const slides = [...data.slides];
-    slides[activeSlide] = { ...slide, elements };
-    setData({ ...data, slides });
-  }
-
-  /**
-   * Handle resize from handles.
-   * @param elemId - Element id
-   * @param w - New width
-   * @param h - New height
-   */
-  function handleResize(elemId: string, w: number, h: number): void {
-    if (!data || !slide) return;
-    const elements = slide.elements.map((el) => (el.id === elemId ? { ...el, w, h } : el));
-    const slides = [...data.slides];
-    slides[activeSlide] = { ...slide, elements };
-    setData({ ...data, slides });
-  }
-
-  /**
-   * Reorder zIndex.
-   * @param elemId - Element id
-   * @param dir - Direction
-   */
-  function handleReorder(elemId: string, dir: 1 | -1): void {
-    if (!data || !slide) return;
-    const elements = [...slide.elements];
-    const idx = elements.findIndex((e) => e.id === elemId);
-    if (idx === -1) return;
-    const target = idx + dir;
-    if (target < 0 || target >= elements.length) return;
-    const [moved] = elements.splice(idx, 1);
-    if (!moved) return;
-    elements.splice(target, 0, moved);
-    const withZ = elements.map((e, i) => ({ ...e, zIndex: i }));
-    const slides = [...data.slides];
-    slides[activeSlide] = { ...slide, elements: withZ };
-    setData({ ...data, slides });
-  }
-
-  /**
-   * Handle full drag sort for layers.
-   * @param activeId - Active element id
-   * @param overId - Over element id
-   */
-  function handleSortLayer(activeId: string, overId: string): void {
-    if (!data || !slide) return;
-    const elements = [...slide.elements];
-    const oldIndex = elements.findIndex((e) => e.id === activeId);
-    const newIndex = elements.findIndex((e) => e.id === overId);
-    if (oldIndex === -1 || newIndex === -1) return;
-    const [moved] = elements.splice(oldIndex, 1);
-    if (!moved) return;
-    elements.splice(newIndex, 0, moved);
-    const withZ = elements.map((e, i) => ({ ...e, zIndex: i }));
-    const slides = [...data.slides];
-    slides[activeSlide] = { ...slide, elements: withZ };
-    setData({ ...data, slides });
-  }
-
-  /**
-   * Update slide background color.
-   * @param color - CSS color
-   */
-  function handleBackgroundChange(color: string): void {
-    if (!data || !slide) return;
-    const slides = [...data.slides];
-    slides[activeSlide] = { ...slide, background: color };
-    setData({ ...data, slides });
-  }
-
-  /**
-   * Update slide transition.
-   * @param transition - Transition type
-   */
-  function handleTransitionChange(transition: string): void {
-    if (!data || !slide) return;
-    const slides = [...data.slides];
-    slides[activeSlide] = { ...slide, transition: transition as Slide["transition"] };
-    setData({ ...data, slides });
-  }
-
-  /**
-   * Handle file drop on canvas to create image/video element.
-   * @param e - Drag event
-   */
-  async function handleCanvasDrop(e: React.DragEvent): Promise<void> {
-    e.preventDefault();
-    if (!data || !slide) return;
-    const file = e.dataTransfer.files[0];
-    if (!file) return;
-    if (file.size > 100 * 1024 * 1024) {
-      setError("Archivo excede 100MB");
-      return;
-    }
-    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
-    try {
-      const { url } = await uploadFile(file);
-      const type: SlideElement["type"] = file.type.startsWith("image/") ? "image" : "video";
-      const el = createDefaultElement(type, `el-${Date.now()}`);
-      el.props = { ...el.props, src: url };
-      // drop position relative to canvas: use center for now
-      el.x = Math.max(0, 80);
-      el.y = Math.max(0, 80);
-      const slides = [...data.slides];
-      slides[activeSlide] = { ...slide, elements: [...slide.elements, el] };
-      setData({ ...data, slides });
-      setSelectedId(el.id);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al subir archivo");
     }
   }
 
@@ -315,22 +104,22 @@ export function EditorPage(): React.ReactNode {
     }
   }
 
-  if (error && !data) return <div className="p-6 text-sm text-red-600">{error}</div>;
-  if (!data) return <div className="p-6 text-sm text-zinc-500">Cargando editor...</div>;
+  if (error && !data) return <div className="p-6 text-sm text-red-600 dark:text-red-400">{error}</div>;
+  if (!data) return <div className="p-6 text-sm text-zinc-500 dark:text-zinc-400">Cargando editor...</div>;
 
   return (
     <div className="flex h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
       <header className="flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3">
-        <Link to="/dashboard" className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+        <Link to="/dashboard" className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800">
           <FiArrowLeft />
         </Link>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium outline-none focus:border-zinc-900 dark:focus:border-zinc-400 text-zinc-900 dark:text-zinc-100" />
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
         <ThemeToggle />
         <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={(e) => void handleImport(e)} />
-        <button type="button" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+        <button type="button" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700">
           <FiUpload /> Importar
         </button>
-        <button type="button" onClick={handleExport} className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+        <button type="button" onClick={handleExport} className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700">
           <FiDownload /> Exportar
         </button>
         <button type="button" onClick={() => void handleSave()} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 disabled:opacity-50">
@@ -338,7 +127,7 @@ export function EditorPage(): React.ReactNode {
         </button>
       </header>
 
-      {error && <div className="mx-4 mt-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</div>}
+      {error && <div className="mx-4 mt-3 rounded-lg bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-800 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</div>}
 
       <div className="flex flex-1 overflow-hidden">
         <SlidesList data={data} activeSlide={activeSlide} onSelect={(i) => { setActiveSlide(i); setSelectedId(null); }} onAdd={addSlide} onDelete={(idx) => setConfirmSlideIdx(idx)} onDuplicate={duplicateSlide} />
@@ -347,12 +136,12 @@ export function EditorPage(): React.ReactNode {
           <Toolbar onAdd={addElement} disabled={!slide} />
           {slide && (
             <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2">
-              <span className="text-xs text-zinc-600 dark:text-zinc-300">Fondo</span>
-              <input type="color" value={slide.background} onChange={(e) => handleBackgroundChange(e.target.value)} className="h-7 w-12 rounded border border-zinc-200 dark:border-zinc-700" />
-              <input value={slide.background} onChange={(e) => handleBackgroundChange(e.target.value)} placeholder="#ffffff" className="w-24 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100" />
-              <span className="ml-2 text-xs text-zinc-600 dark:text-zinc-300">Transición</span>
+              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Fondo</span>
+              <input type="color" value={slide.background} onChange={(e) => updateBackground(e.target.value)} className="h-7 w-12 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800" />
+              <input value={slide.background} onChange={(e) => updateBackground(e.target.value)} placeholder="#ffffff" className="w-24 rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-1.5 text-xs outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
+              <span className="ml-2 text-xs font-medium text-zinc-600 dark:text-zinc-300">Transición</span>
               <div className="w-28">
-                <Select value={slide.transition} options={[{ value: "fade", label: "Fade" },{ value: "slide", label: "Slide" },{ value: "zoom", label: "Zoom" }]} onChange={handleTransitionChange} placeholder="Transición" />
+                <Select value={slide.transition} options={[{ value: "fade", label: "Fade" }, { value: "slide", label: "Slide" }, { value: "zoom", label: "Zoom" }]} onChange={(v) => updateTransition(v as Slide["transition"])} placeholder="Transición" />
               </div>
             </div>
           )}
@@ -362,7 +151,7 @@ export function EditorPage(): React.ReactNode {
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => void handleCanvasDrop(e)}
               style={{ width: data.width, height: data.height, background: slide?.background ?? "#ffffff" }}
-              className="relative mt-4 origin-top scale-[0.55] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm sm:scale-[0.75] lg:scale-100"
+              className="relative mt-4 origin-top scale-[0.55] overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white shadow-sm sm:scale-[0.75] lg:scale-100"
             >
               {slide ? (
                 slide.elements
@@ -370,7 +159,7 @@ export function EditorPage(): React.ReactNode {
                   .sort((a, b) => a.zIndex - b.zIndex)
                   .map((el) => <DraggableElement key={el.id} element={el} selected={selectedId === el.id} onSelect={setSelectedId} onResize={handleResize} />)
               ) : (
-                <div className="flex h-full items-center justify-center text-sm text-zinc-500">Crea una diapositiva</div>
+                <div className="flex h-full items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">Crea una diapositiva</div>
               )}
             </div>
           </DndContext>
@@ -383,16 +172,18 @@ export function EditorPage(): React.ReactNode {
         </main>
 
         <aside className="hidden w-64 border-l border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 lg:block">
-          <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Consejos</h3>
-          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-zinc-600">
+          <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Consejos</h3>
+          <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-zinc-600 dark:text-zinc-400">
             <li>Arrastra desde el centro para mover.</li>
-            <li>Usa los tiradores de borde para redimensionar (esquina y laterales).</li>
+            <li>Usa los tiradores de borde para redimensionar.</li>
+            <li>Texto: elige fuente, alineación, negrita/cursiva/subrayado.</li>
             <li>Iconos: usa el selector con fondo opcional.</li>
-            <li>Código: elige lenguaje para resaltado Prism (js, python, css...).</li>
+            <li>Código: elige lenguaje para resaltado Prism.</li>
             <li>Pulsa Supr para borrar elemento seleccionado.</li>
           </ul>
         </aside>
       </div>
+
       <ConfirmDialog
         open={confirmSlideIdx !== null}
         title="Eliminar diapositiva"
