@@ -3,6 +3,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import { FiPlus } from "react-icons/fi";
 
+import { TooltipSimple } from "@/components/ui/Tooltip";
 import type { PresentationData } from "@/types/presentation";
 import { SlideCard } from "./SlideCard";
 
@@ -71,9 +72,11 @@ export function SlidesList({ data, activeSlide, onSelect, onAdd, onDelete, onDup
     <aside className="flex w-64 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
       <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-3 py-3">
         <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Diapositivas</h3>
-        <button type="button" onClick={onAdd} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700">
-          <FiPlus size={12} />
-        </button>
+        <TooltipSimple content="Añadir diapositiva" side="right">
+          <button type="button" onClick={onAdd} className="inline-flex h-7 w-7 cursor-pointer items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700">
+            <FiPlus size={12} />
+          </button>
+        </TooltipSimple>
       </div>
       <div className="flex-1 overflow-y-auto p-3">
         <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
