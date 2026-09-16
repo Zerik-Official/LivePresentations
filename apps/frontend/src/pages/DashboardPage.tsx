@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { FiCopy, FiDownload, FiLogOut, FiPlus, FiUpload } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
+import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 
@@ -162,14 +163,10 @@ export function DashboardPage(): React.ReactNode {
           <span className="text-sm text-zinc-600 dark:text-zinc-400">{user?.email}</span>
           <ThemeToggle />
           <TooltipSimple content="Cerrar sesión" side="bottom">
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-sm text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
-            >
+            <Button variant="secondary" size="sm" onClick={handleLogout} className="cursor-pointer">
               <FiLogOut />
               Cerrar sesión
-            </button>
+            </Button>
           </TooltipSimple>
         </div>
       </header>
@@ -180,13 +177,11 @@ export function DashboardPage(): React.ReactNode {
         {roomCode && (
           <div className="mb-6 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
             <span className="text-sm font-medium">Código de sala: {roomCode}</span>
-            <button
-              type="button"
-              onClick={() => void navigator.clipboard.writeText(roomCode)}
-              className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs shadow-sm"
-            >
-              <FiCopy /> Copiar
-            </button>
+            <TooltipSimple content="Copiar código" side="top">
+              <Button variant="secondary" size="sm" onClick={() => void navigator.clipboard.writeText(roomCode)} className="cursor-pointer bg-white dark:bg-white text-zinc-900 shadow-sm hover:bg-zinc-50 px-2 py-1 text-xs">
+                <FiCopy /> Copiar
+              </Button>
+            </TooltipSimple>
             <span className="ml-auto text-xs text-zinc-600">Comparte este código con el controlador</span>
           </div>
         )}
@@ -198,9 +193,9 @@ export function DashboardPage(): React.ReactNode {
               <div className="flex items-center gap-2">
                 <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={(e) => void handleImport(e)} />
                 <TooltipSimple content="Importar JSON" side="top">
-                  <button type="button" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+                  <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} className="cursor-pointer text-xs">
                     <FiUpload /> Importar
-                  </button>
+                  </Button>
                 </TooltipSimple>
               </div>
             </div>
@@ -212,13 +207,9 @@ export function DashboardPage(): React.ReactNode {
                 className="flex-1 rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:focus:border-zinc-300"
               />
               <TooltipSimple content="Crear nueva presentación" side="top">
-                <button
-                  type="button"
-                  onClick={() => void handleCreate()}
-                  className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
-                >
+                <Button variant="primary" size="md" onClick={() => void handleCreate()} className="cursor-pointer">
                   <FiPlus /> Crear
-                </button>
+                </Button>
               </TooltipSimple>
             </div>
 
@@ -229,31 +220,25 @@ export function DashboardPage(): React.ReactNode {
                   <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{p.title}</span>
                   <div className="flex gap-2">
                     <TooltipSimple content="Exportar JSON" side="top">
-                      <button type="button" onClick={() => handleExport(p)} className="rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-2 py-1 text-xs text-zinc-700 dark:text-zinc-200">
+                      <Button variant="secondary" size="sm" onClick={() => handleExport(p)} className="cursor-pointer px-2 py-1 text-xs">
                         <FiDownload />
-                      </button>
+                      </Button>
                     </TooltipSimple>
-                    <button
-                      type="button"
-                      onClick={() => navigate(`/editor/${p.id}`)}
-                      className="rounded-lg border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-3 py-1 text-xs text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-600"
-                    >
-                      Editar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteId(p.id)}
-                      className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-2 py-1 text-xs text-red-600 dark:text-red-400"
-                    >
-                      Borrar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => void handleCreateRoom(p.id)}
-                      className="rounded-lg bg-zinc-900 dark:bg-white px-3 py-1 text-xs text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
-                    >
-                      Crear sala
-                    </button>
+                    <TooltipSimple content="Editar presentación" side="top">
+                      <Button variant="secondary" size="sm" onClick={() => navigate(`/editor/${p.id}`)} className="cursor-pointer px-3 py-1 text-xs">
+                        Editar
+                      </Button>
+                    </TooltipSimple>
+                    <TooltipSimple content="Borrar presentación" side="top">
+                      <Button variant="danger" size="sm" onClick={() => setDeleteId(p.id)} className="cursor-pointer px-2 py-1 text-xs">
+                        Borrar
+                      </Button>
+                    </TooltipSimple>
+                    <TooltipSimple content="Crear sala" side="top">
+                      <Button variant="primary" size="sm" onClick={() => void handleCreateRoom(p.id)} className="cursor-pointer px-3 py-1 text-xs">
+                        Crear sala
+                      </Button>
+                    </TooltipSimple>
                   </div>
                 </li>
               ))}
@@ -271,13 +256,11 @@ export function DashboardPage(): React.ReactNode {
                 maxLength={6}
                 className="flex-1 rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-sm tracking-widest outline-none focus:border-zinc-900 dark:focus:border-zinc-300"
               />
-              <button
-                type="button"
-                onClick={() => void handleJoin()}
-                className="rounded-lg bg-zinc-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100"
-              >
-                Unirse
-              </button>
+              <TooltipSimple content="Unirse a sala" side="top">
+                <Button variant="primary" size="md" onClick={() => void handleJoin()} className="cursor-pointer">
+                  Unirse
+                </Button>
+              </TooltipSimple>
             </div>
             {roomCode && <p className="mt-3 text-xs text-zinc-600 dark:text-zinc-400">Última sala: {roomCode}</p>}
           </section>
@@ -292,15 +275,21 @@ export function DashboardPage(): React.ReactNode {
                   <span className="font-mono tracking-widest text-zinc-900 dark:text-zinc-100">{r.code}</span>
                   <span className="text-zinc-500 dark:text-zinc-400">Slide {r.current_slide + 1}</span>
                   <div className="flex gap-2">
-                    <button type="button" onClick={() => navigate(`/present/${r.code}`)} className="rounded bg-zinc-900 dark:bg-white px-3 py-1 text-xs text-white dark:text-zinc-900">
-                      Presentar
-                    </button>
-                    <button type="button" onClick={() => navigate(`/control/${r.code}`)} className="rounded border border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-700 px-3 py-1 text-xs">
-                      Control
-                    </button>
-                    <button type="button" onClick={() => void handleDeleteRoom(r.code)} className="rounded border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-2 py-1 text-xs text-red-600 dark:text-red-400">
-                      Borrar
-                    </button>
+                    <TooltipSimple content="Presentar sala" side="top">
+                      <Button variant="primary" size="sm" onClick={() => navigate(`/present/${r.code}`)} className="cursor-pointer px-3 py-1 text-xs">
+                        Presentar
+                      </Button>
+                    </TooltipSimple>
+                    <TooltipSimple content="Controlar sala" side="top">
+                      <Button variant="secondary" size="sm" onClick={() => navigate(`/control/${r.code}`)} className="cursor-pointer px-3 py-1 text-xs">
+                        Control
+                      </Button>
+                    </TooltipSimple>
+                    <TooltipSimple content="Borrar sala" side="top">
+                      <Button variant="danger" size="sm" onClick={() => void handleDeleteRoom(r.code)} className="cursor-pointer px-2 py-1 text-xs">
+                        Borrar
+                      </Button>
+                    </TooltipSimple>
                   </div>
                 </li>
               ))}
