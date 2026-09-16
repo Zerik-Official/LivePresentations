@@ -32,7 +32,7 @@ function SortableLayer({ id, type, selected, onSelect }: { id: string; type: str
       <button
         type="button"
         onClick={() => onSelect(id)}
-        className={`flex-1 rounded-full border px-3 py-1 text-xs ${selected ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"}`}
+        className={`flex-1 cursor-pointer rounded-full border px-3 py-1 text-xs ${selected ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-600 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"}`}
       >
         {type} · {id.slice(0, 6)}
       </button>
