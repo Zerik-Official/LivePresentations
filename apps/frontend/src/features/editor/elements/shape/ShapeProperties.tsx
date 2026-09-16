@@ -1,9 +1,25 @@
-import { Select } from "@/components/ui/Select";
+import { Select, type SelectOption } from "@/components/ui/Select";
 import type { SlideElement } from "@/types/presentation";
 
 interface Props {
   element: SlideElement;
   onPatch: (patch: Partial<SlideElement> & { propsPatch?: Record<string, unknown> }) => void;
+}
+
+/**
+ * Build thumbnail for shape variant using current fill.
+ * @param variant - Shape variant
+ * @param fill - Fill color
+ */
+function ShapeThumb({ variant, fill }: { variant: string; fill: string }): React.ReactNode {
+  const base = "h-4 w-6 shrink-0 border border-zinc-200 dark:border-zinc-600";
+  const style: React.CSSProperties = { background: fill };
+  if (variant === "circle") return <span className={`${base} rounded-full`} style={style} />;
+  if (variant === "pill") return <span className={`${base} rounded-full`} style={{ ...style, borderRadius: 999 }} />;
+  if (variant === "triangle") return <span className={base} style={{ ...style, clipPath: "polygon(50% 0%, 0% 100%, 100% 100%)" }} />;
+  if (variant === "diamond") return <span className={base} style={{ ...style, clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" }} />;
+  if (variant === "hexagon") return <span className={base} style={{ ...style, clipPath: "polygon(25% 0%, 75% 0%, 100% 50%, 75% 100%, 25% 100%, 0% 50%)" }} />;
+  return <span className={`${base} rounded-md`} style={style} />;
 }
 
 /**
@@ -13,12 +29,23 @@ interface Props {
  */
 export function ShapeProperties({ element, onPatch }: Props): React.ReactNode {
   const props = element.props as { variant?: string; fill?: string; radius?: number; borderColor?: string; borderWidth?: number };
+  const fill = props.fill ?? "#e4e4e7";
+  const variant = props.variant ?? "rect";
+
+  const options: SelectOption[] = [
+    { value: "rect", label: "Rectángulo", thumb: <ShapeThumb variant="rect" fill={fill} /> },
+    { value: "circle", label: "Círculo", thumb: <ShapeThumb variant="circle" fill={fill} /> },
+    { value: "pill", label: "Píldora", thumb: <ShapeThumb variant="pill" fill={fill} /> },
+    { value: "triangle", label: "Triángulo", thumb: <ShapeThumb variant="triangle" fill={fill} /> },
+    { value: "diamond", label: "Diamante", thumb: <ShapeThumb variant="diamond" fill={fill} /> },
+    { value: "hexagon", label: "Hexágono", thumb: <ShapeThumb variant="hexagon" fill={fill} /> },
+  ];
 
   return (
     <div className="space-y-3">
       <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
         Variante
-        <Select value={props.variant ?? "rect"} options={[{ value: "rect", label: "Rectángulo" }, { value: "circle", label: "Círculo" }]} onChange={(v) => onPatch({ propsPatch: { variant: v } })} placeholder="Variante" />
+        <Select value={variant} options={options} onChange={(v) => onPatch({ propsPatch: { variant: v } })} placeholder="Variante" />
       </label>
       <div className="grid grid-cols-2 gap-2">
         <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
