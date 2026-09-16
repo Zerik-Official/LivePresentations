@@ -4,11 +4,14 @@ import { useRef } from "react";
 import { FiArrowLeft, FiDownload, FiSave, FiUpload } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
+import { Select } from "../../components/ui/Select";
+import { uploadFile } from "../../lib/api";
+
 import { ConfirmDialog } from "../../components/ui/ConfirmDialog";
 import { ThemeToggle } from "../../components/ThemeToggle";
 
 import { getPresentation, updatePresentation } from "../../lib/api";
-import { createDefaultElement, createEmptySlide, parsePresentationData, type PresentationData, type SlideElement } from "../../types/presentation";
+import { createDefaultElement, createEmptySlide, parsePresentationData, type PresentationData, type Slide, type SlideElement } from "../../types/presentation";
 
 import { Layers } from "./components/Layers";
 import { PropertiesOverlay } from "./components/PropertiesOverlay";
@@ -204,6 +207,26 @@ export function EditorPage(): React.ReactNode {
   }
 
   /**
+   * Handle full drag sort for layers.
+   * @param activeId - Active element id
+   * @param overId - Over element id
+   */
+  function handleSortLayer(activeId: string, overId: string): void {
+    if (!data || !slide) return;
+    const elements = [...slide.elements];
+    const oldIndex = elements.findIndex((e) => e.id === activeId);
+    const newIndex = elements.findIndex((e) => e.id === overId);
+    if (oldIndex === -1 || newIndex === -1) return;
+    const [moved] = elements.splice(oldIndex, 1);
+    if (!moved) return;
+    elements.splice(newIndex, 0, moved);
+    const withZ = elements.map((e, i) => ({ ...e, zIndex: i }));
+    const slides = [...data.slides];
+    slides[activeSlide] = { ...slide, elements: withZ };
+    setData({ ...data, slides });
+  }
+
+  /**
    * Update slide background color.
    * @param color - CSS color
    */
@@ -212,6 +235,48 @@ export function EditorPage(): React.ReactNode {
     const slides = [...data.slides];
     slides[activeSlide] = { ...slide, background: color };
     setData({ ...data, slides });
+  }
+
+  /**
+   * Update slide transition.
+   * @param transition - Transition type
+   */
+  function handleTransitionChange(transition: string): void {
+    if (!data || !slide) return;
+    const slides = [...data.slides];
+    slides[activeSlide] = { ...slide, transition: transition as Slide["transition"] };
+    setData({ ...data, slides });
+  }
+
+  /**
+   * Handle file drop on canvas to create image/video element.
+   * @param e - Drag event
+   */
+  async function handleCanvasDrop(e: React.DragEvent): Promise<void> {
+    e.preventDefault();
+    if (!data || !slide) return;
+    const file = e.dataTransfer.files[0];
+    if (!file) return;
+    if (file.size > 100 * 1024 * 1024) {
+      setError("Archivo excede 100MB");
+      return;
+    }
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
+    try {
+      const { url } = await uploadFile(file);
+      const type: SlideElement["type"] = file.type.startsWith("image/") ? "image" : "video";
+      const el = createDefaultElement(type, `el-${Date.now()}`);
+      el.props = { ...el.props, src: url };
+      // drop position relative to canvas: use center for now
+      el.x = Math.max(0, 80);
+      el.y = Math.max(0, 80);
+      const slides = [...data.slides];
+      slides[activeSlide] = { ...slide, elements: [...slide.elements, el] };
+      setData({ ...data, slides });
+      setSelectedId(el.id);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al subir archivo");
+    }
   }
 
   /**
@@ -281,15 +346,24 @@ export function EditorPage(): React.ReactNode {
         <main className="flex flex-1 flex-col items-center overflow-auto p-4 bg-zinc-50 dark:bg-zinc-950">
           <Toolbar onAdd={addElement} disabled={!slide} />
           {slide && (
-            <div className="mt-3 flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2">
-              <span className="text-xs text-zinc-600 dark:text-zinc-300">Fondo canvas</span>
+            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2">
+              <span className="text-xs text-zinc-600 dark:text-zinc-300">Fondo</span>
               <input type="color" value={slide.background} onChange={(e) => handleBackgroundChange(e.target.value)} className="h-7 w-12 rounded border border-zinc-200 dark:border-zinc-700" />
               <input value={slide.background} onChange={(e) => handleBackgroundChange(e.target.value)} placeholder="#ffffff" className="w-24 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100" />
+              <span className="ml-2 text-xs text-zinc-600 dark:text-zinc-300">Transición</span>
+              <div className="w-28">
+                <Select value={slide.transition} options={[{ value: "fade", label: "Fade" },{ value: "slide", label: "Slide" },{ value: "zoom", label: "Zoom" }]} onChange={handleTransitionChange} placeholder="Transición" />
+              </div>
             </div>
           )}
 
           <DndContext onDragEnd={handleDragEnd}>
-            <div style={{ width: data.width, height: data.height, background: slide?.background ?? "#ffffff" }} className="relative mt-4 origin-top scale-[0.55] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm sm:scale-[0.75] lg:scale-100">
+            <div
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => void handleCanvasDrop(e)}
+              style={{ width: data.width, height: data.height, background: slide?.background ?? "#ffffff" }}
+              className="relative mt-4 origin-top scale-[0.55] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm sm:scale-[0.75] lg:scale-100"
+            >
               {slide ? (
                 slide.elements
                   .slice()
@@ -304,7 +378,7 @@ export function EditorPage(): React.ReactNode {
           <PropertiesOverlay selected={selected} onPatch={patchSelected} onDelete={() => setConfirmElementOpen(true)} />
 
           <div className="mt-4 w-full max-w-160">
-            <Layers slide={slide} selectedId={selectedId} onSelect={setSelectedId} onReorder={handleReorder} />
+            <Layers slide={slide} selectedId={selectedId} onSelect={setSelectedId} onReorder={handleReorder} onSort={handleSortLayer} />
           </div>
         </main>
 
