@@ -95,10 +95,14 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
         return <div style={{ background: p.fill ?? "#e4e4e7", borderRadius: p.radius ?? 8 }} className="h-full w-full" />;
       }
       case "icon": {
-        const p = element.props as { name?: string; color?: string; size?: number };
+        const p = element.props as { name?: string; color?: string; size?: number; bg?: string; bgColor?: string; rounded?: number };
         const IconComp = (FaIcons as unknown as Record<string, React.ComponentType<{ size?: number; color?: string }>>)[p.name ?? "FaStar"] ?? FaIcons.FaStar;
+        const showBg = (p.bg ?? "transparent") !== "transparent";
         return (
-          <div className="flex h-full w-full items-center justify-center">
+          <div
+            style={{ background: showBg ? (p.bgColor ?? "#ffffff") : "transparent", borderRadius: p.rounded ?? 12 }}
+            className="flex h-full w-full items-center justify-center"
+          >
             <IconComp size={p.size ?? 48} color={p.color ?? "#18181b"} />
           </div>
         );
@@ -106,8 +110,8 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
       case "code": {
         const p = element.props as { code?: string; language?: string };
         return (
-          <pre className="h-full w-full overflow-auto rounded-md bg-zinc-900 p-2 text-[11px] leading-relaxed text-zinc-100">
-            <code>{p.code ?? ""}</code>
+          <pre className="h-full w-full overflow-auto rounded-md bg-[#2d2d2d] p-2 text-[11px] leading-relaxed text-zinc-100">
+            <code className="language-javascript">{p.code ?? ""}</code>
             <span className="absolute right-1 top-1 rounded bg-zinc-700 px-1 text-[9px] uppercase">{p.language ?? "code"}</span>
           </pre>
         );
@@ -119,11 +123,13 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
     }
   })();
 
+  const isIconTransparent = element.type === "icon" && (element.props as { bg?: string }).bg === "transparent";
+
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`absolute select-none rounded-md border bg-white ${selected ? "border-zinc-900 ring-2 ring-zinc-900" : "border-zinc-200"} ${isDragging ? "shadow-lg" : ""}`}
+      className={`absolute select-none rounded-md border ${isIconTransparent ? "bg-transparent border-dashed border-zinc-300" : "bg-white"} ${selected ? "border-zinc-900 ring-2 ring-zinc-900" : isIconTransparent ? "" : "border-zinc-200"} ${isDragging ? "shadow-lg" : ""}`}
       onPointerDown={() => onSelect(element.id)}
       {...attributes}
       {...listeners}
