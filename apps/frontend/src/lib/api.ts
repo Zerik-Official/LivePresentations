@@ -167,6 +167,24 @@ export async function getRoom(code: string): Promise<Room> {
 }
 
 /**
+ * List active rooms for current user.
+ */
+export async function listRooms(): Promise<Room[]> {
+  const res = await fetch(`${API_BASE}/api/rooms`, { headers: { ...getAuthHeader() } });
+  if (!res.ok) return [];
+  return res.json() as Promise<Room[]>;
+}
+
+/**
+ * Delete a presentation.
+ * @param id - Presentation id
+ */
+export async function deletePresentation(id: string): Promise<void> {
+  const res = await fetch(`${API_BASE}/api/presentations/${id}`, { method: "DELETE", headers: { ...getAuthHeader() } });
+  if (!res.ok) throw new Error("Error al borrar");
+}
+
+/**
  * Upload an image or video (max 100MB).
  * @param file - File to upload
  * @returns URL of uploaded file
