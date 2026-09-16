@@ -44,7 +44,17 @@ export function PresenterPage(): React.ReactNode {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center p-4">
-        <SlideRenderer slide={slide} highlightedId={room.highlightedId} animTriggerId={room.animTriggerId} width={data.width} height={data.height} />
+        <SlideRenderer
+          slide={slide}
+          highlightedId={room.highlightedId}
+          animTriggerId={room.animTriggerId}
+          width={data.width}
+          height={data.height}
+          codeExpandedId={room.codeOverlay.elementId}
+          codeHighlightedLines={room.codeOverlay.highlightedLines}
+          codeScrollTop={room.codeOverlay.scrollTop}
+          onCollapseCode={() => room.send("CODE_COLLAPSE", {})}
+        />
         <div className="mt-4 flex items-center gap-3">
           <button
             type="button"
