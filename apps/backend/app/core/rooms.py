@@ -46,7 +46,10 @@ class RoomManager:
         room = self._rooms.get(code.upper())
         if room is None:
             return None
-        if datetime.now(timezone.utc) > room.expires_at:
+        expires = room.expires_at
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=timezone.utc)
+        if datetime.now(timezone.utc) > expires:
             self._rooms.pop(code.upper(), None)
             return None
         return room
