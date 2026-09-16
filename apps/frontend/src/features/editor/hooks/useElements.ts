@@ -1,6 +1,6 @@
 import type { DragEndEvent } from "@dnd-kit/core";
-import type { PresentationData, SlideElement } from "../../../types/presentation";
-import { createDefaultElement } from "../../../types/presentation";
+import type { PresentationData, SlideElement } from "@/types/presentation";
+import { createDefaultElement } from "@/types/presentation";
 
 /**
  * Element operations for the active slide.

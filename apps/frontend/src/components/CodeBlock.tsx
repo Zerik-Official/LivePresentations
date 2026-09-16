@@ -1,4 +1,4 @@
-import { highlight, langLabel } from "../lib/prism";
+import { highlight, langLabel } from "@/lib/prism";
 
 interface Props {
   code?: string;

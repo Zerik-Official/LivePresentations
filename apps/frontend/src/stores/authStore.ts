@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import { fetchMe, type AuthResponse, type User } from "../lib/api";
+import { fetchMe, type AuthResponse, type User } from "@/lib/api";
 
 interface AuthState {
   user: User | null;

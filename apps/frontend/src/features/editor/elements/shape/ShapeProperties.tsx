@@ -1,5 +1,5 @@
-import { Select } from "../../../../components/ui/Select";
-import type { SlideElement } from "../../../../types/presentation";
+import { Select } from "@/components/ui/Select";
+import type { SlideElement } from "@/types/presentation";
 
 interface Props {
   element: SlideElement;

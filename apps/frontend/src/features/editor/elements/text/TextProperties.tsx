@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FiAlignCenter, FiAlignJustify, FiAlignLeft, FiAlignRight, FiBold, FiItalic, FiType, FiUnderline } from "react-icons/fi";
 
-import type { SlideElement, TextElementProps } from "../../../../types/presentation";
+import type { SlideElement, TextElementProps } from "@/types/presentation";
 import { FONT_OPTIONS } from "./constants";
 import { FontPickerModal } from "./FontPickerModal";
 

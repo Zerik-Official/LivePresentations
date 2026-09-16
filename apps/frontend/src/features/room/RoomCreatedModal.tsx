@@ -2,8 +2,8 @@ import { QRCodeSVG } from "qrcode.react";
 import { FiCopy, FiExternalLink } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
-import { Modal, ModalBody, ModalFooter, ModalHeader } from "../../components/ui/Modal";
-import { TooltipSimple } from "../../components/ui/Tooltip";
+import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/Modal";
+import { TooltipSimple } from "@/components/ui/Tooltip";
 
 interface Props {
   open: boolean;

@@ -1,6 +1,6 @@
 import { FiUpload } from "react-icons/fi";
 
-import type { SlideElement } from "../../../../types/presentation";
+import type { SlideElement } from "@/types/presentation";
 import { useFileUpload } from "../shared/useFileUpload";
 
 interface Props {

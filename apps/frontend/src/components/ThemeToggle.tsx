@@ -1,7 +1,7 @@
 import { FiMoon, FiSun } from "react-icons/fi";
 
 import { TooltipSimple } from "./ui/Tooltip";
-import { useThemeStore } from "../stores/themeStore";
+import { useThemeStore } from "@/stores/themeStore";
 
 /**
  * Toggle button for light/dark theme.

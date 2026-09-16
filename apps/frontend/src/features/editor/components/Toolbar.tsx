@@ -1,7 +1,7 @@
 import { FaCode, FaFont, FaIcons, FaImage, FaShapes, FaVideo } from "react-icons/fa";
 
-import { TooltipSimple } from "../../../components/ui/Tooltip";
-import type { SlideElement } from "../../../types/presentation";
+import { TooltipSimple } from "@/components/ui/Tooltip";
+import type { SlideElement } from "@/types/presentation";
 
 interface Props {
   onAdd: (type: SlideElement["type"]) => void;

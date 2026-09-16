@@ -2,8 +2,8 @@ import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import * as FaIcons from "react-icons/fa";
 
-import { CodeBlock } from "../../components/CodeBlock";
-import type { SlideElement } from "../../types/presentation";
+import { CodeBlock } from "@/components/CodeBlock";
+import type { SlideElement } from "@/types/presentation";
 
 interface Props {
   element: SlideElement;

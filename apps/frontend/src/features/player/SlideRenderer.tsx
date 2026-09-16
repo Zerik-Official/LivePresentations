@@ -1,8 +1,8 @@
 import { AnimatePresence, motion } from "framer-motion";
 import * as FaIcons from "react-icons/fa";
 
-import { CodeBlock } from "../../components/CodeBlock";
-import type { Slide, SlideElement } from "../../types/presentation";
+import { CodeBlock } from "@/components/CodeBlock";
+import type { Slide, SlideElement } from "@/types/presentation";
 
 interface Props {
   slide: Slide | null;

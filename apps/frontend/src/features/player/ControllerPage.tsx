@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { FiChevronLeft, FiChevronRight, FiTarget } from "react-icons/fi";
 import { useParams } from "react-router-dom";
 
-import { ThemeToggle } from "../../components/ThemeToggle";
-import { getPresentation, getRoom } from "../../lib/api";
-import { parsePresentationData } from "../../types/presentation";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { getPresentation, getRoom } from "@/lib/api";
+import { parsePresentationData } from "@/types/presentation";
 import { useRoom } from "./useRoom";
 
 /**

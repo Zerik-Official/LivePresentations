@@ -1,5 +1,5 @@
-import { createDefaultElement, type PresentationData, type SlideElement } from "../../../types/presentation";
-import { uploadFile } from "../../../lib/api";
+import { createDefaultElement, type PresentationData, type SlideElement } from "@/types/presentation";
+import { uploadFile } from "@/lib/api";
 
 /**
  * Hook for handling file drops on the canvas.

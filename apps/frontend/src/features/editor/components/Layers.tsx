@@ -2,7 +2,7 @@ import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import type { Slide } from "../../../types/presentation";
+import type { Slide } from "@/types/presentation";
 
 interface Props {
   slide: Slide | null;

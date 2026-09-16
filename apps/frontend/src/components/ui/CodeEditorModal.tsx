@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { LANGUAGES, resolveLang } from "../../lib/prism";
+import { LANGUAGES, resolveLang } from "@/lib/prism";
 import { CodeEditor } from "./CodeEditor";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "./Modal";
 import { Select } from "./Select";

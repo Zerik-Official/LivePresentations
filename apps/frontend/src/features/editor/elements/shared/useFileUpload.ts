@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { uploadFile } from "../../../../lib/api";
+import { uploadFile } from "@/lib/api";
 
 /**
  * Reusable file upload logic for image and video elements.

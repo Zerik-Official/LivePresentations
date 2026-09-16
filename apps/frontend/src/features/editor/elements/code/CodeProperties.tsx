@@ -1,9 +1,9 @@
 import { useState } from "react";
 
-import { CodeEditorModal } from "../../../../components/ui/CodeEditorModal";
-import { Select } from "../../../../components/ui/Select";
-import { LANGUAGES, resolveLang } from "../../../../lib/prism";
-import type { SlideElement } from "../../../../types/presentation";
+import { CodeEditorModal } from "@/components/ui/CodeEditorModal";
+import { Select } from "@/components/ui/Select";
+import { LANGUAGES, resolveLang } from "@/lib/prism";
+import type { SlideElement } from "@/types/presentation";
 
 interface Props {
   element: SlideElement;

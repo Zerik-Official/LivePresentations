@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import { Select } from "../../../../components/ui/Select";
+import { Select } from "@/components/ui/Select";
 import { IconPickerModal } from "../../components/IconPickerModal";
-import type { SlideElement } from "../../../../types/presentation";
+import type { SlideElement } from "@/types/presentation";
 
 interface Props {
   element: SlideElement;

@@ -2,13 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { FiCopy, FiDownload, FiLogOut, FiPlus, FiUpload } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
-import { ThemeToggle } from "../components/ThemeToggle";
-import { TooltipSimple } from "../components/ui/Tooltip";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { TooltipSimple } from "@/components/ui/Tooltip";
 
-import { ConfirmDialog } from "../components/ui/ConfirmDialog";
-import { RoomCreatedModal } from "../features/room/RoomCreatedModal";
-import { createPresentation, createRoom, deletePresentation, deleteRoom, getRoom, listPresentations, listRooms, type Presentation, type Room } from "../lib/api";
-import { useAuthStore } from "../stores/authStore";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { RoomCreatedModal } from "@/features/room/RoomCreatedModal";
+import { createPresentation, createRoom, deletePresentation, deleteRoom, getRoom, listPresentations, listRooms, type Presentation, type Room } from "@/lib/api";
+import { useAuthStore } from "@/stores/authStore";
 
 /**
  * Dashboard with presentations and room controls.

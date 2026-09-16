@@ -2,8 +2,8 @@ import { useState } from "react";
 import { FiAlertCircle } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 
-import { login } from "../lib/api";
-import { useAuthStore } from "../stores/authStore";
+import { login } from "@/lib/api";
+import { useAuthStore } from "@/stores/authStore";
 
 /**
  * Login page with email and password.

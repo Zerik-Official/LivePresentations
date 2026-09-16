@@ -1,6 +1,6 @@
 import { FiTrash2 } from "react-icons/fi";
 
-import type { SlideElement } from "../../../types/presentation";
+import type { SlideElement } from "@/types/presentation";
 import { CodeProperties } from "../elements/code/CodeProperties";
 import { IconProperties } from "../elements/icon/IconProperties";
 import { ImageProperties } from "../elements/image/ImageProperties";

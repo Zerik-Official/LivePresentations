@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import * as FaIcons from "react-icons/fa";
 
-import { Modal, ModalBody, ModalHeader } from "../../../components/ui/Modal";
+import { Modal, ModalBody, ModalHeader } from "@/components/ui/Modal"
 
 const ALL_ICONS = Object.keys(FaIcons).filter((k) => k.startsWith("Fa")).slice(0, 400);
 

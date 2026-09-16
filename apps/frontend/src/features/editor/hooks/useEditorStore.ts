@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-import type { PresentationData, SlideElement } from "../../../types/presentation";
+import type { PresentationData, SlideElement } from "@/types/presentation";
 
 interface EditorState {
   data: PresentationData | null;

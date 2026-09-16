@@ -1,7 +1,7 @@
 import Editor, { type OnMount } from "@monaco-editor/react";
 import { useEffect, useState } from "react";
 
-import { useThemeStore } from "../../stores/themeStore";
+import { useThemeStore } from "@/stores/themeStore";
 
 interface Props {
   /** Code value. */

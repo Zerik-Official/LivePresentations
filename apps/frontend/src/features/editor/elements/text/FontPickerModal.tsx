@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-import { Modal, ModalBody, ModalHeader } from "../../../../components/ui/Modal";
+import { Modal, ModalBody, ModalHeader } from "@/components/ui/Modal";
 import { FONT_OPTIONS, type FontOption } from "./constants";
 
 interface Props {

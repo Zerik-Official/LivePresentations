@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useParams } from "react-router-dom";
 
-import { getPresentation, getRoom } from "../../lib/api";
-import { parsePresentationData } from "../../types/presentation";
+import { getPresentation, getRoom } from "@/lib/api";
+import { parsePresentationData } from "@/types/presentation";
 import { SlideRenderer } from "./SlideRenderer";
 import { useRoom } from "./useRoom";
 

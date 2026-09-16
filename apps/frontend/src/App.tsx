@@ -1,15 +1,15 @@
 import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
-import { TooltipProvider } from "./components/ui/Tooltip";
-import { ProtectedRoute } from "./components/ProtectedRoute";
-import { EditorPage } from "./features/editor/EditorPage";
-import { ControllerPage } from "./features/player/ControllerPage";
-import { PresenterPage } from "./features/player/PresenterPage";
-import { DashboardPage } from "./pages/DashboardPage";
-import { LoginPage } from "./pages/LoginPage";
-import { RegisterPage } from "./pages/RegisterPage";
-import { useAuthStore } from "./stores/authStore";
+import { TooltipProvider } from "@/components/ui/Tooltip";
+import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { EditorPage } from "@/features/editor/EditorPage";
+import { ControllerPage } from "@/features/player/ControllerPage";
+import { PresenterPage } from "@/features/player/PresenterPage";
+import { DashboardPage } from "@/pages/DashboardPage";
+import { LoginPage } from "@/pages/LoginPage";
+import { RegisterPage } from "@/pages/RegisterPage";
+import { useAuthStore } from "@/stores/authStore";
 
 /**
  * Root application with routing and auth hydration.

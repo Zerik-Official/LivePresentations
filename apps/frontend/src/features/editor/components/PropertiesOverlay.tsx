@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 import { FiMaximize2, FiMinimize2, FiMove } from "react-icons/fi";
 
-import type { SlideElement } from "../../../types/presentation";
+import type { SlideElement } from "@/types/presentation";
 
 import { PropertiesPanel } from "./PropertiesPanel";
 
