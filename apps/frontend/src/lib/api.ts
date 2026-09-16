@@ -165,3 +165,19 @@ export async function getRoom(code: string): Promise<Room> {
   if (!res.ok) throw new Error("Sala no encontrada");
   return res.json() as Promise<Room>;
 }
+
+/**
+ * Upload an image or video (max 100MB).
+ * @param file - File to upload
+ * @returns URL of uploaded file
+ */
+export async function uploadFile(file: File): Promise<{ url: string }> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API_BASE}/api/uploads`, { method: "POST", headers: { ...getAuthHeader() }, body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Error al subir archivo" }));
+    throw new Error(err.detail ?? "Error al subir archivo");
+  }
+  return res.json() as Promise<{ url: string }>;
+}
