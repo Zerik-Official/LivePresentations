@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import asyncio
 from contextlib import asynccontextmanager
-
+from datetime import datetime, timezone
 from pathlib import Path
 
 from fastapi import FastAPI
+from sqlalchemy import delete
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
@@ -20,9 +22,39 @@ from app.ws.router import router as ws_router
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):  # type: ignore[no-untyped-def]
-    """Initialize database on startup."""
+    """Initialize database and start periodic cleanup for expired rooms."""
     await init_db()
+
+    async def cleanup_expired_rooms() -> None:
+        """Delete expired rooms every hour and old uploads."""
+        from app.db.session import async_session_factory
+        from app.models.room import Room
+
+        while True:
+            try:
+                async with async_session_factory() as db:
+                    now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
+                    await db.execute(delete(Room).where(Room.expires_at < now_naive))
+                    await db.commit()
+                if _upload_dir.exists():
+                    cutoff = datetime.now(timezone.utc).timestamp() - 7 * 24 * 3600
+                    for f in _upload_dir.iterdir():
+                        try:
+                            if f.is_file() and f.stat().st_mtime < cutoff:
+                                f.unlink()
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+            await asyncio.sleep(3600)
+
+    task = asyncio.create_task(cleanup_expired_rooms())
     yield
+    task.cancel()
+    try:
+        await task
+    except asyncio.CancelledError:
+        pass
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
