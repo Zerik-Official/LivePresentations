@@ -1,13 +1,16 @@
 import { DndContext, type DragEndEvent } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
-import { FiArrowLeft, FiSave } from "react-icons/fi";
+import { useRef } from "react";
+import { FiArrowLeft, FiDownload, FiSave, FiUpload } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
+
+import { ThemeToggle } from "../../components/ThemeToggle";
 
 import { getPresentation, updatePresentation } from "../../lib/api";
 import { createDefaultElement, createEmptySlide, parsePresentationData, type PresentationData, type SlideElement } from "../../types/presentation";
 
 import { Layers } from "./components/Layers";
-import { PropertiesPanel } from "./components/PropertiesPanel";
+import { PropertiesOverlay } from "./components/PropertiesOverlay";
 import { SlidesList } from "./components/SlidesList";
 import { Toolbar } from "./components/Toolbar";
 import { DraggableElement } from "./DraggableElement";
@@ -23,6 +26,7 @@ export function EditorPage(): React.ReactNode {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (!id) return;
@@ -179,17 +183,72 @@ export function EditorPage(): React.ReactNode {
     setData({ ...data, slides });
   }
 
+  /**
+   * Update slide background color.
+   * @param color - CSS color
+   */
+  function handleBackgroundChange(color: string): void {
+    if (!data || !slide) return;
+    const slides = [...data.slides];
+    slides[activeSlide] = { ...slide, background: color };
+    setData({ ...data, slides });
+  }
+
+  /**
+   * Export current presentation as JSON.
+   */
+  function handleExport(): void {
+    if (!data) return;
+    const blob = new Blob([JSON.stringify({ title, data }, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${title.replace(/\s+/g, "_") || "presentacion"}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /**
+   * Import JSON to replace current presentation data.
+   * @param e - File input event
+   */
+  async function handleImport(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const text = await file.text();
+      const json = JSON.parse(text) as { title?: string; data?: unknown };
+      const parsed = parsePresentationData((json.data ?? json) as unknown);
+      setData(parsed);
+      if (json.title && typeof json.title === "string") setTitle(json.title);
+      setActiveSlide(0);
+      setSelectedId(null);
+    } catch {
+      setError("Error al importar JSON");
+    } finally {
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  }
+
   if (error && !data) return <div className="p-6 text-sm text-red-600">{error}</div>;
   if (!data) return <div className="p-6 text-sm text-zinc-500">Cargando editor...</div>;
 
   return (
-    <div className="flex h-screen flex-col bg-zinc-50">
-      <header className="flex items-center gap-3 border-b border-zinc-200 bg-white px-4 py-3">
-        <Link to="/dashboard" className="rounded-lg border border-zinc-200 p-2 hover:bg-zinc-50">
+    <div className="flex h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
+      <header className="flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3">
+        <Link to="/dashboard" className="rounded-lg border border-zinc-200 dark:border-zinc-700 p-2 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
           <FiArrowLeft />
         </Link>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" className="flex-1 rounded-lg border border-zinc-200 px-3 py-2 text-sm font-medium outline-none focus:border-zinc-900" />
-        <button type="button" onClick={() => void handleSave()} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 px-4 py-2 text-sm font-medium text-white hover:bg-zinc-800 disabled:opacity-50">
+        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium outline-none focus:border-zinc-900 dark:focus:border-zinc-400 text-zinc-900 dark:text-zinc-100" />
+        <ThemeToggle />
+        <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={(e) => void handleImport(e)} />
+        <button type="button" onClick={() => fileRef.current?.click()} className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+          <FiUpload /> Importar
+        </button>
+        <button type="button" onClick={handleExport} className="inline-flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-1.5 text-xs text-zinc-700 dark:text-zinc-300">
+          <FiDownload /> Exportar
+        </button>
+        <button type="button" onClick={() => void handleSave()} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-zinc-900 dark:bg-white px-4 py-2 text-sm font-medium text-white dark:text-zinc-900 hover:bg-zinc-800 dark:hover:bg-zinc-100 disabled:opacity-50">
           <FiSave /> {saving ? "Guardando..." : "Guardar"}
         </button>
       </header>
@@ -199,8 +258,15 @@ export function EditorPage(): React.ReactNode {
       <div className="flex flex-1 overflow-hidden">
         <SlidesList data={data} activeSlide={activeSlide} onSelect={(i) => { setActiveSlide(i); setSelectedId(null); }} onAdd={addSlide} onDelete={deleteSlide} onDuplicate={duplicateSlide} />
 
-        <main className="flex flex-1 flex-col items-center overflow-auto p-4">
+        <main className="flex flex-1 flex-col items-center overflow-auto p-4 bg-zinc-50 dark:bg-zinc-950">
           <Toolbar onAdd={addElement} disabled={!slide} />
+          {slide && (
+            <div className="mt-3 flex items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2">
+              <span className="text-xs text-zinc-600 dark:text-zinc-300">Fondo canvas</span>
+              <input type="color" value={slide.background} onChange={(e) => handleBackgroundChange(e.target.value)} className="h-7 w-12 rounded border border-zinc-200 dark:border-zinc-700" />
+              <input value={slide.background} onChange={(e) => handleBackgroundChange(e.target.value)} placeholder="#ffffff" className="w-24 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-2 py-1 text-xs text-zinc-900 dark:text-zinc-100" />
+            </div>
+          )}
 
           <DndContext onDragEnd={handleDragEnd}>
             <div style={{ width: data.width, height: data.height, background: slide?.background ?? "#ffffff" }} className="relative mt-4 origin-top scale-[0.55] overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm sm:scale-[0.75] lg:scale-100">
@@ -215,15 +281,14 @@ export function EditorPage(): React.ReactNode {
             </div>
           </DndContext>
 
-          <div className="mt-4 w-full max-w-160 space-y-3">
-            <div className="rounded-xl border border-zinc-200 bg-white p-4">
-              <PropertiesPanel selected={selected} onPatch={patchSelected} onDelete={deleteSelected} />
-            </div>
+          <PropertiesOverlay selected={selected} onPatch={patchSelected} onDelete={deleteSelected} />
+
+          <div className="mt-4 w-full max-w-160">
             <Layers slide={slide} selectedId={selectedId} onSelect={setSelectedId} onReorder={handleReorder} />
           </div>
         </main>
 
-        <aside className="hidden w-64 border-l border-zinc-200 bg-white p-4 lg:block">
+        <aside className="hidden w-64 border-l border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-4 lg:block">
           <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500">Consejos</h3>
           <ul className="mt-2 list-disc space-y-1 pl-4 text-xs text-zinc-600">
             <li>Arrastra desde el centro para mover.</li>
