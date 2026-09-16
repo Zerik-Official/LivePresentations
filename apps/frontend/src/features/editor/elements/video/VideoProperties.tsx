@@ -16,7 +16,7 @@ interface Props {
  */
 export function VideoProperties({ element, onPatch }: Props): React.ReactNode {
   const { uploading, error, upload } = useFileUpload();
-  const props = element.props as { src?: string; poster?: string; autoplay?: boolean; loop?: boolean; muted?: boolean };
+  const props = element.props as { src?: string; poster?: string; autoplay?: boolean; loop?: boolean; muted?: boolean; controls?: boolean };
 
   const youtubeId = parseYouTubeId(props.src ?? "");
   const isYouTube = isYouTubeUrl(props.src ?? "");
@@ -54,7 +54,7 @@ export function VideoProperties({ element, onPatch }: Props): React.ReactNode {
           <input value={props.poster ?? ""} onChange={(e) => onPatch({ propsPatch: { poster: e.target.value } })} placeholder="https://..." className="mt-1 w-full rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
         </label>
       )}
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-2 gap-2">
         <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300">
           <input type="checkbox" checked={Boolean(props.autoplay)} onChange={(e) => onPatch({ propsPatch: { autoplay: e.target.checked } })} className="cursor-pointer accent-zinc-900 dark:accent-white" /> Autoplay
         </label>
@@ -62,7 +62,10 @@ export function VideoProperties({ element, onPatch }: Props): React.ReactNode {
           <input type="checkbox" checked={Boolean(props.loop)} onChange={(e) => onPatch({ propsPatch: { loop: e.target.checked } })} className="cursor-pointer accent-zinc-900 dark:accent-white" /> Loop
         </label>
         <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300">
-          <input type="checkbox" checked={props.muted ?? true} onChange={(e) => onPatch({ propsPatch: { muted: e.target.checked } })} className="cursor-pointer accent-zinc-900 dark:accent-white" /> Muted
+          <input type="checkbox" checked={props.muted ?? true} onChange={(e) => onPatch({ propsPatch: { muted: e.target.checked } })} className="cursor-pointer accent-zinc-900 dark:accent-white" /> Silenciado
+        </label>
+        <label className="flex cursor-pointer items-center gap-1.5 text-xs font-medium text-zinc-700 dark:text-zinc-300">
+          <input type="checkbox" checked={props.controls ?? true} onChange={(e) => onPatch({ propsPatch: { controls: e.target.checked } })} className="cursor-pointer accent-zinc-900 dark:accent-white" /> Controles
         </label>
       </div>
     </div>
