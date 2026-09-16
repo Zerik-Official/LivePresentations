@@ -89,7 +89,7 @@ export function createDefaultElement(type: SlideElement["type"], id: string): Sl
     case "image":
       return { ...base, w: 400, h: 250, props: { src: "https://picsum.photos/400/250", alt: "Imagen" } };
     case "shape":
-      return { ...base, w: 200, h: 120, props: { variant: "rect", fill: "#e4e4e7", radius: 12 } };
+      return { ...base, w: 200, h: 120, props: { variant: "rect", fill: "#e4e4e7", radius: 12, borderColor: "#18181b", borderWidth: 0 } };
     case "video":
       return { ...base, w: 480, h: 270, props: { src: "" } };
     case "code":
