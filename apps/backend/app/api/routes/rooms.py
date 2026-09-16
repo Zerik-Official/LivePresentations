@@ -94,3 +94,16 @@ async def list_rooms(current_user: User = Depends(get_current_user), db: AsyncSe
         return exp > now
     active = [r for r in rooms if _is_active(r)]
     return [RoomRead(code=r.code, presentation_id=r.presentation_id, current_slide=r.current_slide, highlighted_id=r.highlighted_id) for r in active]
+
+
+@router.delete("/{code}", status_code=status.HTTP_200_OK)
+async def delete_room(code: str, current_user: User = Depends(get_current_user), db: AsyncSession = Depends(get_db)) -> dict[str, str]:
+    """Delete a room if owned."""
+    result = await db.execute(select(Room).where(Room.code == code.upper()))
+    room = result.scalar_one_or_none()
+    if room is None or room.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Sala no encontrada")
+    room_manager.delete(room.code)
+    await db.delete(room)
+    await db.commit()
+    return {"status": "deleted"}
