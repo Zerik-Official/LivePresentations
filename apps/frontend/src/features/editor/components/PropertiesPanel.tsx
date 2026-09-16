@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { FiTrash2, FiUpload } from "react-icons/fi";
 
+import { CodeEditorModal } from "../../../components/ui/CodeEditorModal";
 import { Select } from "../../../components/ui/Select";
 import { uploadFile } from "../../../lib/api";
 import type { SlideElement } from "../../../types/presentation";
@@ -20,6 +21,7 @@ interface Props {
  */
 export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.ReactNode {
   const [iconOpen, setIconOpen] = useState(false);
+  const [codeOpen, setCodeOpen] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -137,6 +139,20 @@ export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.R
             />
           </label>
           {uploadError && <p className="text-xs text-red-600">{uploadError}</p>}
+          <label className="block text-xs">
+            Poster (URL imagen) <input value={(selected.props as { poster?: string }).poster ?? ""} onChange={(e) => onPatch({ propsPatch: { poster: e.target.value } })} placeholder="https://..." className="mt-1 w-full rounded border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-1" />
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            <label className="flex items-center gap-1 text-xs">
+              <input type="checkbox" checked={Boolean((selected.props as { autoplay?: boolean }).autoplay)} onChange={(e) => onPatch({ propsPatch: { autoplay: e.target.checked } })} /> Autoplay
+            </label>
+            <label className="flex items-center gap-1 text-xs">
+              <input type="checkbox" checked={Boolean((selected.props as { loop?: boolean }).loop)} onChange={(e) => onPatch({ propsPatch: { loop: e.target.checked } })} /> Loop
+            </label>
+            <label className="flex items-center gap-1 text-xs">
+              <input type="checkbox" checked={(selected.props as { muted?: boolean }).muted ?? true} onChange={(e) => onPatch({ propsPatch: { muted: e.target.checked } })} /> Muted
+            </label>
+          </div>
         </div>
       )}
 
@@ -166,23 +182,49 @@ export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.R
         </div>
       )}
 
+      {selected.type === "shape" && (
+        <div className="space-y-2">
+          <label className="block text-xs">
+            Variante <Select value={(selected.props as { variant?: string }).variant ?? "rect"} options={[{ value: "rect", label: "Rectángulo" },{ value: "circle", label: "Círculo" }]} onChange={(v) => onPatch({ propsPatch: { variant: v } })} placeholder="Variante" />
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-xs">
+              Relleno <input type="color" value={(selected.props as { fill?: string }).fill ?? "#e4e4e7"} onChange={(e) => onPatch({ propsPatch: { fill: e.target.value } })} className="mt-1 h-8 w-full rounded border" />
+            </label>
+            <label className="text-xs">
+              Radio <input type="number" value={(selected.props as { radius?: number }).radius ?? 12} onChange={(e) => onPatch({ propsPatch: { radius: Number(e.target.value) } })} className="mt-1 w-full rounded border px-2 py-1" />
+            </label>
+            <label className="text-xs">
+              Borde <input type="number" min={0} max={12} value={(selected.props as { borderWidth?: number }).borderWidth ?? 0} onChange={(e) => onPatch({ propsPatch: { borderWidth: Number(e.target.value) } })} className="mt-1 w-full rounded border px-2 py-1" />
+            </label>
+            <label className="text-xs">
+              Color borde <input type="color" value={(selected.props as { borderColor?: string }).borderColor ?? "#18181b"} onChange={(e) => onPatch({ propsPatch: { borderColor: e.target.value } })} className="mt-1 h-8 w-full rounded border" />
+            </label>
+          </div>
+        </div>
+      )}
+
       {selected.type === "code" && (
         <div className="space-y-2">
           <label className="block text-xs">
             Lenguaje
             <Select value={resolveLang((selected.props as { language?: string }).language)} options={LANGUAGES} onChange={(v) => onPatch({ propsPatch: { language: v } })} placeholder="Lenguaje" />
           </label>
-          <label className="flex items-center gap-2 text-xs">
-            <input
-              type="checkbox"
-              checked={Boolean((selected.props as { lineNumbers?: boolean }).lineNumbers)}
-              onChange={(e) => onPatch({ propsPatch: { lineNumbers: e.target.checked } })}
-            />
-            Números de línea
-          </label>
-          <label className="block text-xs">
-            Código <textarea value={(selected.props as { code?: string }).code ?? ""} onChange={(e) => onPatch({ propsPatch: { code: e.target.value } })} rows={5} className="mt-1 w-full rounded border px-2 py-1 font-mono text-xs" />
-          </label>
+          <div className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 p-2">
+            <pre className="max-h-28 overflow-auto whitespace-pre-wrap wrap-break-word font-mono text-xs leading-relaxed text-zinc-800 dark:text-zinc-100">
+              {((selected.props as { code?: string }).code ?? "") || "Sin código"}
+            </pre>
+          </div>
+          <button type="button" onClick={() => setCodeOpen(true)} className="w-full rounded-lg bg-zinc-900 dark:bg-white px-3 py-2 text-xs font-medium text-white dark:text-zinc-900">
+            Abrir editor grande
+          </button>
+          <CodeEditorModal
+            open={codeOpen}
+            value={(selected.props as { code?: string }).code ?? ""}
+            language={resolveLang((selected.props as { language?: string }).language)}
+            onClose={() => setCodeOpen(false)}
+            onSave={(val, lang) => onPatch({ propsPatch: { code: val, language: lang } })}
+          />
         </div>
       )}
 
