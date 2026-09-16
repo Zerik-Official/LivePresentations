@@ -5,6 +5,8 @@ import "prismjs/components/prism-typescript";
 import "prismjs/components/prism-python";
 import "prismjs/components/prism-css";
 import "prismjs/components/prism-json";
+import "prismjs/components/prism-bash";
+import "prismjs/components/prism-markup";
 import "prismjs/themes/prism-tomorrow.css";
 import * as FaIcons from "react-icons/fa";
 
@@ -85,10 +87,15 @@ function ElementView({
         return <div style={{ background: p.fill ?? "#e4e4e7", borderRadius: p.radius ?? 12 }} className="h-full w-full" />;
       }
       case "icon": {
-        const p = element.props as { name?: string; color?: string; size?: number };
+        const p = element.props as { name?: string; color?: string; size?: number; bg?: string; bgColor?: string; rounded?: number };
         const IconComp = (FaIcons as unknown as Record<string, React.ComponentType<{ size?: number; color?: string }>>)[p.name ?? "FaStar"] ?? FaIcons.FaStar;
+        const bg = p.bg ?? "transparent";
+        const showBg = bg !== "transparent";
         return (
-          <div className="flex h-full w-full items-center justify-center">
+          <div
+            style={{ background: showBg ? (p.bgColor ?? "#ffffff") : "transparent", borderRadius: p.rounded ?? 12 }}
+            className="flex h-full w-full items-center justify-center"
+          >
             <IconComp size={p.size ?? 48} color={p.color ?? "#18181b"} />
           </div>
         );
@@ -100,11 +107,13 @@ function ElementView({
       }
       case "code": {
         const p = element.props as { code?: string; language?: string };
-        const lang = (p.language ?? "javascript").toLowerCase();
+        const raw = (p.language ?? "javascript").toLowerCase().trim();
+        const alias: Record<string, string> = { js: "javascript", py: "python", ts: "typescript", sh: "bash", shell: "bash", html: "markup" };
+        const lang = alias[raw] ?? raw;
         const grammar = (Prism.languages[lang] ?? Prism.languages.javascript) as Prism.Grammar;
         const html = Prism.highlight(p.code ?? "", grammar, lang);
         return (
-          <pre className="h-full w-full overflow-auto rounded-md bg-zinc-900 p-3 text-xs leading-relaxed">
+          <pre className="h-full w-full overflow-auto rounded-md bg-[#2d2d2d] p-3 text-xs leading-relaxed">
             <code className={`language-${lang}`} dangerouslySetInnerHTML={{ __html: html }} />
           </pre>
         );
