@@ -13,7 +13,7 @@ interface Props {
  * @param onAdd - Handler for new element
  */
 export function Toolbar({ onAdd, disabled }: Props): React.ReactNode {
-  const btn = "inline-flex items-center gap-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-2 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-40";
+  const btn = "inline-flex cursor-pointer items-center gap-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-2 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed";
   return (
     <div className="flex flex-wrap gap-2">
       <TooltipSimple content="Añadir texto" side="top">
