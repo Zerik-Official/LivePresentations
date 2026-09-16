@@ -1,6 +1,10 @@
-import { FiPlus, FiTrash2 } from "react-icons/fi";
+import { DndContext, closestCenter, type DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import { FiPlus } from "react-icons/fi";
 
-import type { PresentationData } from "../../../types/presentation";
+import type { PresentationData } from "@/types/presentation";
+import { SlideCard } from "./SlideCard";
 
 interface Props {
   data: PresentationData;
@@ -9,43 +13,79 @@ interface Props {
   onAdd: () => void;
   onDelete: (idx: number) => void;
   onDuplicate: (idx: number) => void;
+  onReorder: (activeId: string, overId: string) => void;
 }
 
 /**
- * List of slides with actions.
+ * Single sortable wrapper for a slide card.
+ * @param id - Slide id
+ * @param index - Position
+ */
+function SortableSlide({ id, index, data, activeSlide, onSelect, onDelete, onDuplicate }: { id: string; index: number; data: PresentationData; activeSlide: number; onSelect: (idx: number) => void; onDelete: (idx: number) => void; onDuplicate: (idx: number) => void }): React.ReactNode {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.6 : 1,
+  };
+  const slide = data.slides[index];
+  if (!slide) return null;
+  return (
+    <div ref={setNodeRef} style={style}>
+      <SlideCard
+        slide={slide}
+        index={index}
+        active={index === activeSlide}
+        onSelect={() => onSelect(index)}
+        onDuplicate={() => onDuplicate(index)}
+        onDelete={() => onDelete(index)}
+        dragListeners={listeners as unknown as Record<string, unknown>}
+        dragAttributes={attributes as unknown as Record<string, unknown>}
+      />
+    </div>
+  );
+}
+
+/**
+ * Sidebar list of slide thumbnails supporting drag reorder.
  * @param data - Presentation data
  * @param activeSlide - Active index
+ * @param onSelect - Select handler
+ * @param onAdd - Add handler
+ * @param onDelete - Delete handler
+ * @param onDuplicate - Duplicate handler
+ * @param onReorder - Reorder handler
  */
-export function SlidesList({ data, activeSlide, onSelect, onAdd, onDelete, onDuplicate }: Props): React.ReactNode {
+export function SlidesList({ data, activeSlide, onSelect, onAdd, onDelete, onDuplicate, onReorder }: Props): React.ReactNode {
+  /**
+   * Handle drag end to reorder slides.
+   * @param event - Drag end event
+   */
+  function handleDragEnd(event: DragEndEvent): void {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    onReorder(String(active.id), String(over.id));
+  }
+
   return (
-    <aside className="w-56 border-r border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3">
-      <div className="mb-3 flex items-center justify-between">
+    <aside className="flex w-64 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+      <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-3 py-3">
         <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Diapositivas</h3>
-        <button type="button" onClick={onAdd} className="rounded-md border border-zinc-200 dark:border-zinc-700 p-1.5 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
-          <FiPlus />
+        <button type="button" onClick={onAdd} className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700">
+          <FiPlus size={12} />
         </button>
       </div>
-      <div className="space-y-2">
-        {data.slides.map((s, idx) => (
-          <div
-            key={s.id}
-            className={`rounded-lg border p-2 text-xs ${idx === activeSlide ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"}`}
-          >
-            <button type="button" onClick={() => onSelect(idx)} className="w-full text-left">
-              <div className="font-medium">Diapositiva {idx + 1}</div>
-              <div className="truncate text-[10px] opacity-70">{s.elements.length} elementos</div>
-            </button>
-            <div className="mt-1 flex gap-1">
-              <button type="button" onClick={() => onDuplicate(idx)} className="rounded border border-zinc-200 dark:border-zinc-600 bg-zinc-100 dark:bg-zinc-700 px-1.5 py-0.5 text-[10px] text-zinc-700 dark:text-zinc-200 hover:bg-white dark:hover:bg-zinc-600">
-                Duplicar
-              </button>
-              <button type="button" onClick={() => onDelete(idx)} className="rounded border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-1.5 py-0.5 text-[10px] text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900">
-                <FiTrash2 className="inline" />
-              </button>
+      <div className="flex-1 overflow-y-auto p-3">
+        <DndContext collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+          <SortableContext items={data.slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            <div className="flex flex-col gap-3">
+              {data.slides.map((s, idx) => (
+                <SortableSlide key={s.id} id={s.id} index={idx} data={data} activeSlide={activeSlide} onSelect={onSelect} onDelete={onDelete} onDuplicate={onDuplicate} />
+              ))}
+              {data.slides.length === 0 && <p className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 p-6 text-center text-xs text-zinc-500 dark:text-zinc-400">Sin diapositivas. Crea una.</p>}
             </div>
-          </div>
-        ))}
-        {data.slides.length === 0 && <p className="text-xs text-zinc-500">Sin diapositivas. Crea una.</p>}
+          </SortableContext>
+        </DndContext>
       </div>
     </aside>
   );
