@@ -68,7 +68,7 @@ export function FontPickerModal({ open, onClose, value, onSelect }: Props): Reac
                         onClose();
                       }}
                       style={{ fontFamily: `"${font.value}", sans-serif` }}
-                      className={`flex flex-col items-start gap-1 rounded-xl border px-4 py-3 text-left transition-colors ${active ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}
+                      className={`flex cursor-pointer flex-col items-start gap-1 rounded-xl border px-4 py-3 text-left transition-colors ${active ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-800 dark:text-zinc-100 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}
                     >
                       <span className="text-sm font-semibold leading-none">{font.label}</span>
                       <span className={`text-xs leading-tight ${active ? "text-white/80 dark:text-zinc-700" : "text-zinc-500 dark:text-zinc-400"}`} style={{ fontFamily: `"${font.value}", sans-serif` }}>
