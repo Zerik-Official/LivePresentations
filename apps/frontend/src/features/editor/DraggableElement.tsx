@@ -81,9 +81,35 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
   const content = (() => {
     switch (element.type) {
       case "text": {
-        const p = element.props as { text?: string; fontSize?: number; color?: string; bold?: boolean };
+        const p = element.props as {
+          text?: string;
+          fontSize?: number;
+          color?: string;
+          bold?: boolean;
+          italic?: boolean;
+          underline?: boolean;
+          align?: string;
+          fontFamily?: string;
+          lineHeight?: number;
+          letterSpacing?: number;
+          opacity?: number;
+        };
         return (
-          <div style={{ fontSize: p.fontSize ?? 24, color: p.color ?? "#18181b", fontWeight: p.bold ? 700 : 400 }} className="h-full w-full overflow-hidden p-2 text-sm">
+          <div
+            style={{
+              fontSize: p.fontSize ?? 24,
+              color: p.color ?? "#18181b",
+              fontWeight: p.bold ? 700 : 400,
+              fontStyle: p.italic ? "italic" : "normal",
+              textDecoration: p.underline ? "underline" : "none",
+              textAlign: (p.align as React.CSSProperties["textAlign"]) ?? "left",
+              fontFamily: p.fontFamily ? `"${p.fontFamily}", sans-serif` : undefined,
+              lineHeight: p.lineHeight ?? 1.2,
+              letterSpacing: p.letterSpacing ? `${p.letterSpacing}px` : undefined,
+              opacity: p.opacity ?? 1,
+            }}
+            className="h-full w-full overflow-hidden p-2 text-sm"
+          >
             {p.text ?? ""}
           </div>
         );
