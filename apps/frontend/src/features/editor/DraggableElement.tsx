@@ -4,6 +4,7 @@ import * as FaIcons from "react-icons/fa";
 
 import { CodeBlock } from "@/components/CodeBlock";
 import type { SlideElement } from "@/types/presentation";
+import { SecretText } from "./elements/text/SecretText";
 import { isYouTubeUrl, parseYouTubeId } from "./elements/video/youtube";
 
 interface Props {
@@ -124,13 +125,16 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
             }}
             className="h-full w-full overflow-hidden text-sm"
           >
-            {p.text ?? ""}
+            <SecretText text={p.text ?? ""} />
           </div>
         );
       }
       case "image": {
-        const p = element.props as { src?: string };
-        return <img src={p.src ?? ""} alt="" className="h-full w-full object-cover rounded-md" draggable={false} />;
+        const p = element.props as { src?: string; fit?: string };
+        const fit = p.fit ?? "cover";
+        const fitClass = fit === "contain" ? "object-contain" : fit === "fill" ? "object-fill" : fit === "none" ? "object-none" : "object-cover";
+        const bgClass = fit === "contain" ? "bg-zinc-100 dark:bg-zinc-800" : "";
+        return <img src={p.src ?? ""} alt="" className={`h-full w-full rounded-md ${fitClass} ${bgClass}`} draggable={false} />;
       }
       case "shape": {
         const p = element.props as { fill?: string; radius?: number; borderColor?: string; borderWidth?: number; variant?: string };
