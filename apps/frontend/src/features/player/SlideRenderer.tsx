@@ -185,6 +185,24 @@ function ElementView({
         const p = element.props as { code?: string; language?: string; lineNumbers?: boolean };
         return <CodeBlock code={p.code} language={p.language} lineNumbers={p.lineNumbers ?? false} className="text-xs" showBadge={false} />;
       }
+      case "specials": {
+        const p = element.props as { text?: string; icon?: string; iconColor?: string; iconBgColor?: string; backgroundColor?: string; textColor?: string };
+        const IconComp = (FaIcons as unknown as Record<string, React.ComponentType<{ size?: number; color?: string }>>)[p.icon ?? "FaStar"] ?? FaIcons.FaStar;
+        const iconSize = fullscreen && scale ? Math.round(22 * scale) : 22;
+        return (
+          <div
+            style={{ backgroundColor: p.backgroundColor ?? "#fffbeb", borderColor: "#fcd34d" }}
+            className="flex h-full w-full items-center justify-between gap-3 rounded-md border px-3"
+          >
+            <span className="truncate font-medium" style={{ fontSize: fullscreen && scale ? `${14 * scale}px` : "14px", color: p.textColor ?? "#18181b" }}>
+              {p.text ?? "Respuesta especial"}
+            </span>
+            <span style={{ backgroundColor: p.iconBgColor ?? "#ffffff" }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700">
+              <IconComp size={iconSize} color={p.iconColor ?? "#f59e0b"} />
+            </span>
+          </div>
+        );
+      }
       default:
         return null;
     }
