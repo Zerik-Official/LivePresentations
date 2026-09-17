@@ -48,10 +48,23 @@ export function ShapeProperties({ element, onPatch }: Props): React.ReactNode {
         <Select value={variant} options={options} onChange={(v) => onPatch({ propsPatch: { variant: v } })} placeholder="Variante" />
       </label>
       <div className="grid grid-cols-2 gap-2">
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
-          Relleno
-          <input type="color" value={props.fill ?? "#e4e4e7"} onChange={(e) => onPatch({ propsPatch: { fill: e.target.value } })} className="h-9 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-1" />
-        </label>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Relleno</span>
+          <div className="flex gap-1">
+            <input type="color" value={props.fill ?? "#e4e4e7"} onChange={(e) => onPatch({ propsPatch: { fill: e.target.value } })} className="h-8 w-8 shrink-0 cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-1" />
+            <input
+              value={props.fill ?? "#e4e4e7"}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                const hex = v.startsWith("#") ? v : `#${v}`;
+                if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex)) onPatch({ propsPatch: { fill: hex } });
+                else if (v === "" || v === "#") onPatch({ propsPatch: { fill: v } });
+              }}
+              placeholder="#e4e4e7"
+              className="min-w-0 flex-1 rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-1.5 text-xs outline-none focus:border-zinc-900 dark:focus:border-zinc-400"
+            />
+          </div>
+        </div>
         <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
           Radio
           <input type="number" value={props.radius ?? 12} onChange={(e) => onPatch({ propsPatch: { radius: Number(e.target.value) } })} className="rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
@@ -60,10 +73,23 @@ export function ShapeProperties({ element, onPatch }: Props): React.ReactNode {
           Borde
           <input type="number" min={0} max={12} value={props.borderWidth ?? 0} onChange={(e) => onPatch({ propsPatch: { borderWidth: Number(e.target.value) } })} className="rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
         </label>
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
-          Color borde
-          <input type="color" value={props.borderColor ?? "#18181b"} onChange={(e) => onPatch({ propsPatch: { borderColor: e.target.value } })} className="h-9 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-1" />
-        </label>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Color borde</span>
+          <div className="flex gap-1">
+            <input type="color" value={props.borderColor ?? "#18181b"} onChange={(e) => onPatch({ propsPatch: { borderColor: e.target.value } })} className="h-8 w-8 shrink-0 cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-1" />
+            <input
+              value={props.borderColor ?? "#18181b"}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                const hex = v.startsWith("#") ? v : `#${v}`;
+                if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex)) onPatch({ propsPatch: { borderColor: hex } });
+                else if (v === "" || v === "#") onPatch({ propsPatch: { borderColor: v } });
+              }}
+              placeholder="#18181b"
+              className="min-w-0 flex-1 rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-1.5 text-xs outline-none focus:border-zinc-900 dark:focus:border-zinc-400"
+            />
+          </div>
+        </div>
       </div>
     </div>
   );
