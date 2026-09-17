@@ -3,7 +3,100 @@ import * as FaIcons from "react-icons/fa";
 
 import { Modal, ModalBody, ModalHeader } from "@/components/ui/Modal"
 
-const ALL_ICONS = Object.keys(FaIcons).filter((k) => k.startsWith("Fa")).slice(0, 400);
+const ALL_ICONS = Object.keys(FaIcons).filter((k) => k.startsWith("Fa"));
+
+const COMMON_ICONS = [
+  "FaStar",
+  "FaRegStar",
+  "FaHeart",
+  "FaRegHeart",
+  "FaBell",
+  "FaRegBell",
+  "FaBookmark",
+  "FaRegBookmark",
+  "FaFlag",
+  "FaExclamation",
+  "FaExclamationCircle",
+  "FaExclamationTriangle",
+  "FaInfo",
+  "FaInfoCircle",
+  "FaQuestion",
+  "FaQuestionCircle",
+  "FaCheck",
+  "FaCheckCircle",
+  "FaCheckSquare",
+  "FaTimes",
+  "FaTimesCircle",
+  "FaPlus",
+  "FaPlusCircle",
+  "FaMinus",
+  "FaMinusCircle",
+  "FaArrowUp",
+  "FaArrowDown",
+  "FaArrowLeft",
+  "FaArrowRight",
+  "FaArrowCircleUp",
+  "FaArrowCircleDown",
+  "FaThumbsUp",
+  "FaRegThumbsUp",
+  "FaThumbsDown",
+  "FaRegThumbsDown",
+  "FaSmile",
+  "FaRegSmile",
+  "FaFrown",
+  "FaMeh",
+  "FaEye",
+  "FaEyeSlash",
+  "FaLock",
+  "FaUnlock",
+  "FaKey",
+  "FaSearch",
+  "FaCog",
+  "FaWrench",
+  "FaTools",
+  "FaTrash",
+  "FaEdit",
+  "FaPen",
+  "FaSave",
+  "FaDownload",
+  "FaUpload",
+  "FaLink",
+  "FaUnlink",
+  "FaHome",
+  "FaUser",
+  "FaUsers",
+  "FaGraduationCap",
+  "FaTrophy",
+  "FaGift",
+  "FaFire",
+  "FaBolt",
+  "FaCloud",
+  "FaSun",
+  "FaMoon",
+  "FaLightbulb",
+  "FaRegLightbulb",
+  "FaBook",
+  "FaCalendar",
+  "FaClock",
+  "FaRegClock",
+  "FaComment",
+  "FaRegComment",
+  "FaEnvelope",
+  "FaRegEnvelope",
+  "FaPhone",
+  "FaMapMarkerAlt",
+  "FaRocket",
+  "FaShieldAlt",
+  "FaMedal",
+  "FaBullhorn",
+  "FaChartBar",
+  "FaChartLine",
+  "FaHandPaper",
+  "FaRegHandPaper",
+  "FaHandPointUp",
+  "FaSignOutAlt",
+  "FaSignInAlt",
+].filter((n) => ALL_ICONS.includes(n));
 
 interface Props {
   open: boolean;
@@ -22,8 +115,8 @@ export function IconPickerModal({ open, onClose, onSelect }: Props): React.React
 
   const filtered = useMemo(() => {
     const q = query.toLowerCase().replace(/^fa/, "");
-    if (!q) return ALL_ICONS.slice(0, 60);
-    return ALL_ICONS.filter((n) => n.toLowerCase().includes(q)).slice(0, 60);
+    if (!q) return COMMON_ICONS.length > 0 ? COMMON_ICONS : ALL_ICONS.slice(0, 80);
+    return ALL_ICONS.filter((n) => n.toLowerCase().includes(q)).slice(0, 80);
   }, [query]);
 
   return (
