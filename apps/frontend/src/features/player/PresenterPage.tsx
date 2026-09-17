@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import { getPresentation, getRoom } from "@/lib/api";
 import { parsePresentationData } from "@/types/presentation";
 import { AntiSpoilerOverlay } from "./elements/AntiSpoilerOverlay";
+import { SpecialsPresenter } from "./elements/specials/SpecialsPresenter";
 import { SlideRenderer } from "./SlideRenderer";
 import { useRoom } from "./useRoom";
 
@@ -60,6 +61,8 @@ export function PresenterPage(): React.ReactNode {
   if (!data) return <div className="p-6 text-sm text-zinc-500">Cargando presentación...</div>;
 
   const slide = data.slides[room.currentSlide] ?? null;
+  const specialsElement = slide?.elements.find((e) => e.type === "specials") ?? null;
+  const specialsState = specialsElement ? (room.specialsState[specialsElement.id] as Record<string, unknown> | undefined) : undefined;
 
   return (
     <div className={isFullscreen ? "flex min-h-screen flex-col bg-zinc-950 text-white" : "flex min-h-screen flex-col bg-zinc-950 text-white"}>
@@ -85,6 +88,7 @@ export function PresenterPage(): React.ReactNode {
             fullscreen={isFullscreen}
             showControls={showControls}
           />
+          {specialsElement && specialsState && <SpecialsPresenter element={specialsElement} state={specialsState} variables={data.variables} />}
           {showIntro && <AntiSpoilerOverlay active={showIntro} countdown={room.countdown} />}
           {showControls && !isFullscreen && (
             <div className="mt-4 flex items-center gap-3">
