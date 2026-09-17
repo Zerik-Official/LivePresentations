@@ -1,5 +1,5 @@
 import { DndContext } from "@dnd-kit/core";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FiArrowLeft, FiDownload, FiSave, FiUpload } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
 
@@ -8,6 +8,8 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Select } from "@/components/ui/Select";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { ExportPresentationModal } from "@/components/ExportPresentationModal";
+import { ImportPresentationModal } from "@/components/ImportPresentationModal";
 import { getPresentation, updatePresentation } from "@/lib/api";
 import { parsePresentationData, type PresentationData, type Slide } from "@/types/presentation";
 import { DraggableElement } from "./DraggableElement";
@@ -31,12 +33,17 @@ export function EditorPage(): React.ReactNode {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement | null>(null);
   const [confirmSlideIdx, setConfirmSlideIdx] = useState<number | null>(null);
   const [confirmElementOpen, setConfirmElementOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   const slide = useMemo(() => (data ? (data.slides[activeSlide] ?? null) : null), [data, activeSlide]);
   const selected = useMemo(() => slide?.elements.find((e) => e.id === selectedId) ?? null, [slide, selectedId]);
+  const exportPres = useMemo(() => {
+    if (!id || !data) return null;
+    return { id, title, data: data as unknown as Record<string, unknown>, owner_id: "", created_at: "", updated_at: "" } as unknown as import("@/lib/api").Presentation;
+  }, [id, title, data]);
 
   const { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition, reorderSlides } = useSlides(data, setData, activeSlide, setActiveSlide, setSelectedId);
   const { addElement, patchSelected, deleteSelected, handleDragEnd, handleResize, handleReorder, handleSortLayer } = useElements(data, setData, activeSlide, selectedId, setSelectedId);
@@ -70,41 +77,7 @@ export function EditorPage(): React.ReactNode {
     }
   }
 
-  /**
-   * Export current presentation as JSON.
-   */
-  function handleExport(): void {
-    if (!data) return;
-    const blob = new Blob([JSON.stringify({ title, data }, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${title.replace(/\s+/g, "_") || "presentacion"}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
-  /**
-   * Import JSON to replace current presentation data.
-   * @param e - File input event
-   */
-  async function handleImport(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const json = JSON.parse(text) as { title?: string; data?: unknown };
-      const parsed = parsePresentationData((json.data ?? json) as unknown);
-      setData(parsed);
-      if (json.title && typeof json.title === "string") setTitle(json.title);
-      setActiveSlide(0);
-      setSelectedId(null);
-    } catch {
-      setError("Error al importar JSON");
-    } finally {
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  }
 
   if (error && !data) return <div className="p-6 text-sm text-red-600 dark:text-red-400">{error}</div>;
   if (!data) return <div className="p-6 text-sm text-zinc-500 dark:text-zinc-400">Cargando editor...</div>;
@@ -119,14 +92,13 @@ export function EditorPage(): React.ReactNode {
         </TooltipSimple>
         <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Título" className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-sm font-medium text-zinc-900 dark:text-zinc-100 outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
         <ThemeToggle />
-        <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={(e) => void handleImport(e)} />
-        <TooltipSimple content="Importar JSON" side="bottom">
-          <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} className="cursor-pointer">
+        <TooltipSimple content="Importar presentación" side="bottom">
+          <Button variant="secondary" size="sm" onClick={() => setImportOpen(true)} className="cursor-pointer">
             <FiUpload /> Importar
           </Button>
         </TooltipSimple>
-        <TooltipSimple content="Exportar JSON" side="bottom">
-          <Button variant="secondary" size="sm" onClick={handleExport} className="cursor-pointer">
+        <TooltipSimple content="Exportar presentación" side="bottom">
+          <Button variant="secondary" size="sm" onClick={() => setExportOpen(true)} className="cursor-pointer">
             <FiDownload /> Exportar
           </Button>
         </TooltipSimple>
@@ -213,6 +185,17 @@ export function EditorPage(): React.ReactNode {
         onConfirm={() => {
           deleteSelected();
           setConfirmElementOpen(false);
+        }}
+      />
+      <ExportPresentationModal open={exportOpen} onClose={() => setExportOpen(false)} presentation={exportPres} />
+      <ImportPresentationModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={(pres) => {
+          setTitle(pres.title);
+          setData(parsePresentationData(pres.data));
+          setActiveSlide(0);
+          setSelectedId(null);
         }}
       />
     </div>
