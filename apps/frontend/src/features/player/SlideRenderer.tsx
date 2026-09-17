@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import * as FaIcons from "react-icons/fa";
+import { TbNumber, TbNumber0, TbNumber1, TbNumber2, TbNumber3, TbNumber4, TbNumber5, TbNumber6, TbNumber7, TbNumber8, TbNumber9, TbNumbers } from "react-icons/tb";
 
 import { CodeBlock } from "@/components/CodeBlock";
 import { buildYouTubeEmbedUrl, isYouTubeUrl, parseYouTubeId } from "@/features/editor/elements/video/youtube";
@@ -150,7 +151,22 @@ function ElementView({
       }
       case "icon": {
         const p = element.props as { name?: string; color?: string; size?: number; bg?: string; bgColor?: string; rounded?: number };
-        const IconComp = (FaIcons as unknown as Record<string, React.ComponentType<{ size?: number; color?: string }>>)[p.name ?? "FaStar"] ?? FaIcons.FaStar;
+        const TbMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+          TbNumber0,
+          TbNumber1,
+          TbNumber2,
+          TbNumber3,
+          TbNumber4,
+          TbNumber5,
+          TbNumber6,
+          TbNumber7,
+          TbNumber8,
+          TbNumber9,
+          TbNumbers,
+          TbNumber,
+        };
+        const iconMap = { ...(FaIcons as Record<string, unknown>), ...TbMap } as Record<string, React.ComponentType<{ size?: number; color?: string }>>;
+        const IconComp = iconMap[p.name ?? "FaStar"] ?? FaIcons.FaStar;
         const bg = p.bg ?? "transparent";
         const showBg = bg !== "transparent";
         const iconSize = fullscreen && scale ? Math.round((p.size ?? 48) * scale) : (p.size ?? 48);
