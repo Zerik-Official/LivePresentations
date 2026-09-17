@@ -85,6 +85,10 @@ export interface Room {
   presentation_id: string;
   current_slide: number;
   highlighted_id: string | null;
+  show_controls: boolean;
+  fullscreen: boolean;
+  anti_spoiler: boolean;
+  auto_fullscreen: boolean;
 }
 
 /**
@@ -173,6 +177,24 @@ export async function listRooms(): Promise<Room[]> {
   const res = await fetch(`${API_BASE}/api/rooms`, { headers: { ...getAuthHeader() } });
   if (!res.ok) return [];
   return res.json() as Promise<Room[]>;
+}
+
+/**
+ * Update room config.
+ * @param code - Room code
+ * @param config - Config patch
+ */
+export async function updateRoomConfig(code: string, config: { show_controls?: boolean; fullscreen?: boolean; anti_spoiler?: boolean; auto_fullscreen?: boolean }): Promise<Room> {
+  const res = await fetch(`${API_BASE}/api/rooms/${code}/config`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...getAuthHeader() },
+    body: JSON.stringify(config),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Error al actualizar configuración" }));
+    throw new Error(err.detail ?? "Error al actualizar configuración");
+  }
+  return res.json() as Promise<Room>;
 }
 
 /**
