@@ -185,10 +185,10 @@ export function EditorPage(): React.ReactNode {
             </div>
           </DndContext>
 
-          <PropertiesOverlay selected={selected} onPatch={patchSelected} onDelete={() => setConfirmElementOpen(true)} />
+          <PropertiesOverlay selected={selected} onPatch={patchSelected} onDelete={() => setConfirmElementOpen(true)} data={data} />
         </main>
 
-        <EditorSidebar slide={slide} selectedId={selectedId} onSelect={setSelectedId} onReorder={handleReorder} onSort={handleSortLayer} />
+        <EditorSidebar slide={slide} selectedId={selectedId} onSelect={setSelectedId} onReorder={handleReorder} onSort={handleSortLayer} data={data} onUpdateData={setData} />
       </div>
 
       <ConfirmDialog
