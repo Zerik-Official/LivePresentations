@@ -9,6 +9,7 @@ import { getPresentation, getRoom } from "@/lib/api";
 import { parsePresentationData } from "@/types/presentation";
 import { useRoom } from "./useRoom";
 import { CodeControllerModal } from "./elements/code/CodeControllerModal";
+import { SpecialsController } from "./elements/specials/SpecialsController";
 import { ElementControls } from "./controls/ElementControls";
 
 /**
@@ -111,14 +112,12 @@ export function ControllerPage(): React.ReactNode {
           </button>
         </div>
 
-        {room.roomConfig.antiSpoiler && (
+        {room.roomConfig.antiSpoiler && !room.spoilerDismissed && (
           <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4">
             <h3 className="flex items-center gap-2 text-sm font-semibold text-amber-900 dark:text-amber-100">
               <FiClock /> Vista inicial anti-spoiler
             </h3>
-            {room.spoilerDismissed ? (
-              <p className="mt-1 text-xs text-amber-700 dark:text-amber-300">Presentación iniciada</p>
-            ) : room.countdown !== null ? (
+            {room.countdown !== null ? (
               <div className="mt-2 flex items-center gap-3">
                 <span className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500 text-lg font-black text-white tabular-nums">{room.countdown}</span>
                 <span className="text-xs text-amber-700 dark:text-amber-300">Iniciando...</span>
@@ -144,6 +143,22 @@ export function ControllerPage(): React.ReactNode {
                 </div>
               </>
             )}
+          </div>
+        )}
+
+        {slide && slide.elements.some((e) => e.type === "specials") && (
+          <div className="space-y-2">
+            {slide.elements
+              .filter((e) => e.type === "specials")
+              .map((el) => (
+                <SpecialsController
+                  key={el.id}
+                  element={el}
+                  variables={data?.variables ?? []}
+                  send={room.send}
+                  state={room.specialsState[el.id] as Record<string, unknown> | undefined}
+                />
+              ))}
           </div>
         )}
 
