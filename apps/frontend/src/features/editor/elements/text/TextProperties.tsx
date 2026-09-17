@@ -111,10 +111,23 @@ export function TextProperties({ element, onPatch }: Props): React.ReactNode {
       </div>
 
       <div className="grid grid-cols-3 gap-2">
-        <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
-          Color
-          <input type="color" value={props.color ?? "#18181b"} onChange={(e) => onPatch({ propsPatch: { color: e.target.value } })} className="h-8 w-full cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-1" />
-        </label>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">Color</span>
+          <div className="flex gap-1">
+            <input type="color" value={props.color ?? "#18181b"} onChange={(e) => onPatch({ propsPatch: { color: e.target.value } })} className="h-8 w-8 shrink-0 cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 p-1" />
+            <input
+              value={props.color ?? "#18181b"}
+              onChange={(e) => {
+                const v = e.target.value.trim();
+                const hex = v.startsWith("#") ? v : `#${v}`;
+                if (/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(hex)) onPatch({ propsPatch: { color: hex } });
+                else if (v === "" || v === "#") onPatch({ propsPatch: { color: v } });
+              }}
+              placeholder="#18181b"
+              className="min-w-0 flex-1 rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-1.5 text-xs outline-none focus:border-zinc-900 dark:focus:border-zinc-400"
+            />
+          </div>
+        </div>
         <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
           Interlineado
           <input type="number" step={0.1} min={0.8} max={3} value={props.lineHeight ?? 1.2} onChange={(e) => onPatch({ propsPatch: { lineHeight: Number(e.target.value) } })} className="rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-1.5 text-xs outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
