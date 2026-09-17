@@ -81,7 +81,7 @@ export function CodeBlock({
             <div
               key={lineNo}
               onClick={interactive && onToggleLine ? () => onToggleLine(lineNo) : undefined}
-              className={`flex min-w-max items-start gap-0 px-3 py-[1px] first:pt-3 last:pb-3 ${isHighlighted ? "bg-amber-500/20 border-l-2 border-amber-400" : "border-l-2 border-transparent"} ${interactive ? "cursor-pointer hover:bg-white/[0.06]" : ""}`}
+              className={`flex min-w-max items-start gap-0 px-3 py-px first:pt-3 last:pb-3 ${isHighlighted ? "bg-amber-500/20 border-l-2 border-amber-400" : "border-l-2 border-transparent"} ${interactive ? "cursor-pointer hover:bg-white/6" : ""}`}
             >
               {lineNumbers && (
                 <span className={`mr-3 shrink-0 select-none border-r border-zinc-600/60 pr-3 text-right text-xs tabular-nums ${isHighlighted ? "text-amber-300" : "text-zinc-500"}`} style={{ minWidth: `${String(startLine + total).length + 1}ch` }}>
