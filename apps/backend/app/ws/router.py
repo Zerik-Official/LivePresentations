@@ -209,6 +209,9 @@ async def ws_room(
                 if isinstance(enabled, bool):
                     await ws_manager.broadcast(code, {"type": "PRESENTATION_FULLSCREEN_CHANGED", "payload": {"enabled": enabled, "by": role}})
 
+            elif mtype.startswith(("SPECIALS_", "ELEMENT_", "CUSTOM_")):
+                await ws_manager.broadcast(code, {"type": mtype, "payload": payload})
+
     except WebSocketDisconnect:
         pass
     finally:
