@@ -1,6 +1,7 @@
 import * as FaIcons from "react-icons/fa";
 
 import type { Slide } from "@/types/presentation";
+import { SecretText } from "../elements/text/SecretText";
 import { isYouTubeUrl, parseYouTubeId } from "../elements/video/youtube";
 
 /**
@@ -62,13 +63,15 @@ export function SlidePreview({ slide, width = 1280, height = 720 }: { slide: Sli
                   }}
                   className="p-1"
                 >
-                  {(p.text ?? "").slice(0, 40)}
+                  <SecretText text={(p.text ?? "").slice(0, 40)} />
                 </div>
               );
             }
             if (el.type === "image") {
-              const p = el.props as { src?: string };
-              return <img key={el.id} src={p.src ?? ""} alt="" style={baseStyle} className="object-cover rounded-sm" draggable={false} />;
+              const p = el.props as { src?: string; fit?: string };
+              const fit = p.fit ?? "cover";
+              const fitClass = fit === "contain" ? "object-contain" : fit === "fill" ? "object-fill" : fit === "none" ? "object-none" : "object-cover";
+              return <img key={el.id} src={p.src ?? ""} alt="" style={baseStyle} className={`${fitClass} rounded-sm`} draggable={false} />;
             }
             if (el.type === "shape") {
               const p = el.props as { fill?: string; radius?: number; variant?: string; borderColor?: string; borderWidth?: number };
