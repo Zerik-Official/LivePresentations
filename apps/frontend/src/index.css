@@ -1,0 +1,61 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Poppins:wght@400;600;700&family=Playfair+Display:wght@400;700&family=Roboto:wght@400;700&family=Montserrat:wght@400;600;700&family=Oswald:wght@400;600&family=Lora:wght@400;700&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@400;700&family=Merriweather:wght@400;700&family=DM+Sans:wght@400;700&family=Bebas+Neue&display=swap");
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-border: #e4e4e7;
+  --color-input-bg: var(--input-bg);
+  --color-input-border: var(--input-border);
+  --color-input-text: var(--input-text);
+}
+
+:root {
+  --input-bg: #ffffff;
+  --input-border: #e4e4e7;
+  --input-text: #18181b;
+  --input-placeholder: #71717a;
+  --bg-input: var(--input-bg);
+  --border-strong: var(--input-border);
+  --text-soft: #3f3f46;
+  --muted: #71717a;
+  --primary: #18181b;
+  --primary-hover: #27272a;
+  --primary-active: #09090b;
+}
+
+html.dark {
+  color-scheme: dark;
+  --input-bg: #27272a;
+  --input-border: #3f3f46;
+  --input-text: #f4f4f5;
+  --input-placeholder: #a1a1aa;
+  --bg-input: var(--input-bg);
+  --border-strong: var(--input-border);
+  --text-soft: #e4e4e7;
+  --muted: #a1a1aa;
+  --primary: #fafafa;
+  --primary-hover: #e4e4e7;
+  --primary-active: #d4d4d8;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #a1a1aa transparent;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--input-placeholder);
+  opacity: 1;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.96) translateY(4px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
