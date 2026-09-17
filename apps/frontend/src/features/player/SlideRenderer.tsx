@@ -16,6 +16,8 @@ interface Props {
   codeHighlightedLines?: number[];
   codeScrollTop?: number;
   onCollapseCode?: () => void;
+  fullscreen?: boolean;
+  showControls?: boolean;
 }
 
 /**
@@ -201,6 +203,8 @@ export function SlideRenderer({
   codeHighlightedLines,
   codeScrollTop,
   onCollapseCode,
+  fullscreen = false,
+  showControls = true,
 }: Props): React.ReactNode {
   if (!slide) {
     return (
@@ -221,6 +225,13 @@ export function SlideRenderer({
   const expandedElement = codeExpandedId ? (slide.elements.find((e) => e.id === codeExpandedId) ?? null) : null;
   const isCodeExpanded = Boolean(expandedElement && expandedElement.type === "code");
 
+  const containerClass = fullscreen
+    ? "relative overflow-hidden border-0 bg-white shadow-none"
+    : "relative overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm";
+  const containerStyle: React.CSSProperties = fullscreen
+    ? { width: "100vw", height: "100vh", maxWidth: "100vw", maxHeight: "100vh", background: slide.background }
+    : { width, height, background: slide.background };
+
   return (
     <AnimatePresence mode="wait">
       <motion.div
@@ -229,8 +240,8 @@ export function SlideRenderer({
         animate={slideVariants.animate}
         exit={slideVariants.exit}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        style={{ width, height, background: slide.background }}
-        className="relative overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm"
+        style={containerStyle}
+        className={containerClass}
       >
         {slide.elements
           .slice()
@@ -239,7 +250,7 @@ export function SlideRenderer({
             <ElementView key={el.id} element={el} highlighted={highlightedId === el.id} isTriggered={animTriggerId === el.id} />
           ))}
         {isCodeExpanded && (
-          <CodeExpandedOverlay element={expandedElement} expanded={isCodeExpanded} highlightedLines={codeHighlightedLines ?? []} scrollTop={codeScrollTop ?? 0} onCollapse={onCollapseCode} />
+          <CodeExpandedOverlay element={expandedElement} expanded={isCodeExpanded} highlightedLines={codeHighlightedLines ?? []} scrollTop={codeScrollTop ?? 0} onCollapse={showControls ? onCollapseCode : undefined} />
         )}
       </motion.div>
     </AnimatePresence>
