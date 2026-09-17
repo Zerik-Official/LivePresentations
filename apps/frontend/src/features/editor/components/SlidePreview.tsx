@@ -127,6 +127,16 @@ export function SlidePreview({ slide, width = 1280, height = 720 }: { slide: Sli
                 </div>
               );
             }
+            if (el.type === "specials") {
+              const p = el.props as { text?: string; icon?: string; iconColor?: string };
+              const IconComp = (FaIcons as unknown as Record<string, React.ComponentType<{ size?: number; color?: string }>>)[p.icon ?? "FaStar"] ?? FaIcons.FaStar;
+              return (
+                <div key={el.id} style={{ ...baseStyle, background: "#fffbeb", borderRadius: 6, border: "1px solid #fcd34d" }} className="flex items-center justify-between px-2">
+                  <span className="truncate text-[8px] font-medium text-zinc-900">{(p.text ?? "Respuesta").slice(0, 18)}</span>
+                  <IconComp size={14} color={p.iconColor ?? "#f59e0b"} />
+                </div>
+              );
+            }
             return null;
           })}
       </div>
