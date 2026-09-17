@@ -111,6 +111,15 @@ export interface TextElementProps {
 }
 
 /**
+ * Image element props typing helper.
+ */
+export interface ImageElementProps {
+  src: string;
+  alt: string;
+  fit: "cover" | "contain" | "fill" | "none";
+}
+
+/**
  * Specials element props typing helper (e.g., specials-answers).
  */
 export interface SpecialsElementProps {
@@ -168,7 +177,12 @@ export function createDefaultElement(type: SlideElement["type"], id: string): Sl
         } satisfies TextElementProps as unknown as Record<string, unknown>,
       };
     case "image":
-      return { ...base, w: 400, h: 250, props: { src: "https://picsum.photos/400/250", alt: "Imagen" } };
+      return {
+        ...base,
+        w: 400,
+        h: 250,
+        props: { src: "https://picsum.photos/400/250", alt: "Imagen", fit: "cover" } satisfies ImageElementProps as unknown as Record<string, unknown>,
+      };
     case "shape":
       return { ...base, w: 200, h: 120, props: { variant: "rect", fill: "#e4e4e7", radius: 12, borderColor: "#18181b", borderWidth: 0 } };
     case "video":
