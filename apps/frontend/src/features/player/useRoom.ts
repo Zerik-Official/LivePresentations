@@ -36,6 +36,7 @@ export function useRoom(code: string, role: "presenter" | "controller") {
   const [roomConfig, setRoomConfig] = useState<RoomConfigState>({ showControls: true, fullscreen: false, antiSpoiler: false, autoFullscreen: true });
   const [countdown, setCountdown] = useState<number | null>(null);
   const [spoilerDismissed, setSpoilerDismissed] = useState(false);
+  const [specialsState, setSpecialsState] = useState<Record<string, Record<string, unknown>>>({});
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -131,6 +132,18 @@ export function useRoom(code: string, role: "presenter" | "controller") {
           } else if (msg.type === "SPOILER_INTRO_DISMISSED") {
             setSpoilerDismissed(true);
             setCountdown(null);
+          } else if (msg.type === "SPECIALS_RESTART") {
+            const key = (msg.payload.elementId as string) ?? (msg.payload.questionId as string) ?? "";
+            if (key) {
+              setSpecialsState((prev) => {
+                const next = { ...prev };
+                delete next[key];
+                return next;
+              });
+            }
+          } else if (msg.type.startsWith("SPECIALS_") || msg.type.startsWith("ELEMENT_") || msg.type.startsWith("CUSTOM_")) {
+            const key = (msg.payload.elementId as string) ?? (msg.payload.questionId as string) ?? msg.type;
+            setSpecialsState((prev) => ({ ...prev, [key]: { type: msg.type, ...msg.payload } }));
           }
         } catch {
           // ignore
@@ -156,5 +169,5 @@ export function useRoom(code: string, role: "presenter" | "controller") {
     wsRef.current?.send(JSON.stringify({ type, payload }));
   }
 
-  return { currentSlide, highlightedId, animTriggerId, codeOverlay, roomConfig, countdown, spoilerDismissed, setSpoilerDismissed, setCountdown, connected, send };
+  return { currentSlide, highlightedId, animTriggerId, codeOverlay, roomConfig, countdown, spoilerDismissed, specialsState, setSpoilerDismissed, setCountdown, connected, send };
 }
