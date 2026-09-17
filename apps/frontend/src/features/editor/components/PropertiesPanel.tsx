@@ -2,11 +2,12 @@ import { FiTrash2 } from "react-icons/fi";
 
 import { Button } from "@/components/ui/Button";
 import { TooltipSimple } from "@/components/ui/Tooltip";
-import type { SlideElement } from "@/types/presentation";
+import type { PresentationData, SlideElement } from "@/types/presentation";
 import { CodeProperties } from "../elements/code/CodeProperties";
 import { IconProperties } from "../elements/icon/IconProperties";
 import { ImageProperties } from "../elements/image/ImageProperties";
 import { ShapeProperties } from "../elements/shape/ShapeProperties";
+import { SpecialsProperties } from "../elements/specials/SpecialsProperties";
 import { TextProperties } from "../elements/text/TextProperties";
 import { VideoProperties } from "../elements/video/VideoProperties";
 
@@ -14,6 +15,7 @@ interface Props {
   selected: SlideElement | null;
   onPatch: (patch: Partial<SlideElement> & { propsPatch?: Record<string, unknown> }) => void;
   onDelete: () => void;
+  data?: PresentationData | null;
 }
 
 /**
@@ -22,7 +24,7 @@ interface Props {
  * @param onPatch - Patch handler
  * @param onDelete - Delete handler
  */
-export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.ReactNode {
+export function PropertiesPanel({ selected, onPatch, onDelete, data }: Props): React.ReactNode {
   if (!selected) return <p className="text-xs text-zinc-500 dark:text-zinc-400">Selecciona un elemento en el canvas o en capas.</p>;
 
   return (
@@ -68,6 +70,7 @@ export function PropertiesPanel({ selected, onPatch, onDelete }: Props): React.R
       {selected.type === "icon" && <IconProperties element={selected} onPatch={onPatch} />}
       {selected.type === "shape" && <ShapeProperties element={selected} onPatch={onPatch} />}
       {selected.type === "code" && <CodeProperties element={selected} onPatch={onPatch} />}
+      {selected.type === "specials" && <SpecialsProperties element={selected} onPatch={onPatch} data={data} />}
 
       <Button variant="danger" size="sm" onClick={onDelete} className="cursor-pointer">
         <FiTrash2 /> Eliminar
