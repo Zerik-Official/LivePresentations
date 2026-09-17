@@ -1,6 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import * as FaIcons from "react-icons/fa";
+import { TbNumber, TbNumber0, TbNumber1, TbNumber2, TbNumber3, TbNumber4, TbNumber5, TbNumber6, TbNumber7, TbNumber8, TbNumber9, TbNumbers } from "react-icons/tb";
 
 import { CodeBlock } from "@/components/CodeBlock";
 import type { SlideElement } from "@/types/presentation";
@@ -153,7 +154,22 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
       }
       case "icon": {
         const p = element.props as { name?: string; color?: string; size?: number; bg?: string; bgColor?: string; rounded?: number };
-        const IconComp = (FaIcons as unknown as Record<string, React.ComponentType<{ size?: number; color?: string }>>)[p.name ?? "FaStar"] ?? FaIcons.FaStar;
+        const TbMap: Record<string, React.ComponentType<{ size?: number; color?: string }>> = {
+          TbNumber0,
+          TbNumber1,
+          TbNumber2,
+          TbNumber3,
+          TbNumber4,
+          TbNumber5,
+          TbNumber6,
+          TbNumber7,
+          TbNumber8,
+          TbNumber9,
+          TbNumbers,
+          TbNumber,
+        };
+        const iconMap = { ...(FaIcons as Record<string, unknown>), ...TbMap } as Record<string, React.ComponentType<{ size?: number; color?: string }>>;
+        const IconComp = iconMap[p.name ?? "FaStar"] ?? FaIcons.FaStar;
         const showBg = (p.bg ?? "transparent") !== "transparent";
         return (
           <div
