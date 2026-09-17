@@ -164,6 +164,31 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
         const p = element.props as { code?: string; language?: string; lineNumbers?: boolean };
         return <CodeBlock code={p.code} language={p.language} lineNumbers={p.lineNumbers ?? false} className="text-[11px]" />;
       }
+      case "specials": {
+        const p = element.props as {
+          text?: string;
+          icon?: string;
+          iconColor?: string;
+          iconBgColor?: string;
+          backgroundColor?: string;
+          textColor?: string;
+          kind?: string;
+        };
+        const IconComp = (FaIcons as unknown as Record<string, React.ComponentType<{ size?: number; color?: string }>>)[p.icon ?? "FaStar"] ?? FaIcons.FaStar;
+        return (
+          <div
+            style={{ backgroundColor: p.backgroundColor ?? "#fffbeb", borderColor: "#fcd34d" }}
+            className="flex h-full w-full items-center justify-between gap-3 rounded-md border px-3"
+          >
+            <span style={{ color: p.textColor ?? "#18181b" }} className="truncate text-sm font-medium">
+              {p.text ?? "Respuesta especial"}
+            </span>
+            <span style={{ backgroundColor: p.iconBgColor ?? "#ffffff" }} className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-zinc-200 dark:border-zinc-700">
+              <IconComp size={18} color={p.iconColor ?? "#f59e0b"} />
+            </span>
+          </div>
+        );
+      }
       case "video": {
         const p = element.props as { src?: string; poster?: string; autoplay?: boolean; loop?: boolean; muted?: boolean; controls?: boolean };
         if (!p.src) return <div className="flex h-full w-full items-center justify-center bg-zinc-900 text-xs text-white">Sin video</div>;
