@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import * as FaIcons from "react-icons/fa";
 
@@ -30,19 +31,37 @@ function ElementView({
   element,
   highlighted,
   isTriggered,
+  width,
+  height,
+  fullscreen,
+  scale,
 }: {
   element: SlideElement;
   highlighted: boolean;
   isTriggered: boolean;
+  width: number;
+  height: number;
+  fullscreen?: boolean;
+  scale?: number;
 }): React.ReactNode {
-  const style: React.CSSProperties = {
-    left: element.x,
-    top: element.y,
-    width: element.w,
-    height: element.h,
-    transform: `rotate(${element.rotation}deg)`,
-    zIndex: element.zIndex,
-  };
+  const style: React.CSSProperties = fullscreen
+    ? {
+        left: `${(element.x / width) * 100}%`,
+        top: `${(element.y / height) * 100}%`,
+        width: `${(element.w / width) * 100}%`,
+        height: `${(element.h / height) * 100}%`,
+        transform: `rotate(${element.rotation}deg)`,
+        transformOrigin: "center",
+        zIndex: element.zIndex,
+      }
+    : {
+        left: element.x,
+        top: element.y,
+        width: element.w,
+        height: element.h,
+        transform: `rotate(${element.rotation}deg)`,
+        zIndex: element.zIndex,
+      };
 
   const highlightClass = highlighted ? "ring-4 ring-amber-400 ring-offset-2 shadow-xl scale-[1.02]" : "";
   const anim = element.animation;
@@ -81,10 +100,12 @@ function ElementView({
           backgroundPadding?: number;
         };
         const hasBg = Boolean(p.backgroundEnabled);
+        const baseFont = p.fontSize ?? 32;
+        const scaledFont = fullscreen && scale ? baseFont * scale : baseFont;
         return (
           <div
             style={{
-              fontSize: p.fontSize ?? 32,
+              fontSize: scaledFont,
               color: p.color ?? "#18181b",
               textAlign: (p.align as React.CSSProperties["textAlign"]) ?? "left",
               fontWeight: p.bold ? 700 : 400,
@@ -96,7 +117,7 @@ function ElementView({
               opacity: p.opacity ?? 1,
               backgroundColor: hasBg ? (p.backgroundColor ?? "#ffffff") : "transparent",
               borderRadius: hasBg ? (p.backgroundRadius ?? 8) : undefined,
-              padding: hasBg ? (p.backgroundPadding ?? 8) : 8,
+              padding: hasBg ? (p.backgroundPadding ?? 8) * (fullscreen && scale ? scale : 1) : 8,
             }}
             className="h-full w-full overflow-hidden"
           >
@@ -128,12 +149,13 @@ function ElementView({
         const IconComp = (FaIcons as unknown as Record<string, React.ComponentType<{ size?: number; color?: string }>>)[p.name ?? "FaStar"] ?? FaIcons.FaStar;
         const bg = p.bg ?? "transparent";
         const showBg = bg !== "transparent";
+        const iconSize = fullscreen && scale ? Math.round((p.size ?? 48) * scale) : (p.size ?? 48);
         return (
           <div
-            style={{ background: showBg ? (p.bgColor ?? "#ffffff") : "transparent", borderRadius: p.rounded ?? 12 }}
+            style={{ background: showBg ? (p.bgColor ?? "#ffffff") : "transparent", borderRadius: (p.rounded ?? 12) * (fullscreen && scale ? scale : 1) }}
             className="flex h-full w-full items-center justify-center"
           >
-            <IconComp size={p.size ?? 48} color={p.color ?? "#18181b"} />
+            <IconComp size={iconSize} color={p.color ?? "#18181b"} />
           </div>
         );
       }
@@ -225,14 +247,35 @@ export function SlideRenderer({
   const expandedElement = codeExpandedId ? (slide.elements.find((e) => e.id === codeExpandedId) ?? null) : null;
   const isCodeExpanded = Boolean(expandedElement && expandedElement.type === "code");
 
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    if (!fullscreen) return;
+    /**
+     * Compute scale factor for auto-recalculated content (fonts, icons) when canvas fills viewport.
+     * Uses average of width/height ratios to scale content proportionally.
+     */
+    function updateScale(): void {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const sx = vw / width;
+      const sy = vh / height;
+      const next = (sx + sy) / 2;
+      setScale(Math.min(Math.max(next, 0.7), 3));
+    }
+    updateScale();
+    window.addEventListener("resize", updateScale);
+    return () => window.removeEventListener("resize", updateScale);
+  }, [width, height, fullscreen]);
+
   const containerClass = fullscreen
     ? "relative overflow-hidden border-0 bg-white shadow-none"
     : "relative overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm";
   const containerStyle: React.CSSProperties = fullscreen
-    ? { width: "100vw", height: "100vh", maxWidth: "100vw", maxHeight: "100vh", background: slide.background }
+    ? { width: "100vw", height: "100vh", background: slide.background }
     : { width, height, background: slide.background };
 
-  return (
+  const slideNode = (
     <AnimatePresence mode="wait">
       <motion.div
         key={slide.id}
@@ -247,7 +290,16 @@ export function SlideRenderer({
           .slice()
           .sort((a, b) => a.zIndex - b.zIndex)
           .map((el) => (
-            <ElementView key={el.id} element={el} highlighted={highlightedId === el.id} isTriggered={animTriggerId === el.id} />
+            <ElementView
+              key={el.id}
+              element={el}
+              highlighted={highlightedId === el.id}
+              isTriggered={animTriggerId === el.id}
+              width={width}
+              height={height}
+              fullscreen={fullscreen}
+              scale={scale}
+            />
           ))}
         {isCodeExpanded && (
           <CodeExpandedOverlay element={expandedElement} expanded={isCodeExpanded} highlightedLines={codeHighlightedLines ?? []} scrollTop={codeScrollTop ?? 0} onCollapse={showControls ? onCollapseCode : undefined} />
@@ -255,4 +307,6 @@ export function SlideRenderer({
       </motion.div>
     </AnimatePresence>
   );
+
+  return slideNode;
 }
