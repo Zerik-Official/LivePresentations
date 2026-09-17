@@ -22,6 +22,10 @@ class RoomState:
     current_slide: int = 0
     highlighted_id: str | None = None
     code_overlay: dict[str, object] | None = None
+    show_controls: bool = True
+    fullscreen: bool = False
+    anti_spoiler: bool = False
+    auto_fullscreen: bool = True
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     expires_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc) + timedelta(hours=4))
 
