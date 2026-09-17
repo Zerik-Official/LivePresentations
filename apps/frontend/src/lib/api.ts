@@ -198,6 +198,34 @@ export async function updateRoomConfig(code: string, config: { show_controls?: b
 }
 
 /**
+ * Export presentation as zip package.
+ * @param id - Presentation id
+ */
+export async function exportPresentationZip(id: string): Promise<Blob> {
+  const res = await fetch(`${API_BASE}/api/presentations/${id}/export`, { headers: { ...getAuthHeader() } });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Error al exportar" }));
+    throw new Error(err.detail ?? "Error al exportar");
+  }
+  return res.blob();
+}
+
+/**
+ * Import presentation from zip file.
+ * @param file - Zip file
+ */
+export async function importPresentationZip(file: File): Promise<Presentation> {
+  const form = new FormData();
+  form.append("file", file);
+  const res = await fetch(`${API_BASE}/api/presentations/import-zip`, { method: "POST", headers: { ...getAuthHeader() }, body: form });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: "Error al importar zip" }));
+    throw new Error(err.detail ?? "Error al importar zip");
+  }
+  return res.json() as Promise<Presentation>;
+}
+
+/**
  * Delete a presentation.
  * @param id - Presentation id
  */
