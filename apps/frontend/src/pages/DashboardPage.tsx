@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { FiCopy, FiDownload, FiEye, FiLogOut, FiPlus, FiSettings, FiUpload } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
@@ -7,6 +7,8 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { ExportPresentationModal } from "@/components/ExportPresentationModal";
+import { ImportPresentationModal } from "@/components/ImportPresentationModal";
 import { RoomCreatedModal } from "@/features/room/RoomCreatedModal";
 import { createPresentation, createRoom, deletePresentation, deleteRoom, getRoom, listPresentations, listRooms, type Presentation, type Room } from "@/lib/api";
 import { useAuthStore } from "@/stores/authStore";
@@ -25,7 +27,9 @@ export function DashboardPage(): React.ReactNode {
   const [rooms, setRooms] = useState<Room[]>([]);
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [exportPres, setExportPres] = useState<Presentation | null>(null);
+  const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   useEffect(() => {
     void listPresentations()
@@ -133,39 +137,7 @@ export function DashboardPage(): React.ReactNode {
     }
   }
 
-  /**
-   * Export presentation as JSON file.
-   * @param p - Presentation
-   */
-  function handleExport(p: Presentation): void {
-    const blob = new Blob([JSON.stringify({ title: p.title, data: p.data }, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${p.title.replace(/\s+/g, "_")}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  }
 
-  /**
-   * Handle import from file input.
-   * @param e - Change event
-   */
-  async function handleImport(e: React.ChangeEvent<HTMLInputElement>): Promise<void> {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    try {
-      const text = await file.text();
-      const json = JSON.parse(text) as { title?: string; data?: Record<string, unknown> };
-      const titleImport = (json.title as string) ?? file.name.replace(/\.json$/i, "");
-      const pres = await createPresentation(titleImport || "Importada", (json.data as Record<string, unknown>) ?? (json as unknown as Record<string, unknown>));
-      setPresentations((prev) => [pres, ...prev]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error al importar JSON");
-    } finally {
-      if (fileRef.current) fileRef.current.value = "";
-    }
-  }
 
   return (
     <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
@@ -203,9 +175,8 @@ export function DashboardPage(): React.ReactNode {
             <div className="flex items-center justify-between">
               <h2 className="font-semibold text-zinc-900 dark:text-zinc-100">Mis presentaciones</h2>
               <div className="flex items-center gap-2">
-                <input ref={fileRef} type="file" accept=".json" className="hidden" onChange={(e) => void handleImport(e)} />
-                <TooltipSimple content="Importar JSON" side="top">
-                  <Button variant="secondary" size="sm" onClick={() => fileRef.current?.click()} className="cursor-pointer text-xs">
+                <TooltipSimple content="Importar presentación" side="top">
+                  <Button variant="secondary" size="sm" onClick={() => setImportOpen(true)} className="cursor-pointer text-xs">
                     <FiUpload /> Importar
                   </Button>
                 </TooltipSimple>
@@ -231,8 +202,16 @@ export function DashboardPage(): React.ReactNode {
                 <li key={p.id} className="flex items-center justify-between rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-4 py-3">
                   <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{p.title}</span>
                   <div className="flex gap-2">
-                    <TooltipSimple content="Exportar JSON" side="top">
-                      <Button variant="secondary" size="sm" onClick={() => handleExport(p)} className="cursor-pointer px-2 py-1 text-xs">
+                    <TooltipSimple content="Exportar" side="top">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setExportPres(p);
+                          setExportOpen(true);
+                        }}
+                        className="cursor-pointer px-2 py-1 text-xs"
+                      >
                         <FiDownload />
                       </Button>
                     </TooltipSimple>
@@ -323,6 +302,12 @@ export function DashboardPage(): React.ReactNode {
         )}
       </main>
       <RoomCreatedModal open={roomModalOpen} code={roomCode} onClose={() => setRoomModalOpen(false)} />
+      <ExportPresentationModal open={exportOpen} onClose={() => setExportOpen(false)} presentation={exportPres} />
+      <ImportPresentationModal
+        open={importOpen}
+        onClose={() => setImportOpen(false)}
+        onImported={(pres) => setPresentations((prev) => [pres, ...prev])}
+      />
       <ConfirmDialog open={deleteId !== null} title="Borrar presentación" description="¿Seguro que quieres borrar esta presentación? Se perderán todas sus diapositivas." confirmLabel="Borrar" cancelLabel="Cancelar" onCancel={() => setDeleteId(null)} onConfirm={() => deleteId && void handleDelete(deleteId)} />
     </div>
   );
