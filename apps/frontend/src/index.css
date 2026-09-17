@@ -15,6 +15,13 @@
   --input-border: #e4e4e7;
   --input-text: #18181b;
   --input-placeholder: #71717a;
+  --bg-input: var(--input-bg);
+  --border-strong: var(--input-border);
+  --text-soft: #3f3f46;
+  --muted: #71717a;
+  --primary: #18181b;
+  --primary-hover: #27272a;
+  --primary-active: #09090b;
 }
 
 html.dark {
@@ -23,6 +30,13 @@ html.dark {
   --input-border: #3f3f46;
   --input-text: #f4f4f5;
   --input-placeholder: #a1a1aa;
+  --bg-input: var(--input-bg);
+  --border-strong: var(--input-border);
+  --text-soft: #e4e4e7;
+  --muted: #a1a1aa;
+  --primary: #fafafa;
+  --primary-hover: #e4e4e7;
+  --primary-active: #d4d4d8;
 }
 
 * {
