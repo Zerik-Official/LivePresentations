@@ -61,8 +61,13 @@ export function PresenterPage(): React.ReactNode {
   if (!data) return <div className="p-6 text-sm text-zinc-500">Cargando presentación...</div>;
 
   const slide = data.slides[room.currentSlide] ?? null;
-  const specialsElement = slide?.elements.find((e) => e.type === "specials") ?? null;
-  const specialsState = specialsElement ? (room.specialsState[specialsElement.id] as Record<string, unknown> | undefined) : undefined;
+  const specialsElements = slide ? slide.elements.filter((e) => e.type === "specials") : [];
+  const activeSpecials = specialsElements
+    .map((el) => ({ element: el, state: room.specialsState[el.id] as Record<string, unknown> | undefined }))
+    .filter(({ state }) => {
+      const t = state?.type as string | undefined;
+      return Boolean(t && t !== "SPECIALS_FINALIZED");
+    });
 
   return (
     <div className={isFullscreen ? "flex min-h-screen flex-col bg-zinc-950 text-white" : "flex min-h-screen flex-col bg-zinc-950 text-white"}>
@@ -88,7 +93,9 @@ export function PresenterPage(): React.ReactNode {
             fullscreen={isFullscreen}
             showControls={showControls}
           />
-          {specialsElement && specialsState && <SpecialsPresenter element={specialsElement} state={specialsState} variables={data.variables} />}
+          {activeSpecials.map(({ element, state }) => (
+            <SpecialsPresenter key={element.id} element={element} state={state} variables={data.variables} fullscreen={isFullscreen} />
+          ))}
           {showIntro && <AntiSpoilerOverlay active={showIntro} countdown={room.countdown} />}
           {showControls && !isFullscreen && (
             <div className="mt-4 flex items-center gap-3">
