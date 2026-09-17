@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,6 +14,7 @@ from app.models.presentation import Presentation
 from app.models.room import Room
 from app.models.user import User
 from app.schemas.presentation import PresentationCreate, PresentationRead, PresentationUpdate
+from app.services.presentation_package import build_export_zip, import_presentation_zip
 
 router = APIRouter(prefix="/presentations", tags=["presentations"])
 
@@ -77,6 +79,38 @@ async def update_presentation(
         pres.title = payload.title.strip()
     if payload.data is not None:
         pres.data = json.dumps(payload.data)
+    await db.commit()
+    await db.refresh(pres)
+    return _to_read(pres)
+
+
+@router.get("/{presentation_id}/export", response_class=StreamingResponse)
+async def export_presentation_zip(
+    presentation_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> StreamingResponse:
+    """Export presentation as zip package with manifest, slices, variables and assets."""
+    result = await db.execute(select(Presentation).where(Presentation.id == presentation_id))
+    pres = result.scalar_one_or_none()
+    if pres is None or pres.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Presentación no encontrada")
+    data, filename = await build_export_zip(pres)
+    from io import BytesIO
+
+    return StreamingResponse(BytesIO(data), media_type="application/zip", headers={"Content-Disposition": f'attachment; filename="{filename}"'})
+
+
+@router.post("/import-zip", response_model=PresentationRead, status_code=status.HTTP_201_CREATED)
+async def import_presentation_zip_endpoint(
+    file: UploadFile,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> PresentationRead:
+    """Import presentation from zip package."""
+    title, data = await import_presentation_zip(file, current_user.id)
+    pres = Presentation(owner_id=current_user.id, title=title, data=json.dumps(data))
+    db.add(pres)
     await db.commit()
     await db.refresh(pres)
     return _to_read(pres)
