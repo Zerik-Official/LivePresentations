@@ -17,11 +17,25 @@ export interface CodeOverlayState {
   scrollTop: number;
 }
 
+export interface RoomConfigState {
+  /** Whether to show presentation controls */
+  showControls: boolean;
+  /** Whether to present fullscreen (CSS) */
+  fullscreen: boolean;
+  /** Whether anti-spoiler intro is enabled */
+  antiSpoiler: boolean;
+  /** Whether to auto request browser fullscreen on present */
+  autoFullscreen: boolean;
+}
+
 export function useRoom(code: string, role: "presenter" | "controller") {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [animTriggerId, setAnimTriggerId] = useState<string | null>(null);
   const [codeOverlay, setCodeOverlay] = useState<CodeOverlayState>({ elementId: null, expanded: false, highlightedLines: [], scrollTop: 0 });
+  const [roomConfig, setRoomConfig] = useState<RoomConfigState>({ showControls: true, fullscreen: false, antiSpoiler: false, autoFullscreen: true });
+  const [countdown, setCountdown] = useState<number | null>(null);
+  const [spoilerDismissed, setSpoilerDismissed] = useState(false);
   const [connected, setConnected] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
 
@@ -60,6 +74,12 @@ export function useRoom(code: string, role: "presenter" | "controller") {
           if (msg.type === "ROOM_STATE") {
             setCurrentSlide((msg.payload.current_slide as number) ?? 0);
             setHighlightedId((msg.payload.highlighted_id as string | null) ?? null);
+            setRoomConfig({
+              showControls: (msg.payload.show_controls as boolean) ?? true,
+              fullscreen: (msg.payload.fullscreen as boolean) ?? false,
+              antiSpoiler: (msg.payload.anti_spoiler as boolean) ?? false,
+              autoFullscreen: (msg.payload.auto_fullscreen as boolean) ?? true,
+            });
             const overlay = msg.payload.code_overlay as { elementId?: string | null; expanded?: boolean; highlightedLines?: number[]; scrollTop?: number } | null | undefined;
             if (overlay && typeof overlay === "object" && overlay.elementId) {
               setCodeOverlay({
@@ -93,6 +113,24 @@ export function useRoom(code: string, role: "presenter" | "controller") {
           } else if (msg.type === "CODE_SCROLL_CHANGED") {
             const top = (msg.payload.scrollTop as number) ?? 0;
             setCodeOverlay((prev) => ({ ...prev, scrollTop: top }));
+          } else if (msg.type === "ROOM_CONFIG_CHANGED") {
+            const sc = msg.payload.show_controls as boolean | undefined;
+            const fs = msg.payload.fullscreen as boolean | undefined;
+            const anti = msg.payload.anti_spoiler as boolean | undefined;
+            const autoFs = msg.payload.auto_fullscreen as boolean | undefined;
+            setRoomConfig((prev) => ({
+              showControls: typeof sc === "boolean" ? sc : prev.showControls,
+              fullscreen: typeof fs === "boolean" ? fs : prev.fullscreen,
+              antiSpoiler: typeof anti === "boolean" ? anti : prev.antiSpoiler,
+              autoFullscreen: typeof autoFs === "boolean" ? autoFs : prev.autoFullscreen,
+            }));
+          } else if (msg.type === "SPOILER_COUNTDOWN_STARTED") {
+            const sec = (msg.payload.seconds as number) ?? 3;
+            setCountdown(sec);
+            setSpoilerDismissed(false);
+          } else if (msg.type === "SPOILER_INTRO_DISMISSED") {
+            setSpoilerDismissed(true);
+            setCountdown(null);
           }
         } catch {
           // ignore
@@ -118,5 +156,5 @@ export function useRoom(code: string, role: "presenter" | "controller") {
     wsRef.current?.send(JSON.stringify({ type, payload }));
   }
 
-  return { currentSlide, highlightedId, animTriggerId, codeOverlay, connected, send };
+  return { currentSlide, highlightedId, animTriggerId, codeOverlay, roomConfig, countdown, spoilerDismissed, setSpoilerDismissed, setCountdown, connected, send };
 }
