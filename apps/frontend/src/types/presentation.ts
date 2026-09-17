@@ -1,11 +1,24 @@
 import { z } from "zod";
 
 /**
+ * Variable type for presentation-level variables.
+ */
+export const variableSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  varType: z.enum(["number", "boolean", "string", "array", "object"]),
+  arrayType: z.enum(["string", "number", "boolean", "array", "object", "any"]).optional(),
+  value: z.unknown(),
+});
+
+export type Variable = z.infer<typeof variableSchema>;
+
+/**
  * Schema for a slide element.
  */
 export const elementSchema = z.object({
   id: z.string(),
-  type: z.enum(["text", "image", "shape", "video", "code", "icon"]),
+  type: z.enum(["text", "image", "shape", "video", "code", "icon", "specials"]),
   x: z.number(),
   y: z.number(),
   w: z.number(),
@@ -51,6 +64,7 @@ export const presentationDataSchema = z.object({
     .default({ primary: "#18181b", accent: "#18181b" }),
   width: z.number().default(1280),
   height: z.number().default(720),
+  variables: z.array(variableSchema).default([]),
 });
 
 export type PresentationData = z.infer<typeof presentationDataSchema>;
@@ -63,7 +77,7 @@ export type PresentationData = z.infer<typeof presentationDataSchema>;
 export function parsePresentationData(data: unknown): PresentationData {
   const parsed = presentationDataSchema.safeParse(data);
   if (parsed.success) return parsed.data;
-  return { slides: [], theme: { primary: "#18181b", accent: "#18181b" }, width: 1280, height: 720 };
+  return { slides: [], theme: { primary: "#18181b", accent: "#18181b" }, width: 1280, height: 720, variables: [] };
 }
 
 /**
@@ -94,6 +108,33 @@ export interface TextElementProps {
   backgroundColor: string;
   backgroundRadius: number;
   backgroundPadding: number;
+}
+
+/**
+ * Specials element props typing helper (e.g., specials-answers).
+ */
+export interface SpecialsElementProps {
+  text: string;
+  icon: string;
+  iconColor: string;
+  iconBgColor: string;
+  backgroundColor: string;
+  textColor: string;
+  kind: string;
+  questionId: string;
+  variableId?: string;
+  randomSelection: boolean;
+  discardAfterPick: boolean;
+  selectorType: "strip" | "wheel";
+  selectorDuration: number;
+  questionText: string;
+  questionColor: string;
+  questionAlign: "left" | "center" | "right" | "justify";
+  answersCount: number;
+  answersFormat: "letters" | "numbers" | "text";
+  answers: string[];
+  correctAnswerIndex: number | null;
+  extraCodeBlocks: Array<{ language: string; code: string }>;
 }
 
 /**
@@ -141,6 +182,35 @@ export function createDefaultElement(type: SlideElement["type"], id: string): Sl
       };
     case "icon":
       return { ...base, w: 80, h: 80, props: { name: "FaStar", color: "#f59e0b", size: 48, bg: "transparent", bgColor: "#ffffff", rounded: 12 } };
+    case "specials":
+      return {
+        ...base,
+        w: 400,
+        h: 80,
+        props: {
+          text: "Respuesta especial",
+          icon: "FaStar",
+          iconColor: "#f59e0b",
+          iconBgColor: "#ffffff",
+          backgroundColor: "#fffbeb",
+          textColor: "#18181b",
+          kind: "specials-answers",
+          questionId: `q-${Date.now()}`,
+          variableId: undefined,
+          randomSelection: true,
+          discardAfterPick: true,
+          selectorType: "strip",
+          selectorDuration: 5,
+          questionText: "¿Pregunta de ejemplo?",
+          questionColor: "#18181b",
+          questionAlign: "center",
+          answersCount: 4,
+          answersFormat: "letters",
+          answers: ["Respuesta A", "Respuesta B", "Respuesta C", "Respuesta D"],
+          correctAnswerIndex: 0,
+          extraCodeBlocks: [],
+        } satisfies SpecialsElementProps as unknown as Record<string, unknown>,
+      };
     default:
       return { ...base, props: {} };
   }
