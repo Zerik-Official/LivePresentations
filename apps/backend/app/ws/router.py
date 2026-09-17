@@ -4,7 +4,6 @@ import json
 
 from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.rooms import RoomState, room_manager
 from app.core.security import decode_access_token
@@ -57,7 +56,7 @@ async def ws_room(
             if db_room is None:
                 await websocket.close(code=4404, reason="Sala no encontrada")
                 return
-            room = RoomState(code=db_room.code, presentation_id=db_room.presentation_id, owner_id=db_room.owner_id, current_slide=db_room.current_slide, highlighted_id=db_room.highlighted_id, expires_at=db_room.expires_at)
+            room = RoomState(code=db_room.code, presentation_id=db_room.presentation_id, owner_id=db_room.owner_id, current_slide=db_room.current_slide, highlighted_id=db_room.highlighted_id, show_controls=db_room.show_controls, fullscreen=db_room.fullscreen, anti_spoiler=db_room.anti_spoiler, auto_fullscreen=db_room.auto_fullscreen, expires_at=db_room.expires_at)
             room_manager._rooms[code.upper()] = room
 
     await ws_manager.connect(code, websocket)
@@ -72,6 +71,10 @@ async def ws_room(
                     "current_slide": room.current_slide,
                     "highlighted_id": room.highlighted_id,
                     "code_overlay": room.code_overlay,
+                    "show_controls": room.show_controls,
+                    "fullscreen": room.fullscreen,
+                    "anti_spoiler": room.anti_spoiler,
+                    "auto_fullscreen": room.auto_fullscreen,
                 },
             }
         )
@@ -154,6 +157,57 @@ async def ws_room(
                     if room.code_overlay and room.code_overlay.get("elementId") == element_id:
                         room.code_overlay["scrollTop"] = top
                     await ws_manager.broadcast(code, {"type": "CODE_SCROLL_CHANGED", "payload": {"elementId": element_id, "scrollTop": top, "by": role}})
+
+            elif mtype == "ROOM_CONFIG_UPDATE":
+                show = payload.get("show_controls")
+                fs = payload.get("fullscreen")
+                anti = payload.get("anti_spoiler")
+                auto_fs = payload.get("auto_fullscreen")
+                updated: dict[str, object] = {}
+                if isinstance(show, bool):
+                    room.show_controls = show
+                    updated["show_controls"] = show
+                if isinstance(fs, bool):
+                    room.fullscreen = fs
+                    updated["fullscreen"] = fs
+                if isinstance(anti, bool):
+                    room.anti_spoiler = anti
+                    updated["anti_spoiler"] = anti
+                if isinstance(auto_fs, bool):
+                    room.auto_fullscreen = auto_fs
+                    updated["auto_fullscreen"] = auto_fs
+                if updated:
+                    async with async_session_factory() as _db:
+                        res = await _db.execute(select(Room).where(Room.code == code.upper()))
+                        db_r = res.scalar_one_or_none()
+                        if db_r:
+                            if "show_controls" in updated:
+                                db_r.show_controls = updated["show_controls"]  # type: ignore[assignment]
+                            if "fullscreen" in updated:
+                                db_r.fullscreen = updated["fullscreen"]  # type: ignore[assignment]
+                            if "anti_spoiler" in updated:
+                                db_r.anti_spoiler = updated["anti_spoiler"]  # type: ignore[assignment]
+                            if "auto_fullscreen" in updated:
+                                db_r.auto_fullscreen = updated["auto_fullscreen"]  # type: ignore[assignment]
+                            await _db.commit()
+                    await ws_manager.broadcast(code, {"type": "ROOM_CONFIG_CHANGED", "payload": updated})
+
+            elif mtype == "SPOILER_COUNTDOWN_START":
+                seconds = payload.get("seconds", 3)
+                try:
+                    sec = int(seconds)
+                    sec = max(1, min(10, sec))
+                except Exception:
+                    sec = 3
+                await ws_manager.broadcast(code, {"type": "SPOILER_COUNTDOWN_STARTED", "payload": {"seconds": sec, "by": role}})
+
+            elif mtype == "SPOILER_INTRO_DISMISS":
+                await ws_manager.broadcast(code, {"type": "SPOILER_INTRO_DISMISSED", "payload": {"by": role}})
+
+            elif mtype == "PRESENTATION_FULLSCREEN":
+                enabled = payload.get("enabled")
+                if isinstance(enabled, bool):
+                    await ws_manager.broadcast(code, {"type": "PRESENTATION_FULLSCREEN_CHANGED", "payload": {"enabled": enabled, "by": role}})
 
     except WebSocketDisconnect:
         pass
