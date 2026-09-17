@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { FiCopy, FiDownload, FiLogOut, FiPlus, FiUpload } from "react-icons/fi";
+import { FiCopy, FiDownload, FiEye, FiLogOut, FiPlus, FiSettings, FiUpload } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
@@ -93,6 +93,18 @@ export function DashboardPage(): React.ReactNode {
     } finally {
       setDeleteId(null);
     }
+  }
+
+  /**
+   * Navigate to presenter with optional auto fullscreen.
+   * @param code - Room code
+   */
+  function handlePresent(code: string): void {
+    const room = rooms.find((r) => r.code === code);
+    if (room?.auto_fullscreen ?? true) {
+      void document.documentElement.requestFullscreen?.().catch(() => null);
+    }
+    navigate(`/present/${code}`);
   }
 
   /**
@@ -275,8 +287,21 @@ export function DashboardPage(): React.ReactNode {
                   <span className="font-mono tracking-widest text-zinc-900 dark:text-zinc-100">{r.code}</span>
                   <span className="text-zinc-500 dark:text-zinc-400">Slide {r.current_slide + 1}</span>
                   <div className="flex gap-2">
+                    <TooltipSimple content="Ver QR y configuración" side="top">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setRoomCode(r.code);
+                          setRoomModalOpen(true);
+                        }}
+                        className="cursor-pointer px-2 py-1 text-xs"
+                      >
+                        <FiEye /> <FiSettings size={10} />
+                      </Button>
+                    </TooltipSimple>
                     <TooltipSimple content="Presentar sala" side="top">
-                      <Button variant="primary" size="sm" onClick={() => navigate(`/present/${r.code}`)} className="cursor-pointer px-3 py-1 text-xs">
+                      <Button variant="primary" size="sm" onClick={() => handlePresent(r.code)} className="cursor-pointer px-3 py-1 text-xs">
                         Presentar
                       </Button>
                     </TooltipSimple>
