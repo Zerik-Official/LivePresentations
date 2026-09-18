@@ -21,6 +21,7 @@ export function useElements(
   patchSelected: (patch: Partial<SlideElement> & { propsPatch?: Record<string, unknown> }) => void;
   patchSelectedId: (newId: string) => boolean;
   replaceSelected: (next: SlideElement) => boolean;
+  replaceSubtree: (next: { element: SlideElement; children: SlideElement[] }) => boolean;
   deleteSelected: () => void;
   handleDragEnd: (event: DragEndEvent) => void;
   handleResize: (elemId: string, w: number, h: number) => void;
@@ -104,6 +105,44 @@ export function useElements(
     slides[activeSlide] = { ...slide, elements };
     setData({ ...data, slides });
     if (next.id !== selectedId) setSelectedId(next.id);
+    return true;
+  }
+
+  /**
+   * Replace selected element and its children from a wrapper object.
+   * @param next - Wrapper with element and children
+   * @returns True if replaced
+   */
+  function replaceSubtree(next: { element: SlideElement; children: SlideElement[] }): boolean {
+    if (!data || !selectedId) return false;
+    const slide = data.slides[activeSlide];
+    if (!slide) return false;
+    const newElement = next.element;
+    const newChildren = next.children ?? [];
+    const oldDescendantIds = new Set(getDescendantIds(slide.elements, selectedId));
+    const remaining = slide.elements.filter((e) => e.id !== selectedId && !oldDescendantIds.has(e.id));
+    const remainingIds = new Set(remaining.map((e) => e.id));
+    if (newElement.id !== selectedId && remainingIds.has(newElement.id)) return false;
+    for (const child of newChildren) {
+      if (child.id === newElement.id) return false;
+      if (remainingIds.has(child.id)) return false;
+    }
+    const seen = new Set<string>([newElement.id]);
+    for (const child of newChildren) {
+      if (seen.has(child.id)) return false;
+      seen.add(child.id);
+    }
+    const oldWrapperId = newElement.id;
+    const normalizedChildren = newChildren.map((c) => {
+      if (c.parentId === oldWrapperId || !c.parentId) return c;
+      const parentInSubtree = newChildren.some((x) => x.id === c.parentId) || c.parentId === newElement.id;
+      return parentInSubtree ? c : { ...c, parentId: newElement.id };
+    });
+    const nextElements = [...remaining, newElement, ...normalizedChildren];
+    const slides = [...data.slides];
+    slides[activeSlide] = { ...slide, elements: nextElements };
+    setData({ ...data, slides });
+    if (newElement.id !== selectedId) setSelectedId(newElement.id);
     return true;
   }
 
@@ -255,5 +294,5 @@ export function useElements(
     if (newRootId) setSelectedId(newRootId);
   }
 
-  return { addElement, patchSelected, patchSelectedId, replaceSelected, deleteSelected, handleDragEnd, handleResize, handleReorder, handleSortLayer, setParent, unlinkElement, duplicateWithChildren };
+  return { addElement, patchSelected, patchSelectedId, replaceSelected, replaceSubtree, deleteSelected, handleDragEnd, handleResize, handleReorder, handleSortLayer, setParent, unlinkElement, duplicateWithChildren };
 }
