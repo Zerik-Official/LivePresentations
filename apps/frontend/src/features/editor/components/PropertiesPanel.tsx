@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FiCopy, FiEdit3, FiTrash2 } from "react-icons/fi";
 
+import { CodeBlock } from "@/components/CodeBlock";
 import { Button } from "@/components/ui/Button";
 import { CodeEditorModal } from "@/components/ui/CodeEditorModal";
 import { TooltipSimple } from "@/components/ui/Tooltip";
@@ -21,6 +22,7 @@ interface Props {
   onPatch: (patch: Partial<SlideElement> & { propsPatch?: Record<string, unknown> }) => void;
   onPatchId?: (newId: string) => boolean;
   onReplace?: (next: SlideElement) => boolean;
+  onReplaceSubtree?: (next: { element: SlideElement; children: SlideElement[] }) => boolean;
   onDelete: () => void;
   data?: PresentationData | null;
   slide?: Slide | null;
@@ -36,16 +38,18 @@ interface Props {
  * @param data - Full presentation data
  * @param slide - Active slide for subtree resolution
  */
-export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onDelete, data, slide }: Props): React.ReactNode {
+export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onReplaceSubtree, onDelete, data, slide }: Props): React.ReactNode {
   const [tab, setTab] = useState<Tab>("general");
   const [idDraft, setIdDraft] = useState(selected?.id ?? "");
   const [copied, setCopied] = useState(false);
   const [jsonOpen, setJsonOpen] = useState(false);
   const [jsonError, setJsonError] = useState<string | null>(null);
+  const [idSaved, setIdSaved] = useState(false);
 
   useEffect(() => {
     setIdDraft(selected?.id ?? "");
     setJsonError(null);
+    setIdSaved(false);
   }, [selected?.id]);
 
   useEffect(() => {
@@ -53,6 +57,12 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onDel
     const t = window.setTimeout(() => setCopied(false), 1800);
     return () => window.clearTimeout(t);
   }, [copied]);
+
+  useEffect(() => {
+    if (!idSaved) return;
+    const t = window.setTimeout(() => setIdSaved(false), 2000);
+    return () => window.clearTimeout(t);
+  }, [idSaved]);
 
   const subtreeJson = useMemo(() => {
     if (!selected) return "";
@@ -63,10 +73,7 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onDel
     return JSON.stringify(selected, null, 2);
   }, [selected, slide]);
 
-  const jsonForEditor = useMemo(() => {
-    if (!selected) return "";
-    return JSON.stringify(selected, null, 2);
-  }, [selected]);
+  const jsonForEditor = useMemo(() => subtreeJson, [subtreeJson]);
 
   if (!selected) return <p className="text-xs text-zinc-500 dark:text-zinc-400">Selecciona un elemento en el canvas o en capas.</p>;
 
@@ -75,11 +82,20 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onDel
    */
   function handleIdCommit(): void {
     if (!onPatchId || !selected) return;
-    const ok = onPatchId(idDraft);
+    const trimmed = idDraft.trim();
+    if (!trimmed || trimmed === selected.id) {
+      setJsonError(null);
+      return;
+    }
+    const ok = onPatchId(trimmed);
     if (!ok) {
       setIdDraft(selected.id);
       setJsonError("ID inválido o ya existe");
-    } else setJsonError(null);
+      setIdSaved(false);
+    } else {
+      setJsonError(null);
+      setIdSaved(true);
+    }
   }
 
   /**
@@ -101,6 +117,44 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onDel
   function handleJsonSave(value: string): void {
     try {
       const parsed: unknown = JSON.parse(value);
+      if (parsed && typeof parsed === "object" && "element" in (parsed as Record<string, unknown>)) {
+        const wrapper = parsed as { element?: unknown; children?: unknown };
+        if (wrapper.element) {
+          const elementResult = elementSchema.safeParse(wrapper.element);
+          if (!elementResult.success) {
+            setJsonError(elementResult.error.issues.map((i) => i.message).join(", "));
+            return;
+          }
+          const childrenRaw = Array.isArray(wrapper.children) ? wrapper.children : [];
+          const childrenParsed: SlideElement[] = [];
+          for (const c of childrenRaw) {
+            const r = elementSchema.safeParse(c);
+            if (!r.success) {
+              setJsonError(r.error.issues.map((i) => i.message).join(", "));
+              return;
+            }
+            childrenParsed.push(r.data);
+          }
+          if (onReplaceSubtree) {
+            const ok = onReplaceSubtree({ element: elementResult.data, children: childrenParsed });
+            if (!ok) setJsonError("ID duplicado o estructura inválida");
+            else {
+              setJsonError(null);
+              setJsonOpen(false);
+            }
+            return;
+          }
+          if (onReplace) {
+            const ok = onReplace(elementResult.data);
+            if (!ok) setJsonError("ID duplicado");
+            else {
+              setJsonError(null);
+              setJsonOpen(false);
+            }
+            return;
+          }
+        }
+      }
       const result = elementSchema.safeParse(parsed);
       if (!result.success) {
         setJsonError(result.error.issues.map((i) => i.message).join(", "));
@@ -109,7 +163,10 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onDel
       if (onReplace) {
         const ok = onReplace(result.data);
         if (!ok) setJsonError("ID duplicado");
-        else setJsonError(null);
+        else {
+          setJsonError(null);
+          setJsonOpen(false);
+        }
       }
     } catch (e) {
       setJsonError(e instanceof Error ? e.message : "JSON inválido");
@@ -193,7 +250,10 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onDel
             <div className="flex gap-2">
               <input
                 value={idDraft}
-                onChange={(e) => setIdDraft(e.target.value)}
+                onChange={(e) => {
+                  setIdDraft(e.target.value);
+                  setIdSaved(false);
+                }}
                 onBlur={handleIdCommit}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleIdCommit();
@@ -201,12 +261,19 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onDel
                 placeholder="el-123"
                 className="flex-1 rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-xs outline-none focus:border-zinc-900 dark:focus:border-zinc-400"
               />
-              <Button variant="secondary" size="sm" onClick={handleIdCommit} className="cursor-pointer">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleIdCommit}
+                disabled={!idDraft.trim() || idDraft.trim() === selected.id}
+                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+              >
                 Guardar
               </Button>
             </div>
           </label>
 
+          {idSaved ? <p className="rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-300">Guardado correctamente</p> : null}
           {jsonError ? <p className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-3 py-2 text-xs text-red-700 dark:text-red-300">{jsonError}</p> : null}
 
           <div className="grid grid-cols-2 gap-2">
@@ -222,7 +289,9 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onDel
             <div className="border-b border-zinc-200 dark:border-zinc-700 bg-zinc-100 dark:bg-zinc-800 px-3 py-1.5">
               <span className="text-[11px] font-medium text-zinc-600 dark:text-zinc-300">JSON · incluye hijos si existen</span>
             </div>
-            <pre className="max-h-64 overflow-auto p-3 text-[11px] leading-relaxed text-zinc-700 dark:text-zinc-300">{subtreeJson}</pre>
+            <div className="max-h-64 overflow-auto">
+              <CodeBlock code={subtreeJson} language="json" className="rounded-none border-0 text-[11px] leading-relaxed" showBadge={false} />
+            </div>
           </div>
 
           <CodeEditorModal open={jsonOpen} value={jsonForEditor} language="json" onClose={() => setJsonOpen(false)} onSave={(v) => handleJsonSave(v)} />
