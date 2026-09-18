@@ -20,10 +20,6 @@ export function useFileUpload(): {
    * @returns URL or null on error
    */
   async function upload(file: File): Promise<string | null> {
-    if (file.size > 100 * 1024 * 1024) {
-      setError("Archivo excede 100MB");
-      return null;
-    }
     setUploading(true);
     setError(null);
     try {
