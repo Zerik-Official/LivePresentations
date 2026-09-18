@@ -22,6 +22,7 @@ export function useSlides(
   updateBackground: (color: string) => void;
   updateTransition: (transition: Slide["transition"]) => void;
   reorderSlides: (activeId: string, overId: string) => void;
+  updateSlide: (idx: number, nextSlide: Slide) => boolean;
 } {
   /**
    * Add a new slide.
@@ -113,5 +114,20 @@ export function useSlides(
     setActiveSlide(nextActive);
   }
 
-  return { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition, reorderSlides };
+  /**
+   * Replace a whole slide from JSON editor.
+   * @param idx - Slide index
+   * @param nextSlide - New slide data
+   * @returns True if updated
+   */
+  function updateSlide(idx: number, nextSlide: Slide): boolean {
+    if (!data) return false;
+    if (idx < 0 || idx >= data.slides.length) return false;
+    const slides = [...data.slides];
+    slides[idx] = nextSlide;
+    setData({ ...data, slides });
+    return true;
+  }
+
+  return { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition, reorderSlides, updateSlide };
 }
