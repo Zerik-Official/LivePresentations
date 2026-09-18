@@ -13,6 +13,8 @@ interface Props {
   selected: boolean;
   onSelect: (id: string) => void;
   onResize: (id: string, w: number, h: number) => void;
+  dragDelta?: { x: number; y: number } | null;
+  isDescendantOfDragging?: boolean;
 }
 
 /**
@@ -22,11 +24,13 @@ interface Props {
  * @param onSelect - Selection handler
  * @param onResize - Resize handler
  */
-export function DraggableElement({ element, selected, onSelect, onResize }: Props): React.ReactNode {
+export function DraggableElement({ element, selected, onSelect, onResize, dragDelta, isDescendantOfDragging }: Props): React.ReactNode {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: element.id });
   const rawListeners = listeners as Record<string, unknown> | undefined;
 
-  const translate = CSS.Translate.toString(transform);
+  const activeTranslate = CSS.Translate.toString(transform);
+  const descendantTranslate = isDescendantOfDragging && dragDelta ? `translate3d(${dragDelta.x}px, ${dragDelta.y}px, 0)` : "";
+  const translate = activeTranslate ?? descendantTranslate;
   const rotate = element.rotation ? ` rotate(${element.rotation}deg)` : "";
   const combinedTransform = `${translate ?? ""}${rotate}`.trim() || undefined;
 
@@ -38,7 +42,7 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
     transform: combinedTransform,
     transformOrigin: "center",
     zIndex: element.zIndex,
-    opacity: isDragging ? 0.85 : 1,
+    opacity: isDragging || isDescendantOfDragging ? 0.85 : 1,
   };
 
   /**
@@ -134,8 +138,7 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
         const p = element.props as { src?: string; fit?: string };
         const fit = p.fit ?? "cover";
         const fitClass = fit === "contain" ? "object-contain" : fit === "fill" ? "object-fill" : fit === "none" ? "object-none" : "object-cover";
-        const bgClass = fit === "contain" ? "bg-zinc-100 dark:bg-zinc-800" : "";
-        return <img src={p.src ?? ""} alt="" className={`h-full w-full rounded-md ${fitClass} ${bgClass}`} draggable={false} />;
+        return <img src={p.src ?? ""} alt="" className={`h-full w-full rounded-md ${fitClass} bg-transparent`} draggable={false} />;
       }
       case "shape": {
         const p = element.props as { fill?: string; radius?: number; borderColor?: string; borderWidth?: number; variant?: string };
@@ -245,6 +248,8 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
 
   const isIconTransparent = element.type === "icon" && (element.props as { bg?: string }).bg === "transparent";
   const isTextTransparent = element.type === "text" && !(element.props as { backgroundEnabled?: boolean }).backgroundEnabled;
+  const isImage = element.type === "image";
+  const isTransparentVisual = isIconTransparent || isTextTransparent || isImage;
 
   /**
    * Handle pointer down to select element and forward to dnd-kit.
@@ -260,7 +265,7 @@ export function DraggableElement({ element, selected, onSelect, onResize }: Prop
     <div
       ref={setNodeRef}
       style={style}
-      className={`absolute select-none rounded-md border ${isIconTransparent || isTextTransparent ? "bg-transparent" : "bg-white"} ${selected ? "border-zinc-900 ring-2 ring-zinc-900" : isIconTransparent ? "border-dashed border-zinc-300" : isTextTransparent ? "border-transparent" : "border-zinc-200"} ${isDragging ? "shadow-lg" : ""}`}
+      className={`absolute select-none rounded-md border ${isTransparentVisual ? "bg-transparent" : "bg-white"} ${selected ? "border-zinc-900 ring-2 ring-zinc-900" : isTransparentVisual ? "border-transparent" : "border-zinc-200"} ${isDragging || isDescendantOfDragging ? "shadow-lg" : ""}`}
       onPointerDown={handlePointerDown}
       onClick={() => onSelect(element.id)}
       {...attributes}
