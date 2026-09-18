@@ -16,6 +16,7 @@ interface Props {
   onSort: (activeId: string, overId: string) => void;
   data: PresentationData | null;
   onUpdateData: (data: PresentationData) => void;
+  onSetParent?: (childId: string, parentId: string | null) => void;
 }
 
 /**
@@ -26,7 +27,7 @@ interface Props {
  * @param onReorder - Reorder handler
  * @param onSort - Sort handler
  */
-export function EditorSidebar({ slide, selectedId, onSelect, onReorder, onSort, data, onUpdateData }: Props): React.ReactNode {
+export function EditorSidebar({ slide, selectedId, onSelect, onReorder, onSort, data, onUpdateData, onSetParent }: Props): React.ReactNode {
   const [tab, setTab] = useState<Tab>("layers");
   const [variablesOpen, setVariablesOpen] = useState(false);
 
@@ -59,7 +60,7 @@ export function EditorSidebar({ slide, selectedId, onSelect, onReorder, onSort, 
 
         <div className="flex-1 overflow-y-auto p-3">
           {tab === "layers" ? (
-            <Layers slide={slide} selectedId={selectedId} onSelect={onSelect} onReorder={onReorder} onSort={onSort} />
+            <Layers slide={slide} selectedId={selectedId} onSelect={onSelect} onReorder={onReorder} onSort={onSort} onSetParent={onSetParent} />
           ) : tab === "utilities" ? (
             <div className="space-y-3">
               <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Utilidades</h3>
