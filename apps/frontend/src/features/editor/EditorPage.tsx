@@ -46,7 +46,13 @@ export function EditorPage(): React.ReactNode {
   }, [id, title, data]);
 
   const { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition, reorderSlides } = useSlides(data, setData, activeSlide, setActiveSlide, setSelectedId);
-  const { addElement, patchSelected, deleteSelected, handleDragEnd, handleResize, handleReorder, handleSortLayer } = useElements(data, setData, activeSlide, selectedId, setSelectedId);
+  const { addElement, patchSelected, patchSelectedId, replaceSelected, deleteSelected, handleDragEnd, handleResize, handleReorder, handleSortLayer, setParent } = useElements(
+    data,
+    setData,
+    activeSlide,
+    selectedId,
+    setSelectedId,
+  );
   const { handleCanvasDrop } = useCanvasDrop(data, activeSlide, setData, setSelectedId, setError);
 
   useKeyboardDelete(selectedId, () => setConfirmElementOpen(true));
@@ -157,10 +163,18 @@ export function EditorPage(): React.ReactNode {
             </div>
           </DndContext>
 
-          <PropertiesOverlay selected={selected} onPatch={patchSelected} onDelete={() => setConfirmElementOpen(true)} data={data} />
+          <PropertiesOverlay
+            selected={selected}
+            onPatch={patchSelected}
+            onPatchId={patchSelectedId}
+            onReplace={replaceSelected}
+            onDelete={() => setConfirmElementOpen(true)}
+            data={data}
+            slide={slide}
+          />
         </main>
 
-        <EditorSidebar slide={slide} selectedId={selectedId} onSelect={setSelectedId} onReorder={handleReorder} onSort={handleSortLayer} data={data} onUpdateData={setData} />
+        <EditorSidebar slide={slide} selectedId={selectedId} onSelect={setSelectedId} onReorder={handleReorder} onSort={handleSortLayer} data={data} onUpdateData={setData} onSetParent={setParent} />
       </div>
 
       <ConfirmDialog
