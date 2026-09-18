@@ -14,7 +14,15 @@ export interface AuthResponse {
   user: User;
 }
 
-const API_BASE = "";
+export interface RuntimeConfig {
+  turnstile_enabled: boolean;
+  turnstile_site_key: string | null;
+  upload_quota_bytes: number;
+}
+
+const API_BASE = (import.meta.env.VITE_BACKEND_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+
+export const TURNSTILE_PUBLIC_KEY = import.meta.env.VITE_TURNSTILE_PUBLIC_KEY as string | undefined;
 
 function getAuthHeader(): Record<string, string> {
   const token = localStorage.getItem("access_token");
@@ -27,11 +35,11 @@ function getAuthHeader(): Record<string, string> {
  * @param password - User password (min 8 chars)
  * @returns Auth response with token and user
  */
-export async function register(email: string, password: string): Promise<AuthResponse> {
+export async function register(email: string, password: string, turnstileToken?: string): Promise<AuthResponse> {
   const res = await fetch(`${API_BASE}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, turnstile_token: turnstileToken }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Error al registrarse" }));
@@ -46,17 +54,23 @@ export async function register(email: string, password: string): Promise<AuthRes
  * @param password - User password
  * @returns Auth response with token and user
  */
-export async function login(email: string, password: string): Promise<AuthResponse> {
+export async function login(email: string, password: string, turnstileToken?: string): Promise<AuthResponse> {
   const res = await fetch(`${API_BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, turnstile_token: turnstileToken }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: "Credenciales inválidas" }));
     throw new Error(err.detail ?? "Credenciales inválidas");
   }
   return res.json() as Promise<AuthResponse>;
+}
+
+export async function fetchRuntimeConfig(): Promise<RuntimeConfig> {
+  const res = await fetch(`${API_BASE}/api/config`);
+  if (!res.ok) throw new Error("No se pudo cargar la configuración");
+  return res.json() as Promise<RuntimeConfig>;
 }
 
 /**
@@ -244,7 +258,7 @@ export async function deleteRoom(code: string): Promise<void> {
 }
 
 /**
- * Upload an image or video (max 100MB).
+ * Upload an image or video within the configured user quota.
  * @param file - File to upload
  * @returns URL of uploaded file
  */
