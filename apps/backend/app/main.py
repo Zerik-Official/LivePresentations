@@ -3,7 +3,6 @@ from __future__ import annotations
 import asyncio
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from pathlib import Path
 
 from fastapi import FastAPI
 from sqlalchemy import delete
@@ -36,9 +35,9 @@ async def lifespan(_app: FastAPI):  # type: ignore[no-untyped-def]
                     now_naive = datetime.now(timezone.utc).replace(tzinfo=None)
                     await db.execute(delete(Room).where(Room.expires_at < now_naive))
                     await db.commit()
-                if _upload_dir.exists():
+                if settings.upload_dir.exists():
                     cutoff = datetime.now(timezone.utc).timestamp() - 7 * 24 * 3600
-                    for f in _upload_dir.iterdir():
+                    for f in settings.upload_dir.rglob("*"):
                         try:
                             if f.is_file() and f.stat().st_mtime < cutoff:
                                 f.unlink()
@@ -60,10 +59,10 @@ async def lifespan(_app: FastAPI):  # type: ignore[no-untyped-def]
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
 
-_allow_all = "*" in settings.cors_origins
+_allow_all = "*" in settings.parsed_cors_origins
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origins if not _allow_all else ["*"],
+    allow_origins=settings.parsed_cors_origins if not _allow_all else ["*"],
     allow_credentials=False if _allow_all else True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -76,11 +75,9 @@ app.include_router(rooms_router, prefix="/api")
 app.include_router(uploads_router, prefix="/api")
 app.include_router(ws_router)
 
-_db_path = settings.database_url.replace("sqlite+aiosqlite:///", "")
-_instance = Path(_db_path).parent if _db_path else Path("instance")
-_upload_dir = _instance / "uploads"
-_upload_dir.mkdir(parents=True, exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(_instance)), name="static")
+settings.instance_dir.mkdir(parents=True, exist_ok=True)
+settings.upload_dir.mkdir(parents=True, exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(settings.instance_dir)), name="static")
 
 
 @app.get("/health")
@@ -93,3 +90,13 @@ async def health() -> dict[str, str]:
 async def api_health() -> dict[str, str]:
     """API health check."""
     return {"status": "ok"}
+
+
+@app.get("/api/config")
+async def public_config() -> dict[str, object]:
+    """Return public runtime configuration needed by the frontend."""
+    return {
+        "turnstile_enabled": settings.turnstile_enabled,
+        "turnstile_site_key": settings.turnstile_public_key if settings.turnstile_enabled else None,
+        "upload_quota_bytes": settings.upload_quota_bytes,
+    }
