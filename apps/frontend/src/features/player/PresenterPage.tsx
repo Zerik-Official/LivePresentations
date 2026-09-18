@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useParams } from "react-router-dom";
 
+import { Spinner } from "@/components/ui/Spinner";
 import { getPresentation, getRoom } from "@/lib/api";
 import { parsePresentationData } from "@/types/presentation";
 import { AntiSpoilerOverlay } from "./elements/AntiSpoilerOverlay";
@@ -57,8 +58,19 @@ export function PresenterPage(): React.ReactNode {
     return () => window.clearTimeout(id);
   }, [room.countdown, room]);
 
-  if (!code) return <div className="p-6 text-sm">Código no válido</div>;
-  if (!data) return <div className="p-6 text-sm text-zinc-500">Cargando presentación...</div>;
+  if (!code)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-6">
+        <p className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white">Código no válido</p>
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-950 p-6">
+        <Spinner className="size-7 text-white" />
+        <p className="text-sm font-medium text-zinc-300">Cargando presentación...</p>
+      </div>
+    );
 
   const slide = data.slides[room.currentSlide] ?? null;
   const specialsElements = slide ? slide.elements.filter((e) => e.type === "specials") : [];
