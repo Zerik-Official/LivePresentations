@@ -1,4 +1,4 @@
-import { DndContext } from "@dnd-kit/core";
+import { DndContext, type DragEndEvent, type DragMoveEvent, type DragStartEvent } from "@dnd-kit/core";
 import { useEffect, useMemo, useState } from "react";
 import { FiArrowLeft, FiDownload, FiSave, FiUpload } from "react-icons/fi";
 import { Link, useParams } from "react-router-dom";
@@ -6,12 +6,13 @@ import { Link, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Select } from "@/components/ui/Select";
+import { Spinner } from "@/components/ui/Spinner";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ExportPresentationModal } from "@/components/ExportPresentationModal";
 import { ImportPresentationModal } from "@/components/ImportPresentationModal";
 import { getPresentation, updatePresentation } from "@/lib/api";
-import { parsePresentationData, type PresentationData, type Slide } from "@/types/presentation";
+import { getDescendantIds, parsePresentationData, type PresentationData, type Slide } from "@/types/presentation";
 import { DraggableElement } from "./DraggableElement";
 import { EditorSidebar } from "./components/EditorSidebar";
 import { PropertiesOverlay } from "./components/PropertiesOverlay";
@@ -37,6 +38,8 @@ export function EditorPage(): React.ReactNode {
   const [confirmElementOpen, setConfirmElementOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
+  const [dragActiveId, setDragActiveId] = useState<string | null>(null);
+  const [dragDelta, setDragDelta] = useState<{ x: number; y: number } | null>(null);
 
   const slide = useMemo(() => (data ? (data.slides[activeSlide] ?? null) : null), [data, activeSlide]);
   const selected = useMemo(() => slide?.elements.find((e) => e.id === selectedId) ?? null, [slide, selectedId]);
@@ -45,8 +48,8 @@ export function EditorPage(): React.ReactNode {
     return { id, title, data: data as unknown as Record<string, unknown>, owner_id: "", created_at: "", updated_at: "" } as unknown as import("@/lib/api").Presentation;
   }, [id, title, data]);
 
-  const { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition, reorderSlides } = useSlides(data, setData, activeSlide, setActiveSlide, setSelectedId);
-  const { addElement, patchSelected, patchSelectedId, replaceSelected, deleteSelected, handleDragEnd, handleResize, handleReorder, handleSortLayer, setParent } = useElements(
+  const { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition, reorderSlides, updateSlide } = useSlides(data, setData, activeSlide, setActiveSlide, setSelectedId);
+  const { addElement, patchSelected, patchSelectedId, replaceSelected, replaceSubtree, deleteSelected, handleDragEnd, handleResize, handleReorder, handleSortLayer, setParent } = useElements(
     data,
     setData,
     activeSlide,
@@ -55,6 +58,38 @@ export function EditorPage(): React.ReactNode {
   );
   const { handleCanvasDrop } = useCanvasDrop(data, activeSlide, setData, setSelectedId, setError);
 
+  const descendantIdsForDrag = useMemo(() => {
+    if (!slide || !dragActiveId) return new Set<string>();
+    return new Set(getDescendantIds(slide.elements, dragActiveId));
+  }, [slide, dragActiveId]);
+
+  /**
+   * Handle drag start to track active id for descendant follow.
+   * @param event - Drag start event
+   */
+  function onDragStart(event: DragStartEvent): void {
+    setDragActiveId(String(event.active.id));
+    setDragDelta({ x: 0, y: 0 });
+  }
+
+  /**
+   * Handle drag move to sync children.
+   * @param event - Drag move event
+   */
+  function onDragMove(event: DragMoveEvent): void {
+    setDragDelta({ x: event.delta.x, y: event.delta.y });
+  }
+
+  /**
+   * Handle drag end and reset tracking.
+   * @param event - Drag end event
+   */
+  function onDragEnd(event: DragEndEvent): void {
+    setDragActiveId(null);
+    setDragDelta(null);
+    handleDragEnd(event);
+  }
+
   useKeyboardDelete(selectedId, () => setConfirmElementOpen(true));
 
   useEffect(() => {
@@ -62,7 +97,17 @@ export function EditorPage(): React.ReactNode {
     void getPresentation(id)
       .then((p) => {
         setTitle(p.title);
-        setData(parsePresentationData(p.data));
+        const parsed = parsePresentationData(p.data);
+        setData(parsed);
+        void import("@/lib/prism").then(({ highlight, resolveLang }) => {
+          const langs = new Set<string>();
+          for (const sl of parsed.slides) for (const el of sl.elements) if (el.type === "code") langs.add(resolveLang((el.props as { language?: string }).language));
+          for (const l of langs) highlight("const a = 1", l);
+          if (langs.size === 0) highlight("const a = 1", "javascript");
+        });
+        void import("@monaco-editor/react").then(({ loader }) => {
+          void loader.init().catch(() => null);
+        });
       })
       .catch(() => setError("No se pudo cargar la presentación"));
   }, [id]);
@@ -85,8 +130,20 @@ export function EditorPage(): React.ReactNode {
 
 
 
-  if (error && !data) return <div className="p-6 text-sm text-red-600 dark:text-red-400">{error}</div>;
-  if (!data) return <div className="p-6 text-sm text-zinc-500 dark:text-zinc-400">Cargando editor...</div>;
+  if (error && !data)
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-50 dark:bg-zinc-950 p-6">
+        <p className="rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-4 py-3 text-sm font-medium text-red-700 dark:text-red-300">{error}</p>
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-50 dark:bg-zinc-950">
+        <Spinner className="size-7 text-zinc-900 dark:text-white" />
+        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Cargando editor...</p>
+        <p className="text-xs text-zinc-500 dark:text-zinc-500">Preparando diapositivas y resaltado de código</p>
+      </div>
+    );
 
   return (
     <div className="flex h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
@@ -129,6 +186,7 @@ export function EditorPage(): React.ReactNode {
           onDelete={(idx) => setConfirmSlideIdx(idx)}
           onDuplicate={duplicateSlide}
           onReorder={reorderSlides}
+          onUpdateSlide={updateSlide}
         />
 
         <main className="flex flex-1 flex-col items-center overflow-auto p-4 bg-zinc-50 dark:bg-zinc-950">
@@ -145,7 +203,7 @@ export function EditorPage(): React.ReactNode {
             </div>
           )}
 
-          <DndContext onDragEnd={handleDragEnd}>
+          <DndContext onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd}>
             <div
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => void handleCanvasDrop(e)}
@@ -156,7 +214,17 @@ export function EditorPage(): React.ReactNode {
                 slide.elements
                   .slice()
                   .sort((a, b) => a.zIndex - b.zIndex)
-                  .map((el) => <DraggableElement key={el.id} element={el} selected={selectedId === el.id} onSelect={setSelectedId} onResize={handleResize} />)
+                  .map((el) => (
+                    <DraggableElement
+                      key={el.id}
+                      element={el}
+                      selected={selectedId === el.id}
+                      onSelect={setSelectedId}
+                      onResize={handleResize}
+                      dragDelta={dragDelta}
+                      isDescendantOfDragging={descendantIdsForDrag.has(el.id)}
+                    />
+                  ))
               ) : (
                 <div className="flex h-full items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">Crea una diapositiva</div>
               )}
@@ -168,6 +236,7 @@ export function EditorPage(): React.ReactNode {
             onPatch={patchSelected}
             onPatchId={patchSelectedId}
             onReplace={replaceSelected}
+            onReplaceSubtree={replaceSubtree}
             onDelete={() => setConfirmElementOpen(true)}
             data={data}
             slide={slide}
