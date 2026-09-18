@@ -29,10 +29,6 @@ export function useCanvasDrop(
     if (!slide) return;
     const file = e.dataTransfer.files[0];
     if (!file) return;
-    if (file.size > 100 * 1024 * 1024) {
-      onError("Archivo excede 100MB");
-      return;
-    }
     if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
     try {
       const { url } = await uploadFile(file);
