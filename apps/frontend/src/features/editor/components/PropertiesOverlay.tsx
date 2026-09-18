@@ -11,6 +11,7 @@ interface Props {
   onPatch: (patch: Partial<SlideElement> & { propsPatch?: Record<string, unknown> }) => void;
   onPatchId?: (newId: string) => boolean;
   onReplace?: (next: SlideElement) => boolean;
+  onReplaceSubtree?: (next: { element: SlideElement; children: SlideElement[] }) => boolean;
   onDelete: () => void;
   data?: PresentationData | null;
   slide?: Slide | null;
@@ -22,7 +23,7 @@ interface Props {
  * @param onPatch - Patch handler
  * @param onDelete - Delete handler
  */
-export function PropertiesOverlay({ selected, onPatch, onPatchId, onReplace, onDelete, data, slide }: Props): React.ReactNode {
+export function PropertiesOverlay({ selected, onPatch, onPatchId, onReplace, onReplaceSubtree, onDelete, data, slide }: Props): React.ReactNode {
   const [minimized, setMinimized] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const dragRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null);
@@ -85,7 +86,7 @@ export function PropertiesOverlay({ selected, onPatch, onPatchId, onReplace, onD
       </div>
       {!minimized && (
         <div className="max-h-[60vh] overflow-y-auto p-4">
-          <PropertiesPanel selected={selected} onPatch={onPatch} onPatchId={onPatchId} onReplace={onReplace} onDelete={onDelete} data={data} slide={slide} />
+          <PropertiesPanel selected={selected} onPatch={onPatch} onPatchId={onPatchId} onReplace={onReplace} onReplaceSubtree={onReplaceSubtree} onDelete={onDelete} data={data} slide={slide} />
         </div>
       )}
     </div>
