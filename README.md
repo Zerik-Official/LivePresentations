@@ -122,6 +122,8 @@ uvicorn app.main:app --host 0.0.0.0 --port 8000 --app-dir apps/backend --reload
 
 API en `http://localhost:8000`, docs en `http://localhost:8000/docs`, WebSocket en `/ws/room/{code}`.
 
+La configuración se lee desde `apps/backend/.env` aunque Uvicorn se lance desde la raíz. `CORS_ORIGINS` acepta URLs separadas por comas; `ENABLE_TURNSTILLE_CAPTCHA` está activo por defecto, pero Turnstile solo se activa cuando existen `TURNSTILE_PUBLIC_KEY` y `TURNSTILE_PRIVATE_KEY`. `UPLOAD_QUOTA_MB` define la cuota de assets por usuario y vale 20 MB por defecto. Si no existe `.env`, CORS queda abierto.
+
 En desarrollo el frontend hace proxy a `http://localhost:8000`. En escritorio puedes abrir `http://<tu-ip>:8000/docs` para probar.
 
 ### Build de producción
