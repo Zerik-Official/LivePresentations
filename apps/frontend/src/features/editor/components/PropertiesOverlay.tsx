@@ -2,15 +2,18 @@ import { useRef, useState } from "react";
 import { FiMaximize2, FiMinimize2, FiMove } from "react-icons/fi";
 
 import { TooltipSimple } from "@/components/ui/Tooltip";
-import type { PresentationData, SlideElement } from "@/types/presentation";
+import type { PresentationData, Slide, SlideElement } from "@/types/presentation";
 
 import { PropertiesPanel } from "./PropertiesPanel";
 
 interface Props {
   selected: SlideElement | null;
   onPatch: (patch: Partial<SlideElement> & { propsPatch?: Record<string, unknown> }) => void;
+  onPatchId?: (newId: string) => boolean;
+  onReplace?: (next: SlideElement) => boolean;
   onDelete: () => void;
   data?: PresentationData | null;
+  slide?: Slide | null;
 }
 
 /**
@@ -19,7 +22,7 @@ interface Props {
  * @param onPatch - Patch handler
  * @param onDelete - Delete handler
  */
-export function PropertiesOverlay({ selected, onPatch, onDelete, data }: Props): React.ReactNode {
+export function PropertiesOverlay({ selected, onPatch, onPatchId, onReplace, onDelete, data, slide }: Props): React.ReactNode {
   const [minimized, setMinimized] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const dragRef = useRef<{ x: number; y: number; startX: number; startY: number } | null>(null);
@@ -82,7 +85,7 @@ export function PropertiesOverlay({ selected, onPatch, onDelete, data }: Props):
       </div>
       {!minimized && (
         <div className="max-h-[60vh] overflow-y-auto p-4">
-          <PropertiesPanel selected={selected} onPatch={onPatch} onDelete={onDelete} data={data} />
+          <PropertiesPanel selected={selected} onPatch={onPatch} onPatchId={onPatchId} onReplace={onReplace} onDelete={onDelete} data={data} slide={slide} />
         </div>
       )}
     </div>
