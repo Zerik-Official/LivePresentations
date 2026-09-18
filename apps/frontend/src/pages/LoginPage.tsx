@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { FiAlertCircle } from "react-icons/fi";
 import { Link, useNavigate } from "react-router-dom";
 
 import { login } from "@/lib/api";
+import { fetchRuntimeConfig, TURNSTILE_PUBLIC_KEY, type RuntimeConfig } from "@/lib/api";
+import { TurnstileCaptcha } from "@/components/TurnstileCaptcha";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
@@ -15,6 +17,12 @@ export function LoginPage(): React.ReactNode {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [runtimeConfig, setRuntimeConfig] = useState<RuntimeConfig | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    void fetchRuntimeConfig().then(setRuntimeConfig).catch(() => setRuntimeConfig({ turnstile_enabled: Boolean(TURNSTILE_PUBLIC_KEY), turnstile_site_key: TURNSTILE_PUBLIC_KEY ?? null, upload_quota_bytes: 20 * 1024 * 1024 }));
+  }, []);
 
   /**
    * Handle login form submission.
@@ -25,7 +33,7 @@ export function LoginPage(): React.ReactNode {
     setError(null);
     setLoading(true);
     try {
-      const data = await login(email, password);
+      const data = await login(email, password, turnstileToken ?? undefined);
       setAuth(data);
       navigate("/dashboard");
     } catch (err) {
@@ -74,6 +82,8 @@ export function LoginPage(): React.ReactNode {
             className="mt-1 w-full rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:focus:border-zinc-300 focus:ring-1 focus:ring-zinc-900"
           />
         </label>
+
+        {runtimeConfig?.turnstile_enabled && runtimeConfig.turnstile_site_key && <TurnstileCaptcha siteKey={runtimeConfig.turnstile_site_key} onToken={setTurnstileToken} />}
 
         <button
           type="submit"
