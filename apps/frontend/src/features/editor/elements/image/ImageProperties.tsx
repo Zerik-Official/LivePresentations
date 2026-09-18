@@ -27,7 +27,7 @@ export function ImageProperties({ element, onPatch }: Props): React.ReactNode {
         <input value={src} onChange={(e) => onPatch({ propsPatch: { src: e.target.value } })} placeholder="https://..." className="mt-1 w-full rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-sm outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
       </label>
       <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700">
-        <FiUpload /> {uploading ? "Subiendo..." : "Subir imagen (max 100MB)"}
+        <FiUpload /> {uploading ? "Subiendo..." : "Subir imagen"}
         <input
           type="file"
           accept="image/*"
