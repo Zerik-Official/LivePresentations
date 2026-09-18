@@ -32,8 +32,6 @@ export function CodeEditorModal({ open, value, language, onClose, onSave }: Prop
     }
   }, [open, value, language]);
 
-  const isJson = lang === "json";
-
   return (
     <Modal open={open} onClose={onClose} className="w-full max-w-5xl h-[85vh] max-h-[85vh]">
       <ModalHeader title="Editor de código" subtitle="Soporta indentación, saltos de línea y autocompletado" onClose={onClose} />
@@ -43,7 +41,6 @@ export function CodeEditorModal({ open, value, language, onClose, onSave }: Prop
           <div className="w-48">
             <Select value={lang} options={LANGUAGES} onChange={setLang} placeholder="Lenguaje" />
           </div>
-          <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">{isJson ? "JSON validado al guardar" : "Tab 2 espacios · Enter conserva indentación"}</span>
         </div>
         <div className="flex-1 min-h-0">
           <CodeEditor value={draft} language={lang} onChange={setDraft} height="60vh" />
