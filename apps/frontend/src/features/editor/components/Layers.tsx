@@ -146,7 +146,7 @@ export function Layers({ slide, selectedId, onSelect, onReorder, onSort, onSetPa
   const descendantIds = selected ? new Set(getDescendantIds(slide.elements, selected.id)) : new Set<string>();
   const parentOptions = slide.elements
     .filter((e) => e.id !== selected?.id && !descendantIds.has(e.id))
-    .map((e) => ({ value: e.id, label: `${e.type} · ${e.id.slice(0, 6)}` }));
+    .map((e) => ({ value: e.id, label: `${e.type} · ${e.id}` }));
   const withEmpty = [{ value: "__none__", label: "Sin padre" }, ...parentOptions];
 
   return (
@@ -168,13 +168,13 @@ export function Layers({ slide, selectedId, onSelect, onReorder, onSort, onSetPa
       </div>
 
       {selected && onSetParent ? (
-        <div className="mt-4 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-3">
+        <div className="mt-4 overflow-hidden rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 p-3">
           <h5 className="text-xs font-semibold text-zinc-700 dark:text-zinc-200">Jerarquía</h5>
           <p className="mt-1 text-[11px] text-zinc-500 dark:text-zinc-400">Vincula este elemento a un padre. Al mover el padre, los hijos se desplazan con él.</p>
-          <div className="mt-2 flex flex-col gap-2">
-            <div className="flex items-center gap-2">
+          <div className="mt-2 flex min-w-0 flex-col gap-2">
+            <div className="flex min-w-0 items-center gap-2">
               <span className="w-12 shrink-0 text-xs text-zinc-600 dark:text-zinc-300">Padre</span>
-              <div className="flex-1">
+              <div className="min-w-0 flex-1 overflow-hidden">
                 <Select
                   value={selected.parentId ?? "__none__"}
                   options={withEmpty}
