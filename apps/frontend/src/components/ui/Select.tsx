@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { FiCheck, FiChevronDown } from "react-icons/fi";
 
+import { TooltipSimple } from "./Tooltip";
+
 /**
  * Option for the custom select.
  */
@@ -78,20 +80,30 @@ export function Select({ value, options, onChange, placeholder = "Seleccionar" }
 
   const selected = options.find((o) => o.value === value);
 
+  const triggerButton = (
+    <button
+      ref={triggerRef}
+      type="button"
+      onClick={() => setOpen((v) => !v)}
+      className="flex w-full items-center justify-between gap-2 rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-xs hover:border-zinc-400 dark:hover:border-zinc-500"
+    >
+      <span className="flex min-w-0 items-center gap-2 truncate">
+        {selected?.thumb ? <span className="flex h-4 w-6 shrink-0 overflow-hidden rounded">{selected.thumb}</span> : null}
+        <span className="truncate">{selected?.label ?? placeholder}</span>
+      </span>
+      <FiChevronDown className={`shrink-0 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} size={12} />
+    </button>
+  );
+
   return (
-    <div ref={rootRef} className="relative">
-      <button
-        ref={triggerRef}
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-2 rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-xs hover:border-zinc-400 dark:hover:border-zinc-500"
-      >
-        <span className="flex min-w-0 items-center gap-2 truncate">
-          {selected?.thumb ? <span className="flex h-4 w-6 shrink-0 overflow-hidden rounded">{selected.thumb}</span> : null}
-          <span className="truncate">{selected?.label ?? placeholder}</span>
-        </span>
-        <FiChevronDown className={`shrink-0 text-zinc-400 transition-transform ${open ? "rotate-180" : ""}`} size={12} />
-      </button>
+    <div ref={rootRef} className="relative min-w-0">
+      {selected ? (
+        <TooltipSimple content={selected.label} side="left">
+          {triggerButton}
+        </TooltipSimple>
+      ) : (
+        triggerButton
+      )}
 
       {open && pos
         ? createPortal(
@@ -101,19 +113,20 @@ export function Select({ value, options, onChange, placeholder = "Seleccionar" }
               className="fixed z-9999 flex max-h-56 flex-col gap-1 overflow-y-auto rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-1 shadow-xl"
             >
               {options.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => {
-                    onChange(opt.value);
-                    setOpen(false);
-                  }}
-                  className={`flex items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs ${opt.value === value ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100" : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
-                >
-                  {opt.thumb ? <span className="flex h-4 w-6 shrink-0 overflow-hidden rounded">{opt.thumb}</span> : null}
-                  <span className="flex-1 truncate">{opt.label}</span>
-                  {opt.value === value ? <FiCheck className="shrink-0 text-zinc-900 dark:text-zinc-100" size={12} /> : null}
-                </button>
+                <TooltipSimple key={opt.value} content={opt.label} side="left">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onChange(opt.value);
+                      setOpen(false);
+                    }}
+                    className={`flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-left text-xs ${opt.value === value ? "bg-zinc-100 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100" : "text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800"}`}
+                  >
+                    {opt.thumb ? <span className="flex h-4 w-6 shrink-0 overflow-hidden rounded">{opt.thumb}</span> : null}
+                    <span className="flex-1 truncate">{opt.label}</span>
+                    {opt.value === value ? <FiCheck className="shrink-0 text-zinc-900 dark:text-zinc-100" size={12} /> : null}
+                  </button>
+                </TooltipSimple>
               ))}
             </div>,
             document.body,
