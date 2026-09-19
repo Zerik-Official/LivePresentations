@@ -5,8 +5,8 @@ import { FiLink2, FiX } from "react-icons/fi";
 
 import { Select } from "@/components/ui/Select";
 import { TooltipSimple } from "@/components/ui/Tooltip";
+import { buildElementTree, getDescendantIds } from "@/lib/presentation/hierarchy";
 import type { Slide } from "@/types/presentation";
-import { buildElementTree, getDescendantIds } from "@/types/presentation";
 
 interface Props {
   slide: Slide | null;

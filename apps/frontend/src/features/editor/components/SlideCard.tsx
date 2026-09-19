@@ -7,7 +7,8 @@ import { Button } from "@/components/ui/Button";
 import { CodeEditorModal } from "@/components/ui/CodeEditorModal";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { TooltipSimple } from "@/components/ui/Tooltip";
-import { slideSchema, type Slide } from "@/types/presentation";
+import { slideSchema } from "@/schemas/presentation.schema";
+import type { Slide } from "@/types/presentation";
 import { SlidePreview } from "./SlidePreview";
 
 interface Props {

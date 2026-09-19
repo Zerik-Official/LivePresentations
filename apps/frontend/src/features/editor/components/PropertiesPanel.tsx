@@ -5,15 +5,10 @@ import { CodeBlock } from "@/components/CodeBlock";
 import { Button } from "@/components/ui/Button";
 import { CodeEditorModal } from "@/components/ui/CodeEditorModal";
 import { TooltipSimple } from "@/components/ui/Tooltip";
+import { getSubtree } from "@/lib/presentation/hierarchy";
+import { elementSchema } from "@/schemas/presentation.schema";
 import type { PresentationData, Slide, SlideElement } from "@/types/presentation";
-import { elementSchema, getSubtree } from "@/types/presentation";
-import { CodeProperties } from "../elements/code/CodeProperties";
-import { IconProperties } from "../elements/icon/IconProperties";
-import { ImageProperties } from "../elements/image/ImageProperties";
-import { ShapeProperties } from "../elements/shape/ShapeProperties";
-import { SpecialsProperties } from "../elements/specials/SpecialsProperties";
-import { TextProperties } from "../elements/text/TextProperties";
-import { VideoProperties } from "../elements/video/VideoProperties";
+import { elementRegistry } from "../elements/registry";
 
 type Tab = "general" | "code";
 
@@ -173,6 +168,8 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onRep
     }
   }
 
+  const PropertiesComponent = selected ? elementRegistry.tryGet(selected.type)?.getPropertiesComponent() ?? null : null;
+
   return (
     <div className="space-y-3">
       <div className="flex gap-1 rounded-lg bg-zinc-100 dark:bg-zinc-800 p-1">
@@ -229,13 +226,7 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onRep
             <span className="w-10 text-right text-zinc-500 dark:text-zinc-400">{selected.rotation}°</span>
           </label>
 
-          {selected.type === "text" && <TextProperties element={selected} onPatch={onPatch} />}
-          {selected.type === "image" && <ImageProperties element={selected} onPatch={onPatch} />}
-          {selected.type === "video" && <VideoProperties element={selected} onPatch={onPatch} />}
-          {selected.type === "icon" && <IconProperties element={selected} onPatch={onPatch} />}
-          {selected.type === "shape" && <ShapeProperties element={selected} onPatch={onPatch} />}
-          {selected.type === "code" && <CodeProperties element={selected} onPatch={onPatch} />}
-          {selected.type === "specials" && <SpecialsProperties element={selected} onPatch={onPatch} data={data} />}
+          {PropertiesComponent ? <PropertiesComponent element={selected} onPatch={onPatch} data={data} /> : null}
 
           <Button variant="danger" size="sm" onClick={onDelete} className="cursor-pointer">
             <FiTrash2 /> Eliminar
@@ -261,13 +252,7 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onRep
                 placeholder="el-123"
                 className="flex-1 rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-3 py-2 text-xs outline-none focus:border-zinc-900 dark:focus:border-zinc-400"
               />
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={handleIdCommit}
-                disabled={!idDraft.trim() || idDraft.trim() === selected.id}
-                className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
-              >
+              <Button variant="secondary" size="sm" onClick={handleIdCommit} disabled={!idDraft.trim() || idDraft.trim() === selected.id} className="cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">
                 Guardar
               </Button>
             </div>

@@ -1,6 +1,7 @@
 import type { DragEndEvent } from "@dnd-kit/core";
+import { createDefaultElement } from "@/lib/presentation/factory";
+import { canLink, getDescendantIds } from "@/lib/presentation/hierarchy";
 import type { PresentationData, SlideElement } from "@/types/presentation";
-import { canLink, createDefaultElement, getDescendantIds } from "@/types/presentation";
 
 /**
  * Element operations for the active slide.

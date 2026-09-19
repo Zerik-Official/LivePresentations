@@ -1,5 +1,5 @@
+import { createEmptySlide } from "@/lib/presentation/factory";
 import type { PresentationData, Slide } from "@/types/presentation";
-import { createEmptySlide } from "@/types/presentation";
 
 /**
  * Slide operations derived from editor data.

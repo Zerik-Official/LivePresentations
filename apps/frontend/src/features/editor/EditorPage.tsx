@@ -11,8 +11,11 @@ import { TooltipSimple } from "@/components/ui/Tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { ExportPresentationModal } from "@/components/ExportPresentationModal";
 import { ImportPresentationModal } from "@/components/ImportPresentationModal";
-import { getPresentation, updatePresentation } from "@/lib/api";
-import { getDescendantIds, parsePresentationData, type PresentationData, type Slide } from "@/types/presentation";
+import { presentationsApi } from "@/lib/api";
+import { getDescendantIds } from "@/lib/presentation/hierarchy";
+import { parsePresentationData } from "@/lib/presentation/parser";
+import type { Presentation } from "@/types/backend";
+import type { PresentationData, Slide } from "@/types/presentation";
 import { DraggableElement } from "./DraggableElement";
 import { EditorSidebar } from "./components/EditorSidebar";
 import { PropertiesOverlay } from "./components/PropertiesOverlay";
@@ -45,7 +48,7 @@ export function EditorPage(): React.ReactNode {
   const selected = useMemo(() => slide?.elements.find((e) => e.id === selectedId) ?? null, [slide, selectedId]);
   const exportPres = useMemo(() => {
     if (!id || !data) return null;
-    return { id, title, data: data as unknown as Record<string, unknown>, owner_id: "", created_at: "", updated_at: "" } as unknown as import("@/lib/api").Presentation;
+    return { id, title, data: data as unknown as Record<string, unknown>, owner_id: "", created_at: "", updated_at: "" } as unknown as Presentation;
   }, [id, title, data]);
 
   const { addSlide, deleteSlide, duplicateSlide, updateBackground, updateTransition, reorderSlides, updateSlide } = useSlides(data, setData, activeSlide, setActiveSlide, setSelectedId);
@@ -94,7 +97,8 @@ export function EditorPage(): React.ReactNode {
 
   useEffect(() => {
     if (!id) return;
-    void getPresentation(id)
+    void presentationsApi
+      .get(id)
       .then((p) => {
         setTitle(p.title);
         const parsed = parsePresentationData(p.data);
@@ -120,7 +124,7 @@ export function EditorPage(): React.ReactNode {
     setSaving(true);
     setError(null);
     try {
-      await updatePresentation(id, { title, data: data as unknown as Record<string, unknown> });
+      await presentationsApi.update(id, { title, data: data as unknown as Record<string, unknown> });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Error al guardar");
     } finally {

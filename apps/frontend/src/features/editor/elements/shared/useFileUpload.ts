@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { uploadFile } from "@/lib/api";
+import { uploadsApi } from "@/lib/api";
 
 /**
  * Reusable file upload logic for image and video elements.
@@ -23,7 +23,7 @@ export function useFileUpload(): {
     setUploading(true);
     setError(null);
     try {
-      const { url } = await uploadFile(file);
+      const { url } = await uploadsApi.uploadFile(file);
       return url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al subir");
