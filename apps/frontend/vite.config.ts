@@ -15,6 +15,11 @@ export default defineConfig(({ mode }) => {
       "@": path.resolve(import.meta.dirname, "src"),
     },
   },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    include: ["tests/**/*.{test,spec}.{ts,tsx}"],
+  },
   server: {
     host: "0.0.0.0",
     proxy: {
