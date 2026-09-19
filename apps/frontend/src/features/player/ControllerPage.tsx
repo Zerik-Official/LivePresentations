@@ -5,8 +5,8 @@ import { useParams } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
 import { Spinner } from "@/components/ui/Spinner";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { getPresentation, getRoom } from "@/lib/api";
-import { parsePresentationData } from "@/types/presentation";
+import { presentationsApi, roomsApi } from "@/lib/api";
+import { parsePresentationData } from "@/lib/presentation/parser";
 import { useRoom } from "./useRoom";
 import { CodeControllerModal } from "./elements/code/CodeControllerModal";
 import { SpecialsController } from "./elements/specials/SpecialsController";
@@ -36,14 +36,16 @@ export function ControllerPage(): React.ReactNode {
 
   useEffect(() => {
     if (!code) return;
-    void getRoom(code)
+    void roomsApi
+      .get(code)
       .then((r) => setPresentationId(r.presentation_id))
       .catch(() => null);
   }, [code]);
 
   useEffect(() => {
     if (!presentationId) return;
-    void getPresentation(presentationId)
+    void presentationsApi
+      .get(presentationId)
       .then((p) => setData(parsePresentationData(p.data)))
       .catch(() => null);
   }, [presentationId]);

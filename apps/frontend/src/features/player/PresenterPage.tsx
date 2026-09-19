@@ -3,8 +3,8 @@ import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useParams } from "react-router-dom";
 
 import { Spinner } from "@/components/ui/Spinner";
-import { getPresentation, getRoom } from "@/lib/api";
-import { parsePresentationData } from "@/types/presentation";
+import { presentationsApi, roomsApi } from "@/lib/api";
+import { parsePresentationData } from "@/lib/presentation/parser";
 import { AntiSpoilerOverlay } from "./elements/AntiSpoilerOverlay";
 import { SpecialsPresenter } from "./elements/specials/SpecialsPresenter";
 import { SlideRenderer } from "./SlideRenderer";
@@ -26,14 +26,16 @@ export function PresenterPage(): React.ReactNode {
 
   useEffect(() => {
     if (!code) return;
-    void getRoom(code)
+    void roomsApi
+      .get(code)
       .then((r) => setPresentationId(r.presentation_id))
       .catch(() => null);
   }, [code]);
 
   useEffect(() => {
     if (!presentationId) return;
-    void getPresentation(presentationId)
+    void presentationsApi
+      .get(presentationId)
       .then((p) => setData(parsePresentationData(p.data)))
       .catch(() => null);
   }, [presentationId]);

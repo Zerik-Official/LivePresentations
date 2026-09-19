@@ -6,7 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { Checkbox } from "@/components/ui/Checkbox";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { TooltipSimple } from "@/components/ui/Tooltip";
-import { getRoom, updateRoomConfig } from "@/lib/api";
+import { roomsApi } from "@/lib/api";
 
 interface Props {
   open: boolean;
@@ -34,7 +34,8 @@ export function RoomCreatedModal({ open, code, onClose }: Props): React.ReactNod
   useEffect(() => {
     if (!open || !code) return;
     setTab("info");
-    void getRoom(code)
+    void roomsApi
+      .get(code)
       .then((r) => {
         setShowControls(r.show_controls ?? true);
         setFullscreen(r.fullscreen ?? false);
@@ -58,7 +59,7 @@ export function RoomCreatedModal({ open, code, onClose }: Props): React.ReactNod
     setShowControls(value);
     setSaving(true);
     try {
-      await updateRoomConfig(code as string, { show_controls: value });
+      await roomsApi.updateConfig(code as string, { show_controls: value });
     } catch {
       setShowControls(!value);
     } finally {
@@ -74,7 +75,7 @@ export function RoomCreatedModal({ open, code, onClose }: Props): React.ReactNod
     setFullscreen(value);
     setSaving(true);
     try {
-      await updateRoomConfig(code as string, { fullscreen: value });
+      await roomsApi.updateConfig(code as string, { fullscreen: value });
     } catch {
       setFullscreen(!value);
     } finally {
@@ -90,7 +91,7 @@ export function RoomCreatedModal({ open, code, onClose }: Props): React.ReactNod
     setAntiSpoiler(value);
     setSaving(true);
     try {
-      await updateRoomConfig(code as string, { anti_spoiler: value });
+      await roomsApi.updateConfig(code as string, { anti_spoiler: value });
     } catch {
       setAntiSpoiler(!value);
     } finally {
@@ -106,7 +107,7 @@ export function RoomCreatedModal({ open, code, onClose }: Props): React.ReactNod
     setAutoFullscreen(value);
     setSaving(true);
     try {
-      await updateRoomConfig(code as string, { auto_fullscreen: value });
+      await roomsApi.updateConfig(code as string, { auto_fullscreen: value });
     } catch {
       setAutoFullscreen(!value);
     } finally {

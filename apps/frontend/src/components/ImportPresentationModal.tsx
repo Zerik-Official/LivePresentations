@@ -3,8 +3,8 @@ import { FiUpload } from "react-icons/fi";
 
 import { Button } from "@/components/ui/Button";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/Modal";
-import { createPresentation, importPresentationZip } from "@/lib/api";
-import type { Presentation } from "@/lib/api";
+import { presentationsApi } from "@/lib/api";
+import type { Presentation } from "@/types/backend";
 
 interface Props {
   /** Visibility */
@@ -38,7 +38,7 @@ export function ImportPresentationModal({ open, onClose, onImported }: Props): R
     try {
       const isZip = file.name.toLowerCase().endsWith(".zip");
       if (isZip) {
-        const pres = await importPresentationZip(file);
+        const pres = await presentationsApi.importZip(file);
         onImported(pres);
         onClose();
         setFile(null);
@@ -46,7 +46,7 @@ export function ImportPresentationModal({ open, onClose, onImported }: Props): R
         const text = await file.text();
         const json = JSON.parse(text) as { title?: string; data?: Record<string, unknown> };
         const title = (json.title as string) ?? file.name.replace(/\.json$/i, "");
-        const pres = await createPresentation(title || "Importada", (json.data as Record<string, unknown>) ?? (json as unknown as Record<string, unknown>));
+        const pres = await presentationsApi.create(title || "Importada", (json.data as Record<string, unknown>) ?? (json as unknown as Record<string, unknown>));
         onImported(pres);
         onClose();
         setFile(null);

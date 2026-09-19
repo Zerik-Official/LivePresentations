@@ -1,6 +1,7 @@
 import { create } from "zustand";
 
-import { fetchMe, type AuthResponse, type User } from "@/lib/api";
+import { authApi } from "@/lib/api";
+import type { AuthResponse, User } from "@/types/backend";
 
 interface AuthState {
   user: User | null;
@@ -47,7 +48,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       return;
     }
     try {
-      const user = await fetchMe();
+      const user = await authApi.fetchMe();
       set({ user, token, isAuthenticated: true, isLoading: false });
     } catch {
       localStorage.removeItem("access_token");
