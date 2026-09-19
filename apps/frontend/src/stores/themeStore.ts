@@ -51,7 +51,5 @@ if (typeof document !== "undefined") {
   try {
     const initial = getInitialTheme();
     document.documentElement.classList.toggle("dark", initial === "dark");
-  } catch {
-    // ignore
-  }
+  } catch {}
 }
