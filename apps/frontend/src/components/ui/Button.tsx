@@ -23,7 +23,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * @param children - Button content
  * @param disabled - Disabled state
  */
-export function Button({ variant = "secondary", size = "md", className = "", children, disabled, ...props }: ButtonProps): React.ReactNode {
+export function Button({ variant = "secondary", size = "md", className = "", children, disabled, type = "button", ...props }: ButtonProps): React.ReactNode {
   const base = "inline-flex items-center justify-center gap-2 rounded-lg border font-medium transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-white";
 
   const variants: Record<ButtonVariant, string> = {
@@ -42,7 +42,7 @@ export function Button({ variant = "secondary", size = "md", className = "", chi
   };
 
   return (
-    <button type="button" disabled={disabled} className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
+    <button type={type} disabled={disabled} className={`${base} ${variants[variant]} ${sizes[size]} ${className}`} {...props}>
       {children}
     </button>
   );
