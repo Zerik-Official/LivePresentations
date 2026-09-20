@@ -3,8 +3,8 @@ import { FiArchive, FiDownload, FiFileText } from "react-icons/fi";
 
 import { Button } from "@/components/ui/Button";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/Modal";
-import { exportPresentationZip } from "@/lib/api";
-import type { Presentation } from "@/lib/api";
+import { presentationsApi } from "@/lib/api";
+import type { Presentation } from "@/types/backend";
 
 interface Props {
   /** Visibility */
@@ -44,7 +44,7 @@ export function ExportPresentationModal({ open, onClose, presentation }: Props):
     setExporting(true);
     setError(null);
     try {
-      const blob = await exportPresentationZip(presentation.id);
+      const blob = await presentationsApi.exportZip(presentation.id);
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;

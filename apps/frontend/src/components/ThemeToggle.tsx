@@ -14,7 +14,7 @@ export function ThemeToggle(): React.ReactNode {
       <button
         type="button"
         onClick={toggle}
-        className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
+        className="inline-flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-700"
         aria-label="Cambiar tema"
       >
         {theme === "dark" ? <FiSun /> : <FiMoon />}

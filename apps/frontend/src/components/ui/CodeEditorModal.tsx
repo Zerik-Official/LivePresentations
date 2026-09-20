@@ -41,7 +41,6 @@ export function CodeEditorModal({ open, value, language, onClose, onSave }: Prop
           <div className="w-48">
             <Select value={lang} options={LANGUAGES} onChange={setLang} placeholder="Lenguaje" />
           </div>
-          <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">Tab 2 espacios · Enter conserva indentación</span>
         </div>
         <div className="flex-1 min-h-0">
           <CodeEditor value={draft} language={lang} onChange={setDraft} height="60vh" />

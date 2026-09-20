@@ -1,23 +1,34 @@
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import path from "node:path";
 
 // https://vite.dev/config/
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  const backendUrl = env.VITE_BACKEND_URL || "http://localhost:8000";
+
+  return {
+  base: process.env.GITHUB_ACTIONS ? "/LivePresentations/" : "/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "src"),
     },
   },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    include: ["tests/**/*.{test,spec}.{ts,tsx}"],
+  },
   server: {
     host: "0.0.0.0",
     proxy: {
-      "/api": "http://localhost:8000",
-      "/health": "http://localhost:8000",
-      "/static": "http://localhost:8000",
-      "/ws": { target: "ws://localhost:8000", ws: true },
+      "/api": backendUrl,
+      "/health": backendUrl,
+      "/static": backendUrl,
+      "/ws": { target: backendUrl.replace(/^http/, "ws"), ws: true },
     },
   },
-})
+  };
+});

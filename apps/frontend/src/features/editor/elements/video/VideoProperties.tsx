@@ -33,7 +33,7 @@ export function VideoProperties({ element, onPatch }: Props): React.ReactNode {
         </div>
       )}
       <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2.5 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700">
-        <FiUpload /> {uploading ? "Subiendo..." : "Subir video (max 100MB)"}
+        <FiUpload /> {uploading ? "Subiendo..." : "Subir video"}
         <input
           type="file"
           accept="video/*"

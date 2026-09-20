@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { uploadFile } from "@/lib/api";
+import { uploadsApi } from "@/lib/api";
 
 /**
  * Reusable file upload logic for image and video elements.
@@ -20,14 +20,10 @@ export function useFileUpload(): {
    * @returns URL or null on error
    */
   async function upload(file: File): Promise<string | null> {
-    if (file.size > 100 * 1024 * 1024) {
-      setError("Archivo excede 100MB");
-      return null;
-    }
     setUploading(true);
     setError(null);
     try {
-      const { url } = await uploadFile(file);
+      const { url } = await uploadsApi.uploadFile(file);
       return url;
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al subir");

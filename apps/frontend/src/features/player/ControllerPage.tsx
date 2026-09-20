@@ -3,10 +3,10 @@ import { FiChevronLeft, FiChevronRight, FiClock } from "react-icons/fi";
 import { useParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
-
+import { Spinner } from "@/components/ui/Spinner";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { getPresentation, getRoom } from "@/lib/api";
-import { parsePresentationData } from "@/types/presentation";
+import { presentationsApi, roomsApi } from "@/lib/api";
+import { parsePresentationData } from "@/lib/presentation/parser";
 import { useRoom } from "./useRoom";
 import { CodeControllerModal } from "./elements/code/CodeControllerModal";
 import { SpecialsController } from "./elements/specials/SpecialsController";
@@ -36,14 +36,16 @@ export function ControllerPage(): React.ReactNode {
 
   useEffect(() => {
     if (!code) return;
-    void getRoom(code)
+    void roomsApi
+      .get(code)
       .then((r) => setPresentationId(r.presentation_id))
       .catch(() => null);
   }, [code]);
 
   useEffect(() => {
     if (!presentationId) return;
-    void getPresentation(presentationId)
+    void presentationsApi
+      .get(presentationId)
       .then((p) => setData(parsePresentationData(p.data)))
       .catch(() => null);
   }, [presentationId]);
@@ -71,8 +73,19 @@ export function ControllerPage(): React.ReactNode {
     return () => window.clearTimeout(id);
   }, [room.countdown, room]);
 
-  if (!code) return <div className="p-6 text-sm text-zinc-900 dark:text-zinc-100">Código no válido</div>;
-  if (!data) return <div className="p-6 text-sm text-zinc-500 dark:text-zinc-400">Cargando...</div>;
+  if (!code)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-zinc-950 p-6">
+        <p className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3 text-sm">Código no válido</p>
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-50 dark:bg-zinc-950 p-6">
+        <Spinner className="size-7 text-zinc-900 dark:text-white" />
+        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Cargando controlador...</p>
+      </div>
+    );
 
   return (
     <div className="flex min-h-screen flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100">

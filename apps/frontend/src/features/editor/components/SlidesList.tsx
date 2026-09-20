@@ -4,7 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { FiPlus } from "react-icons/fi";
 
 import { TooltipSimple } from "@/components/ui/Tooltip";
-import type { PresentationData } from "@/types/presentation";
+import type { PresentationData, Slide } from "@/types/presentation";
 import { SlideCard } from "./SlideCard";
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
   onDelete: (idx: number) => void;
   onDuplicate: (idx: number) => void;
   onReorder: (activeId: string, overId: string) => void;
+  onUpdateSlide?: (idx: number, nextSlide: Slide) => boolean;
 }
 
 /**
@@ -22,7 +23,25 @@ interface Props {
  * @param id - Slide id
  * @param index - Position
  */
-function SortableSlide({ id, index, data, activeSlide, onSelect, onDelete, onDuplicate }: { id: string; index: number; data: PresentationData; activeSlide: number; onSelect: (idx: number) => void; onDelete: (idx: number) => void; onDuplicate: (idx: number) => void }): React.ReactNode {
+function SortableSlide({
+  id,
+  index,
+  data,
+  activeSlide,
+  onSelect,
+  onDelete,
+  onDuplicate,
+  onUpdateSlide,
+}: {
+  id: string;
+  index: number;
+  data: PresentationData;
+  activeSlide: number;
+  onSelect: (idx: number) => void;
+  onDelete: (idx: number) => void;
+  onDuplicate: (idx: number) => void;
+  onUpdateSlide?: (idx: number, nextSlide: Slide) => boolean;
+}): React.ReactNode {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -40,6 +59,7 @@ function SortableSlide({ id, index, data, activeSlide, onSelect, onDelete, onDup
         onSelect={() => onSelect(index)}
         onDuplicate={() => onDuplicate(index)}
         onDelete={() => onDelete(index)}
+        onUpdateSlide={onUpdateSlide ? (next) => onUpdateSlide(index, next) : undefined}
         dragListeners={listeners as unknown as Record<string, unknown>}
         dragAttributes={attributes as unknown as Record<string, unknown>}
       />
@@ -57,7 +77,7 @@ function SortableSlide({ id, index, data, activeSlide, onSelect, onDelete, onDup
  * @param onDuplicate - Duplicate handler
  * @param onReorder - Reorder handler
  */
-export function SlidesList({ data, activeSlide, onSelect, onAdd, onDelete, onDuplicate, onReorder }: Props): React.ReactNode {
+export function SlidesList({ data, activeSlide, onSelect, onAdd, onDelete, onDuplicate, onReorder, onUpdateSlide }: Props): React.ReactNode {
   /**
    * Handle drag end to reorder slides.
    * @param event - Drag end event
@@ -83,7 +103,7 @@ export function SlidesList({ data, activeSlide, onSelect, onAdd, onDelete, onDup
           <SortableContext items={data.slides.map((s) => s.id)} strategy={verticalListSortingStrategy}>
             <div className="flex flex-col gap-3">
               {data.slides.map((s, idx) => (
-                <SortableSlide key={s.id} id={s.id} index={idx} data={data} activeSlide={activeSlide} onSelect={onSelect} onDelete={onDelete} onDuplicate={onDuplicate} />
+                <SortableSlide key={s.id} id={s.id} index={idx} data={data} activeSlide={activeSlide} onSelect={onSelect} onDelete={onDelete} onDuplicate={onDuplicate} onUpdateSlide={onUpdateSlide} />
               ))}
               {data.slides.length === 0 && <p className="rounded-lg border border-dashed border-zinc-200 dark:border-zinc-700 p-6 text-center text-xs text-zinc-500 dark:text-zinc-400">Sin diapositivas. Crea una.</p>}
             </div>

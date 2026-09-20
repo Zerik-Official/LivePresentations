@@ -1,5 +1,6 @@
-import { createDefaultElement, type PresentationData, type SlideElement } from "@/types/presentation";
-import { uploadFile } from "@/lib/api";
+import { createDefaultElement } from "@/lib/presentation/factory";
+import type { PresentationData, SlideElement } from "@/types/presentation";
+import { uploadsApi } from "@/lib/api";
 
 /**
  * Hook for handling file drops on the canvas.
@@ -29,13 +30,9 @@ export function useCanvasDrop(
     if (!slide) return;
     const file = e.dataTransfer.files[0];
     if (!file) return;
-    if (file.size > 100 * 1024 * 1024) {
-      onError("Archivo excede 100MB");
-      return;
-    }
     if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) return;
     try {
-      const { url } = await uploadFile(file);
+      const { url } = await uploadsApi.uploadFile(file);
       const type: SlideElement["type"] = file.type.startsWith("image/") ? "image" : "video";
       const el = createDefaultElement(type, `el-${Date.now()}`);
       el.props = { ...el.props, src: url };

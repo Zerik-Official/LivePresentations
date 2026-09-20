@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 
+import { Spinner } from "@/components/ui/Spinner";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { EditorPage } from "@/features/editor/EditorPage";
@@ -24,8 +25,9 @@ export default function App(): React.ReactNode {
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-zinc-500">Cargando...</p>
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-50 dark:bg-zinc-950">
+        <Spinner className="size-6 text-zinc-900 dark:text-white" />
+        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">Cargando aplicación...</p>
       </div>
     );
   }

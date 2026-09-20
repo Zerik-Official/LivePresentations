@@ -2,8 +2,9 @@ import { useEffect, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 import { useParams } from "react-router-dom";
 
-import { getPresentation, getRoom } from "@/lib/api";
-import { parsePresentationData } from "@/types/presentation";
+import { Spinner } from "@/components/ui/Spinner";
+import { presentationsApi, roomsApi } from "@/lib/api";
+import { parsePresentationData } from "@/lib/presentation/parser";
 import { AntiSpoilerOverlay } from "./elements/AntiSpoilerOverlay";
 import { SpecialsPresenter } from "./elements/specials/SpecialsPresenter";
 import { SlideRenderer } from "./SlideRenderer";
@@ -25,14 +26,16 @@ export function PresenterPage(): React.ReactNode {
 
   useEffect(() => {
     if (!code) return;
-    void getRoom(code)
+    void roomsApi
+      .get(code)
       .then((r) => setPresentationId(r.presentation_id))
       .catch(() => null);
   }, [code]);
 
   useEffect(() => {
     if (!presentationId) return;
-    void getPresentation(presentationId)
+    void presentationsApi
+      .get(presentationId)
       .then((p) => setData(parsePresentationData(p.data)))
       .catch(() => null);
   }, [presentationId]);
@@ -57,12 +60,28 @@ export function PresenterPage(): React.ReactNode {
     return () => window.clearTimeout(id);
   }, [room.countdown, room]);
 
-  if (!code) return <div className="p-6 text-sm">Código no válido</div>;
-  if (!data) return <div className="p-6 text-sm text-zinc-500">Cargando presentación...</div>;
+  if (!code)
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950 p-6">
+        <p className="rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm text-white">Código no válido</p>
+      </div>
+    );
+  if (!data)
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-zinc-950 p-6">
+        <Spinner className="size-7 text-white" />
+        <p className="text-sm font-medium text-zinc-300">Cargando presentación...</p>
+      </div>
+    );
 
   const slide = data.slides[room.currentSlide] ?? null;
-  const specialsElement = slide?.elements.find((e) => e.type === "specials") ?? null;
-  const specialsState = specialsElement ? (room.specialsState[specialsElement.id] as Record<string, unknown> | undefined) : undefined;
+  const specialsElements = slide ? slide.elements.filter((e) => e.type === "specials") : [];
+  const activeSpecials = specialsElements
+    .map((el) => ({ element: el, state: room.specialsState[el.id] as Record<string, unknown> | undefined }))
+    .filter(({ state }) => {
+      const t = state?.type as string | undefined;
+      return Boolean(t && t !== "SPECIALS_FINALIZED");
+    });
 
   return (
     <div className={isFullscreen ? "flex min-h-screen flex-col bg-zinc-950 text-white" : "flex min-h-screen flex-col bg-zinc-950 text-white"}>
@@ -88,7 +107,9 @@ export function PresenterPage(): React.ReactNode {
             fullscreen={isFullscreen}
             showControls={showControls}
           />
-          {specialsElement && specialsState && <SpecialsPresenter element={specialsElement} state={specialsState} variables={data.variables} />}
+          {activeSpecials.map(({ element, state }) => (
+            <SpecialsPresenter key={element.id} element={element} state={state} variables={data.variables} fullscreen={isFullscreen} />
+          ))}
           {showIntro && <AntiSpoilerOverlay active={showIntro} countdown={room.countdown} />}
           {showControls && !isFullscreen && (
             <div className="mt-4 flex items-center gap-3">

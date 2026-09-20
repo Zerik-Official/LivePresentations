@@ -9,10 +9,26 @@ interface ThemeState {
 }
 
 /**
+ * Resolve initial theme from storage or system preference.
+ * @returns Theme
+ */
+function getInitialTheme(): Theme {
+  try {
+    if (typeof window === "undefined") return "light";
+    const stored = localStorage.getItem("theme") as Theme | null;
+    if (stored) return stored;
+    if (typeof window.matchMedia === "function" && window.matchMedia("(prefers-color-scheme: dark)").matches) return "dark";
+  } catch {
+    return "light";
+  }
+  return "light";
+}
+
+/**
  * Persist theme in localStorage and sync with document class.
  */
 export const useThemeStore = create<ThemeState>((set, get) => ({
-  theme: (localStorage.getItem("theme") as Theme | null) ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"),
+  theme: getInitialTheme(),
 
   /**
    * Set theme and apply to document.
@@ -31,9 +47,9 @@ export const useThemeStore = create<ThemeState>((set, get) => ({
   },
 }));
 
-// Initialize on load
 if (typeof document !== "undefined") {
-  const stored = localStorage.getItem("theme") as Theme | null;
-  const initial = stored ?? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
-  document.documentElement.classList.toggle("dark", initial === "dark");
+  try {
+    const initial = getInitialTheme();
+    document.documentElement.classList.toggle("dark", initial === "dark");
+  } catch {}
 }

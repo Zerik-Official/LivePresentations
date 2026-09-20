@@ -14,10 +14,7 @@ from fastapi import HTTPException, UploadFile
 from app.core.config import settings
 from app.models.presentation import Presentation
 
-_ASSET_RE = re.compile(r"/static/uploads/([a-zA-Z0-9._-]+)")
-
-_UPLOAD_DIR = Path(settings.database_url.replace("sqlite+aiosqlite:///", "")).parent / "uploads" if settings.database_url.replace("sqlite+aiosqlite:///", "") else Path("instance/uploads")
-
+_ASSET_RE = re.compile(r"/static/uploads/(?:[a-zA-Z0-9_-]+/)?([a-zA-Z0-9._-]+)")
 
 def _collect_asset_filenames(data: dict[str, Any]) -> set[str]:
     """Collect asset filenames referenced in presentation data."""
@@ -25,18 +22,18 @@ def _collect_asset_filenames(data: dict[str, Any]) -> set[str]:
     return set(_ASSET_RE.findall(raw))
 
 
-def _rewrite_asset_urls(obj: Any, mapping: dict[str, str]) -> Any:
+def _rewrite_asset_urls(obj: Any, mapping: dict[str, str], owner_id: str) -> Any:
     """Rewrite /static/uploads/... URLs using filename mapping."""
     if isinstance(obj, str):
         def repl(m: re.Match[str]) -> str:
             fname = m.group(1)
             new_name = mapping.get(fname, fname)
-            return f"/static/uploads/{new_name}"
+            return f"/static/uploads/{owner_id}/{new_name}"
         return _ASSET_RE.sub(repl, obj)
     if isinstance(obj, list):
-        return [_rewrite_asset_urls(item, mapping) for item in obj]
+        return [_rewrite_asset_urls(item, mapping, owner_id) for item in obj]
     if isinstance(obj, dict):
-        return {k: _rewrite_asset_urls(v, mapping) for k, v in obj.items()}
+        return {k: _rewrite_asset_urls(v, mapping, owner_id) for k, v in obj.items()}
     return obj
 
 
@@ -90,7 +87,7 @@ async def build_export_zip(presentation: Presentation) -> tuple[bytes, str]:
             name = f"slices/{idx:03d}-{slide_id}.json"
             zf.writestr(name, json.dumps(slide, indent=2, ensure_ascii=False))
         for fname in asset_names:
-            src = _UPLOAD_DIR / fname
+            src = settings.upload_dir / presentation.owner_id / fname
             if src.exists() and src.is_file():
                 zf.write(src, arcname=f"assets/{fname}")
 
@@ -161,7 +158,9 @@ async def import_presentation_zip(file: UploadFile, owner_id: str) -> tuple[str,
 
             asset_names = [n for n in namelist if n.startswith("assets/") and not n.endswith("/")]
             mapping: dict[str, str] = {}
-            _UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+            upload_dir = settings.upload_dir / owner_id
+            upload_dir.mkdir(parents=True, exist_ok=True)
+            used_size = sum(path.stat().st_size for path in upload_dir.iterdir() if path.is_file())
             for aname in asset_names:
                 fname = Path(aname).name
                 if not fname or ".." in aname or fname.startswith("."):
@@ -172,17 +171,18 @@ async def import_presentation_zip(file: UploadFile, owner_id: str) -> tuple[str,
                     data_bytes = zf.read(aname)
                 except Exception:
                     continue
-                if len(data_bytes) > 100 * 1024 * 1024:
-                    continue
+                if used_size + len(data_bytes) > settings.upload_quota_bytes:
+                    raise HTTPException(status_code=413, detail="Los assets exceden el espacio disponible para tus archivos")
                 ext = Path(fname).suffix
                 new_name = f"{uuid.uuid4().hex}{ext}" if ext else fname
-                dest = _UPLOAD_DIR / new_name
+                dest = upload_dir / new_name
                 orig = Path(aname).name
                 mapping[orig] = new_name
+                used_size += len(data_bytes)
                 dest.write_bytes(data_bytes)
 
             if mapping:
-                slides = _rewrite_asset_urls(slides, mapping)  # type: ignore[assignment]
+                slides = _rewrite_asset_urls(slides, mapping, owner_id)  # type: ignore[assignment]
 
             data: dict[str, Any] = {
                 "slides": slides,
