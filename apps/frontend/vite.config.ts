@@ -9,6 +9,7 @@ export default defineConfig(({ mode }) => {
   const backendUrl = env.VITE_BACKEND_URL || "http://localhost:8000";
 
   return {
+  base: process.env.GITHUB_ACTIONS ? "/LivePresentations/" : "/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
