@@ -1,0 +1,8 @@
+# Only what web.Dockerfile needs from the repository root
+*
+!apps/frontend/
+!deploy/aws/nginx.conf
+apps/frontend/node_modules
+apps/frontend/dist
+apps/frontend/.env
+apps/frontend/.env.*

@@ -1,0 +1,25 @@
+# Single EC2 deployment: Nginx (frontend + reverse proxy) -> FastAPI backend (SQLite in a volume)
+services:
+  backend:
+    build: ../../apps/backend
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      - backend_instance:/app/instance   # SQLite database + uploads
+    # No published ports: only reachable from the web container
+
+  web:
+    build:
+      context: ../..
+      dockerfile: deploy/aws/web.Dockerfile
+      args:
+        VITE_TURNSTILE_PUBLIC_KEY: ${VITE_TURNSTILE_PUBLIC_KEY:-}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  backend_instance:
