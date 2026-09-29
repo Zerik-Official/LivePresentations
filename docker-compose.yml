@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+    container_name: livepresentations-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - SECRET_KEY=${SECRET_KEY:-change-me-generate-with-openssl-rand-hex-32}
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000,http://127.0.0.1:5173,http://127.0.0.1:3000,http://frontend:5173
+      - ENABLE_TURNSTILLE_CAPTCHA=${ENABLE_TURNSTILLE_CAPTCHA:-true}
+      - TURNSTILE_PUBLIC_KEY=${TURNSTILE_PUBLIC_KEY:-}
+      - TURNSTILE_PRIVATE_KEY=${TURNSTILE_PRIVATE_KEY:-}
+      - UPLOAD_QUOTA_MB=${UPLOAD_QUOTA_MB:-20}
+    volumes:
+      - ./apps/backend/instance:/app/instance
+    networks:
+      - livepresentations-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+    container_name: livepresentations-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_BACKEND_URL=http://backend:8000
+      - VITE_TURNSTILE_PUBLIC_KEY=${VITE_TURNSTILE_PUBLIC_KEY:-}
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - livepresentations-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5173"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+networks:
+  livepresentations-network:
+    driver: bridge
+
+volumes:
+  backend_instance:
+    driver: local
