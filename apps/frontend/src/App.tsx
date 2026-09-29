@@ -8,6 +8,7 @@ import { EditorPage } from "@/features/editor/EditorPage";
 import { ControllerPage } from "@/features/player/ControllerPage";
 import { PresenterPage } from "@/features/player/PresenterPage";
 import { DashboardPage } from "@/pages/DashboardPage";
+import { LandingPage } from "@/pages/LandingPage";
 import { LoginPage } from "@/pages/LoginPage";
 import { RegisterPage } from "@/pages/RegisterPage";
 import { useAuthStore } from "@/stores/authStore";
@@ -70,7 +71,7 @@ export default function App(): React.ReactNode {
               </ProtectedRoute>
             }
           />
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </BrowserRouter>
