@@ -18,70 +18,95 @@
   <img src=".github/preview.png" alt="LivePresentations Preview"/>
 </p>
 
-LivePresentations es una plataforma para crear, presentar y controlar diapositivas en tiempo real desde el móvil. Editor visual con canvas arrastrable, salas con QR y WebSocket, modo presentador/controlador, preguntas interactivas, variables de proyecto y exportación/importación de presentaciones.
+LivePresentations is a platform for creating, presenting, and controlling slides in real-time from your mobile device. Features a visual editor with a draggable canvas, rooms with QR codes and WebSocket support, presenter/controller mode, interactive questions, project variables, and presentation export/import functionality.
 
 ---
 
-## Funcionalidades
+## Features
 
-- **Dashboard** para crear y organizar presentaciones, generar salas con código y QR, ver salas activas y unirse como controlador escaneando el QR.
-- **Editor visual** con lienzo 1280×720 donde puedes arrastrar, redimensionar, rotar y reordenar capas; añade texto con múltiples tipografías y fondo opcional, imágenes, formas, vídeos de archivo o YouTube, iconos y bloques de código con resaltado.
-- **Preguntas interactivas** con un bloque especial configurable: elige el texto y los colores del bloque y define la pregunta, sus respuestas y hasta dos bloques de código adicionales.
-- **Sorteo de participantes** usando una lista de nombres guardada como variable; elige al azar con un recuadro deslizante o una ruleta animada, configura la duración del giro y decide si el nombre sorteado se descarta para no repetirse mientras dure la presentación.
-- **Preguntas y respuestas** totalmente personalizables: escribe la pregunta y elige su color y alineación, define cuántas respuestas mostrar (de 2 a 6), el formato (letras A-D, números 1-4 o texto libre), el texto de cada opción y cuál es la correcta.
-- **Variables del proyecto** reutilizables en toda la presentación: crea variables numéricas, de texto, verdadero/falso, listas y objetos con validación del contenido y úsalas para alimentar sorteos u otros contenidos.
-- **Salas configurables** al crearlas: decide si se muestran los controles de navegación, si la presentación ocupa toda la pantalla, si aparece una pantalla anti-spoiler con cuenta regresiva al inicio y si el navegador entra automáticamente en pantalla completa al presentar.
-- **Presentación en vivo** con dos vistas sincronizadas: el presentador ve la diapositiva actual y el controlador cambia de diapositiva, resalta elementos, lanza animaciones, expande bloques de código con líneas resaltadas y controla toda la dinámica de preguntas desde el móvil.
-- **Pantalla completa sin bordes** que adapta automáticamente el tamaño y la posición de todos los elementos al tamaño de la ventana, sin franjas negras.
-- **Exportar e importar** presentaciones completas como archivo `.zip` que incluye la información general, cada diapositiva por separado, las variables y todos los archivos subidos, además de soporte para el formato `.json` anterior.
-- **Tema claro y oscuro** conmutables en toda la interfaz.
-
----
-
-## Arquitectura
-
-Monorepo `apps/frontend` + `apps/backend` con arquitectura por features. Frontend `React 19 + TypeScript + Vite + Tailwind 4 + Framer Motion + Zustand` bajo `src/features/` (`editor/`, `player/`, `room/`) y componentes base en `src/components/ui/` (`Button`, `Modal`, `Select`, `Checkbox`, `CodeBlock`). Estado de sala en `useRoom` y datos de presentación validados con `zod` (`presentationDataSchema`). Backend `FastAPI + SQLAlchemy 2.0 (async) + aiosqlite + Uvicorn` con `app/api/routes/` (`presentations`, `rooms`, `uploads`), `app/services/presentation_package.py` para zip, `app/ws/` para broadcast genérico `SPECIALS_*/ELEMENT_*/CUSTOM_*` sin tocar backend por cada nuevo elemento, y SQLite en `instance/livepresentations.db`. Sin store externo en frontend salvo `zustand` para `auth`/`theme`.
+- **Dashboard** to create and organize presentations, generate rooms with unique codes and QR codes, view active rooms, and join as a controller by scanning the QR code.
+- **Visual editor** with a 1280×720 canvas where you can drag, resize, rotate, and reorder layers; add text with multiple fonts and optional background, images, shapes, videos from files or YouTube, icons, and syntax-highlighted code blocks.
+- **Interactive questions** with configurable special blocks: customize block text and colors, define the question, answers, and up to two additional code blocks.
+- **Participant raffle** using a list of names saved as a variable; draw randomly with an animated slider or spinning wheel, configure spin duration, and optionally exclude drawn names to avoid repetition during the presentation.
+- **Fully customizable Q&A**: write your question and choose its color and alignment, set the number of answers to display (2-6), format (A-D letters, 1-4 numbers, or free text), customize each option's text, and mark the correct answer.
+- **Project variables** reusable throughout the presentation: create numeric, text, boolean, list, and object variables with content validation and use them to power raffles and other content.
+- **Configurable rooms**: when creating a room, decide whether to show navigation controls, fill the screen with the presentation, display an anti-spoiler countdown screen at the start, and whether the browser automatically enters fullscreen when presenting.
+- **Live presentation** with two synchronized views: the presenter sees the current slide while the controller changes slides, highlights elements, triggers animations, expands code blocks with highlighted lines, and controls the entire Q&A flow from the mobile device.
+- **Borderless fullscreen** that automatically adapts the size and position of all elements to the window size without black bars.
+- **Export and import** complete presentations as `.zip` files that include general information, each slide separately, variables, and all uploaded assets, with support for the previous `.json` format.
+- **Light and dark themes** switchable throughout the interface.
 
 ---
 
-## Requisitos
+## Architecture
+
+Monorepo with `apps/frontend` + `apps/backend` using feature-based architecture. Frontend: `React 19 + TypeScript + Vite + Tailwind 4 + Framer Motion + Zustand` organized under `src/features/` (`editor/`, `player/`, `room/`) with base components in `src/components/ui/` (`Button`, `Modal`, `Select`, `Checkbox`, `CodeBlock`). Room state managed with `useRoom` and presentation data validated with `zod` (`presentationDataSchema`). Backend: `FastAPI + SQLAlchemy 2.0 (async) + aiosqlite + Uvicorn` with `app/api/routes/` (`presentations`, `rooms`, `uploads`), `app/services/presentation_package.py` for zip operations, and `app/ws/` for generic broadcast handling (`SPECIALS_*/ELEMENT_*/CUSTOM_*` messages) without modifying the backend for each new element type. SQLite database stored at `instance/livepresentations.db`. Frontend uses only `zustand` for external state management (`auth`/`theme`).
+
+---
+
+## Requirements
 
 - Node 18+
 - Python 3.10+
+- Docker & Docker Compose (optional, for containerized deployment)
 
 ---
 
-## Instalación
+## Quick Start with Docker (Recommended)
 
-Clona el repositorio:
+The easiest way to get the project running is with Docker Compose:
+
+```bash
+git clone https://github.com/Zerik-Official/LivePresentations
+cd LivePresentations
+cp .env.example .env
+docker-compose up
+```
+
+The application will be available at:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8000`
+- API Documentation: `http://localhost:8000/docs`
+
+To stop the services:
+
+```bash
+docker-compose down
+```
+
+To rebuild the images:
+
+```bash
+docker-compose up --build
+```
+
+---
+
+## Manual Setup (Development)
+
+### Clone the repository
 
 ```bash
 git clone https://github.com/Zerik-Official/LivePresentations
 cd LivePresentations
 ```
 
-### Frontend
+### Frontend Setup
 
 ```bash
 cd apps/frontend
 npm install
 ```
 
-### Backend
+### Backend Setup
 
 **Windows:**
 
 ```bash
 cd apps/backend
-
-# Entorno virtual
 python -m venv venv
 venv\Scripts\activate
-
-# Dependencias
 pip install -r requirements.txt
-
-# Variables de entorno
 copy .env.example .env
 ```
 
@@ -89,50 +114,68 @@ copy .env.example .env
 
 ```bash
 cd apps/backend
-
 python3 -m venv venv
 source venv/bin/activate
-
 pip install -r requirements.txt
-
 cp .env.example .env
 ```
 
 ---
 
-## Ejecución
+## Running the Application
 
-> Para local y presentación en red, **conecta presentador y controlador a la misma red** para la comunicación en tiempo real vía WebSocket.
+> For local network testing, ensure your presenter and controller are connected to the same network for real-time WebSocket communication.
 
-### Frontend (Vite) — recomendado con `--host`
+### Frontend (Vite Development Server)
+
+From the `apps/frontend` directory:
 
 ```bash
-cd apps/frontend
 npm run dev -- --host
 ```
 
-Disponible en `http://localhost:5173` y en `http://<tu-ip>:5173` para el móvil.
+Available at `http://localhost:5173` and `http://<your-ip>:5173` for mobile devices.
 
-### Backend (Uvicorn) — recomendado con `--host 0.0.0.0`
+### Backend (Uvicorn Development Server)
+
+From the `apps/backend` directory:
 
 ```bash
-# desde la raíz del repo
-uvicorn app.main:app --host 0.0.0.0 --port 8000 --app-dir apps/backend --reload
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-API en `http://localhost:8000`, docs en `http://localhost:8000/docs`, WebSocket en `/ws/room/{code}`.
+API available at `http://localhost:8000`, documentation at `http://localhost:8000/docs`, WebSocket at `/ws/room/{code}`.
 
-La configuración se lee desde `apps/backend/.env` aunque Uvicorn se lance desde la raíz. `CORS_ORIGINS` acepta URLs separadas por comas; `ENABLE_TURNSTILLE_CAPTCHA` está activo por defecto, pero Turnstile solo se activa cuando existen `TURNSTILE_PUBLIC_KEY` y `TURNSTILE_PRIVATE_KEY`. `UPLOAD_QUOTA_MB` define la cuota de assets por usuario y vale 20 MB por defecto. Si no existe `.env`, CORS queda abierto.
+#### Configuration
 
-En desarrollo el frontend hace proxy a `http://localhost:8000`. En escritorio puedes abrir `http://<tu-ip>:8000/docs` para probar.
+Settings are read from `apps/backend/.env`:
+- `SECRET_KEY`: JWT secret key (generate with `openssl rand -hex 32`)
+- `CORS_ORIGINS`: Comma-separated list of allowed origins (e.g., `http://localhost:5173,http://localhost:3000`)
+- `ENABLE_TURNSTILLE_CAPTCHA`: Enable Cloudflare Turnstile CAPTCHA (default: `true`)
+- `TURNSTILE_PUBLIC_KEY` & `TURNSTILE_PRIVATE_KEY`: Only required if CAPTCHA is enabled
+- `UPLOAD_QUOTA_MB`: Maximum upload size per user in MB (default: 20)
 
-### Build de producción
+If no `.env` file exists, CORS will be open to all origins.
+
+In development, the frontend proxies API requests to `http://localhost:8000`. On desktop, open `http://<your-ip>:8000/docs` to test the API.
+
+### Production Build
 
 ```bash
 cd apps/frontend
 npm run build
 ```
 
-Genera `dist/` listo para servir.
+Generates `dist/` ready for deployment.
+
+---
+
+## Documentation
+
+For more detailed information, check the documentation in the `docs/` folder:
+
+- [DOCKER.md](docs/DOCKER.md) - Comprehensive Docker and Docker Compose guide
+- [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) - Quick deployment reference
+- [SETUP_COMPLETE.md](docs/SETUP_COMPLETE.md) - Setup verification and next steps
 
 ---
