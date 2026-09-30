@@ -23,14 +23,23 @@ if errorlevel 1 (
     set DOCKER_COMPOSE_INSTALLED=1
 )
 
-if !DOCKER_INSTALLED! equ 1 if !DOCKER_COMPOSE_INSTALLED! equ 1 (
+REM Both must be present to offer the Docker path (nested: 'if A if B () else ()'
+REM would skip the else branch entirely when Docker itself is missing)
+set BOTH_DOCKER=0
+if !DOCKER_INSTALLED! equ 1 (
+    if !DOCKER_COMPOSE_INSTALLED! equ 1 (
+        set BOTH_DOCKER=1
+    )
+)
+
+if !BOTH_DOCKER! equ 1 (
     echo [OK] Docker found
     echo [OK] Docker Compose found
     echo.
     echo How do you want to run LivePresentations?
     echo.
-    echo   1) Docker (Recommended - easier setup)
-    echo   2) Manual setup (Frontend + Backend locally)
+    echo   1^) Docker ^(Recommended - easier setup^)
+    echo   2^) Manual setup ^(Frontend + Backend locally^)
     echo.
 
     set /p CHOICE="Enter your choice (1 or 2): "
@@ -47,8 +56,8 @@ if !DOCKER_INSTALLED! equ 1 if !DOCKER_COMPOSE_INSTALLED! equ 1 (
     echo Docker or Docker Compose not found.
     echo.
     echo You have two options:
-    echo   1) Install Docker Desktop from https://www.docker.com/products/docker-desktop
-    echo   2) Run the project manually (see instructions below)
+    echo   1^) Install Docker Desktop from https://www.docker.com/products/docker-desktop
+    echo   2^) Run the project manually ^(see instructions below^)
     echo.
 
     set /p PROCEED="Do you want to proceed with manual setup? (y/n): "
@@ -112,8 +121,8 @@ if !RUN_DOCKER! equ 1 (
     echo For more details, see docs\SETUP_COMPLETE.md
     echo.
     echo Prerequisites:
-    echo   - Node.js 18+ (npm)
-    echo   - Python 3.10+ (python)
+    echo   - Node.js 18+ ^(npm^)
+    echo   - Python 3.10+ ^(python^)
     echo.
 
     echo Step 1: Setup Backend
@@ -134,7 +143,7 @@ if !RUN_DOCKER! equ 1 (
     echo   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     echo.
 
-    echo Step 2: Setup Frontend (in another terminal)
+    echo Step 2: Setup Frontend ^(in another terminal^)
     echo.
     echo   cd apps\frontend
     echo   npm install
