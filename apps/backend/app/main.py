@@ -77,6 +77,7 @@ app.include_router(ws_router)
 
 settings.instance_dir.mkdir(parents=True, exist_ok=True)
 settings.upload_dir.mkdir(parents=True, exist_ok=True)
+settings.avatar_dir.mkdir(parents=True, exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(settings.instance_dir)), name="static")
 
 
