@@ -170,6 +170,12 @@ Generates `dist/` ready for deployment.
 
 ---
 
+## Deployment
+
+- [deploy/aws/README.md](deploy/aws/README.md) - Single EC2 deployment with Nginx reverse proxy and Docker Compose (`web` + `backend`, SQLite volume, no public backend ports).
+
+---
+
 ## Documentation
 
 For more detailed information, check the documentation in the `docs/` folder:

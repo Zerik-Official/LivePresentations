@@ -12,7 +12,7 @@ export function HowItWorksSection(): React.ReactNode {
         </Reveal>
 
         <div className="relative mt-14">
-          <div aria-hidden className="pointer-events-none absolute top-[3.25rem] right-[16%] left-[16%] hidden h-px bg-linear-to-r from-hypr-cyan via-hypr-mint to-hypr-violet opacity-50 md:block" />
+          <div aria-hidden className="pointer-events-none absolute top-[3.25rem] right-[16%] left-[16%] hidden h-px bg-zinc-200 md:block dark:bg-zinc-800" />
           <ol className="grid gap-3 md:grid-cols-3">
             {LANDING_STEPS.map((step, i) => (
               <Reveal as="li" key={step.index} delay={i * 0.1}>

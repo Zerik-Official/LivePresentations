@@ -12,7 +12,7 @@ export function CtaSection(): React.ReactNode {
     <section id="empezar" aria-labelledby="empezar-title" className="scroll-mt-24 px-4 py-20 sm:px-6 lg:py-28">
       <Reveal className="mx-auto max-w-4xl">
         <GlowWindow active label="~/livepresentations — nueva sala" bodyClassName="relative overflow-hidden px-6 py-14 text-center sm:px-12 sm:py-20">
-          <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-hypr-cyan/15 blur-3xl" />
+          <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-zinc-900/5 blur-3xl dark:bg-white/5" />
           <h2 id="empezar-title" className="relative font-hypr-display text-3xl font-semibold tracking-tight text-balance text-zinc-900 sm:text-5xl dark:text-zinc-50">
             Tu próxima presentación <span className="hypr-text-gradient">empieza aquí</span>
           </h2>
@@ -22,7 +22,7 @@ export function CtaSection(): React.ReactNode {
           <div className="relative mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <Link
               to={cta.to}
-              className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-hypr-cyan via-hypr-mint to-hypr-violet px-7 text-sm font-semibold text-zinc-950 shadow-[0_12px_40px_-12px_var(--color-hypr-cyan)] transition-all hover:-translate-y-0.5 hover:brightness-110 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white sm:w-auto"
+              className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-zinc-900 px-7 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2 focus-visible:ring-offset-(--hypr-bg) sm:w-auto dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 dark:focus-visible:ring-white"
             >
               {cta.label}
               <FiArrowRight className="transition-transform group-hover:translate-x-0.5" />

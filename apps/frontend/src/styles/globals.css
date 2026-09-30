@@ -30,7 +30,7 @@
   --hypr-surface: rgb(255 255 255 / 0.62);
   --hypr-line: rgb(24 24 27 / 0.08);
   --hypr-inactive: rgb(24 24 27 / 0.1);
-  --hypr-glow: rgb(51 204 255 / 0.18);
+  --hypr-glow: rgb(24 24 27 / 0.12);
 }
 
 html.dark {
@@ -38,7 +38,7 @@ html.dark {
   --hypr-surface: rgb(16 16 24 / 0.58);
   --hypr-line: rgb(255 255 255 / 0.06);
   --hypr-inactive: rgb(255 255 255 / 0.08);
-  --hypr-glow: rgb(51 204 255 / 0.22);
+  --hypr-glow: rgb(0 0 0 / 0.45);
 }
 
 @keyframes hypr-spin {
@@ -69,7 +69,7 @@ html.dark {
     background: var(--hypr-inactive);
   }
   &::after {
-    background: conic-gradient(from var(--hypr-angle), var(--color-hypr-cyan), var(--color-hypr-mint), var(--color-hypr-violet), var(--color-hypr-rose), var(--color-hypr-cyan));
+    background: conic-gradient(from var(--hypr-angle), var(--border-strong), var(--muted), var(--border-strong), var(--muted), var(--border-strong));
     opacity: var(--hypr-on, 0);
     transition: opacity 300ms ease;
     animation: hypr-spin 6s linear infinite;
@@ -90,7 +90,7 @@ html.dark {
 }
 
 @utility hypr-text-gradient {
-  background: linear-gradient(100deg, var(--color-hypr-cyan), var(--color-hypr-mint) 45%, var(--color-hypr-violet));
+  background: linear-gradient(100deg, var(--primary), var(--muted) 55%, var(--text-soft));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;

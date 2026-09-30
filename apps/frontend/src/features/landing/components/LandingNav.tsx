@@ -15,8 +15,8 @@ export function LandingNav(): React.ReactNode {
   return (
     <header className="fixed inset-x-0 top-0 z-50 px-3 pt-3 sm:px-5 sm:pt-4">
       <nav aria-label="Principal" className="hypr-window mx-auto rounded-2xl flex max-w-6xl items-center justify-between gap-3 px-3 py-2 sm:px-4">
-        <a href="#inicio" className="flex items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-hypr-cyan">
-          <span className="grid size-7 place-items-center rounded-lg bg-linear-to-br from-hypr-cyan via-hypr-mint to-hypr-violet font-hypr-mono text-xs font-bold text-zinc-950">LP</span>
+        <a href="#inicio" className="flex items-center gap-2.5 rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-white">
+          <span className="grid size-7 place-items-center rounded-lg bg-zinc-900 font-hypr-mono text-xs font-bold text-white dark:bg-white dark:text-zinc-900">LP</span>
           <span className="hidden font-hypr-display text-sm font-semibold tracking-tight text-zinc-900 sm:inline dark:text-zinc-100">LivePresentations</span>
         </a>
 
@@ -28,9 +28,9 @@ export function LandingNav(): React.ReactNode {
                 <a
                   href={`#${section.id}`}
                   aria-current={isActive ? "true" : undefined}
-                  className={`flex h-7 min-w-7 items-center justify-center gap-1.5 rounded-lg px-2 font-hypr-mono text-[11px] transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-hypr-cyan ${
+                  className={`flex h-7 min-w-7 items-center justify-center gap-1.5 rounded-lg px-2 font-hypr-mono text-[11px] transition-all duration-300 outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:focus-visible:ring-white ${
                     isActive
-                      ? "bg-linear-to-r from-hypr-cyan/90 to-hypr-mint/90 text-zinc-950 shadow-[0_0_18px_-4px_var(--color-hypr-cyan)]"
+                      ? "bg-zinc-900 text-white shadow-sm dark:bg-white dark:text-zinc-900"
                       : "text-zinc-500 hover:bg-zinc-900/5 hover:text-zinc-900 dark:text-zinc-400 dark:hover:bg-white/6 dark:hover:text-zinc-100"
                   }`}
                 >

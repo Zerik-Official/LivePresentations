@@ -19,8 +19,8 @@ export function HeroSection(): React.ReactNode {
         <div className="lg:col-span-5">
           <motion.div {...enter(0)} className="hypr-window hypr-active inline-flex items-center gap-2 rounded-full px-3 py-1">
             <span className="relative flex size-2">
-              <span className="absolute inline-flex size-full animate-ping rounded-full bg-hypr-mint opacity-60 motion-reduce:hidden" />
-              <span className="relative inline-flex size-2 rounded-full bg-hypr-mint" />
+              <span className="absolute inline-flex size-full animate-ping rounded-full bg-zinc-400 opacity-60 motion-reduce:hidden dark:bg-zinc-500" />
+              <span className="relative inline-flex size-2 rounded-full bg-zinc-900 dark:bg-white" />
             </span>
             <span className="font-hypr-mono text-[11px] text-zinc-700 dark:text-zinc-300">Presentaciones en tiempo real</span>
           </motion.div>
@@ -40,14 +40,14 @@ export function HeroSection(): React.ReactNode {
           <motion.div {...enter(0.24)} className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               to={cta.to}
-              className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 text-sm font-semibold text-white shadow-[0_10px_40px_-12px_var(--color-hypr-cyan)] transition-all hover:-translate-y-0.5 hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hypr-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-(--hypr-bg) dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+              className="group inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-zinc-900 px-6 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-2 focus-visible:ring-offset-(--hypr-bg) dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100 dark:focus-visible:ring-white"
             >
               {cta.label}
               <FiArrowRight className="transition-transform group-hover:translate-x-0.5" />
             </Link>
             <a
               href="#flujo"
-              className="hypr-window hover:hypr-active inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-medium text-zinc-800 transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hypr-cyan dark:text-zinc-200"
+              className="hypr-window hover:hypr-active inline-flex h-12 items-center justify-center gap-2 rounded-xl px-6 text-sm font-medium text-zinc-800 transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 dark:text-zinc-200 dark:focus-visible:ring-white"
             >
               <FiSmartphone />
               Cómo funciona
@@ -57,7 +57,7 @@ export function HeroSection(): React.ReactNode {
           <motion.ul {...enter(0.32)} className="mt-10 flex flex-wrap gap-x-5 gap-y-2">
             {HIGHLIGHTS.map((item) => (
               <li key={item} className="flex items-center gap-2 font-hypr-mono text-[11px] text-zinc-500 dark:text-zinc-400">
-                <span className="size-1 rounded-full bg-hypr-cyan" />
+                <span className="size-1 rounded-full bg-zinc-400 dark:bg-zinc-500" />
                 {item}
               </li>
             ))}

@@ -23,7 +23,7 @@ export function FeaturesSection(): React.ReactNode {
               <Reveal as="li" key={feature.title} delay={(i % 3) * 0.08} className={feature.span}>
                 <GlowWindow hoverActive className="group h-full transition-transform duration-300 hover:-translate-y-1" bodyClassName="flex h-full flex-col p-6">
                     <div className="flex items-center justify-between">
-                      <span className="grid size-10 place-items-center rounded-xl bg-linear-to-br from-hypr-cyan/15 to-hypr-violet/15 text-sky-700 ring-1 ring-(--hypr-line) transition-colors group-hover:text-emerald-600 dark:text-hypr-cyan dark:group-hover:text-hypr-mint">
+                      <span className="grid size-10 place-items-center rounded-xl bg-zinc-900/5 text-zinc-900 ring-1 ring-(--hypr-line) transition-colors group-hover:bg-zinc-900/10 dark:bg-white/10 dark:text-zinc-100">
                         <Icon size={18} />
                       </span>
                       <span className="font-hypr-mono text-[10px] text-zinc-400 dark:text-zinc-500">{feature.tag}</span>

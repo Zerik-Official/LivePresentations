@@ -26,7 +26,7 @@ function SlideArchitecture({ highlight }: { highlight: boolean }): React.ReactNo
   ];
   return (
     <div className="flex h-full flex-col justify-center gap-3 p-5 sm:p-7">
-      <p className="font-hypr-mono text-[10px] uppercase tracking-[0.2em] text-hypr-cyan">src/features</p>
+      <p className="font-hypr-mono text-[10px] uppercase tracking-[0.2em] text-zinc-400">src/features</p>
       <h3 className="font-hypr-display text-lg font-semibold text-white sm:text-2xl">Arquitectura por features</h3>
       <div className="mt-1 flex flex-col gap-2">
         {bars.map((bar, i) => (
@@ -37,7 +37,7 @@ function SlideArchitecture({ highlight }: { highlight: boolean }): React.ReactNo
                 initial={{ width: 0 }}
                 animate={{ width: bar.width }}
                 transition={{ delay: 0.15 + i * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
-                className={`h-full rounded-full ${highlight && i === 0 ? "bg-hypr-mint shadow-[0_0_14px_var(--color-hypr-mint)]" : "bg-linear-to-r from-hypr-cyan to-hypr-violet"}`}
+                className={`h-full rounded-full ${highlight && i === 0 ? "bg-white shadow-sm" : "bg-zinc-500"}`}
               />
             </div>
           </div>
@@ -51,7 +51,7 @@ function SlideQuestion({ highlight }: { highlight: boolean }): React.ReactNode {
   const answers = ["WebSocket", "REST polling", "gRPC"];
   return (
     <div className="flex h-full flex-col justify-center gap-3 p-5 sm:p-7">
-      <p className="font-hypr-mono text-[10px] uppercase tracking-[0.2em] text-hypr-violet">pregunta · 1/1</p>
+      <p className="font-hypr-mono text-[10px] uppercase tracking-[0.2em] text-zinc-400">pregunta · 1/1</p>
       <h3 className="font-hypr-display text-lg font-semibold text-white sm:text-2xl">¿Cómo se sincroniza la sala?</h3>
       <div className="mt-1 grid grid-cols-3 gap-2">
         {answers.map((answer, i) => {
@@ -60,7 +60,7 @@ function SlideQuestion({ highlight }: { highlight: boolean }): React.ReactNode {
             <div
               key={answer}
               className={`rounded-lg border px-2 py-2 text-center text-[10px] font-medium transition-all duration-300 sm:text-xs ${
-                correct ? "border-hypr-mint bg-hypr-mint/15 text-hypr-mint shadow-[0_0_18px_-6px_var(--color-hypr-mint)]" : "border-white/10 bg-white/5 text-zinc-300"
+                correct ? "border-white bg-white/10 text-white shadow-sm" : "border-white/10 bg-white/5 text-zinc-300"
               }`}
             >
               <span className="mr-1 font-hypr-mono opacity-60">{String.fromCharCode(65 + i)}</span>
@@ -76,8 +76,8 @@ function SlideQuestion({ highlight }: { highlight: boolean }): React.ReactNode {
 function SlideRaffle({ highlight }: { highlight: boolean }): React.ReactNode {
   return (
     <div className="flex h-full flex-col items-center justify-center gap-3 p-5 text-center sm:p-7">
-      <p className="font-hypr-mono text-[10px] uppercase tracking-[0.2em] text-hypr-rose">sorteo · $participantes</p>
-      <div className={`rounded-xl border px-6 py-3 transition-all duration-300 ${highlight ? "border-hypr-rose bg-hypr-rose/10 shadow-[0_0_24px_-6px_var(--color-hypr-rose)]" : "border-white/10 bg-white/5"}`}>
+      <p className="font-hypr-mono text-[10px] uppercase tracking-[0.2em] text-zinc-400">sorteo · $participantes</p>
+      <div className={`rounded-xl border px-6 py-3 transition-all duration-300 ${highlight ? "border-white bg-white/10 shadow-sm" : "border-white/10 bg-white/5"}`}>
         <span className="font-hypr-display text-2xl font-semibold text-white sm:text-3xl">Valentina</span>
       </div>
       <p className="text-[11px] text-zinc-400">Ruleta · 3 s · sin repetir</p>
@@ -135,7 +135,7 @@ export function HeroShowcase(): React.ReactNode {
   return (
     <div className="grid grid-cols-5 gap-3">
       <GlowWindow label="presenter — /present/K7Q2" active className="col-span-5 sm:col-span-3" bodyClassName="p-2">
-        <div className="relative aspect-video overflow-hidden rounded-lg bg-[radial-gradient(120%_120%_at_0%_0%,#1b1b2e_0%,#0a0a12_60%)]">
+        <div className="relative aspect-video overflow-hidden rounded-lg bg-[radial-gradient(120%_120%_at_0%_0%,#27272a_0%,#09090b_60%)]">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={index}
@@ -165,7 +165,7 @@ export function HeroShowcase(): React.ReactNode {
               type="button"
               onClick={() => handleManual(-1)}
               aria-label="Diapositiva anterior"
-              className="grid h-10 cursor-pointer place-items-center rounded-lg bg-white/6 text-zinc-200 transition-colors hover:bg-white/12 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hypr-cyan"
+              className="grid h-10 cursor-pointer place-items-center rounded-lg bg-white/6 text-zinc-200 transition-colors hover:bg-white/12 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <FiChevronLeft />
             </button>
@@ -173,7 +173,7 @@ export function HeroShowcase(): React.ReactNode {
               type="button"
               onClick={() => handleManual(1)}
               aria-label="Diapositiva siguiente"
-              className="grid h-10 cursor-pointer place-items-center rounded-lg bg-linear-to-br from-hypr-cyan to-hypr-mint text-zinc-950 transition-transform active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+              className="grid h-10 cursor-pointer place-items-center rounded-lg bg-white text-zinc-900 transition-colors hover:bg-zinc-100 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             >
               <FiChevronRight />
             </button>
@@ -182,8 +182,8 @@ export function HeroShowcase(): React.ReactNode {
             type="button"
             onClick={handleHighlight}
             aria-pressed={highlight}
-            className={`flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hypr-violet ${
-              highlight ? "bg-hypr-violet/25 text-hypr-violet" : "bg-white/6 text-zinc-300 hover:bg-white/12"
+            className={`flex h-9 cursor-pointer items-center justify-center gap-1.5 rounded-lg text-[11px] font-medium transition-all active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${
+              highlight ? "bg-white/15 text-white" : "bg-white/6 text-zinc-300 hover:bg-white/12"
             }`}
           >
             <FiZap size={12} />
@@ -207,7 +207,7 @@ export function HeroShowcase(): React.ReactNode {
                 className="flex gap-2 truncate"
               >
                 <span className="text-zinc-400 dark:text-zinc-600">{entry.time}</span>
-                <span className="text-sky-700 dark:text-hypr-cyan">{entry.type}</span>
+                <span className="text-zinc-500 dark:text-zinc-300">{entry.type}</span>
                 <span className="truncate text-zinc-500">{entry.payload}</span>
               </motion.li>
             ))}
