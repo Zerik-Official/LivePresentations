@@ -155,7 +155,7 @@ export function HeroShowcase(): React.ReactNode {
       </GlowWindow>
 
       <GlowWindow label="controller" hoverActive className="col-span-2 sm:row-span-2" bodyClassName="flex flex-col items-center justify-center p-3">
-        <div className="flex w-full max-w-[140px] flex-col gap-2 rounded-2xl border border-(--hypr-line) bg-zinc-950/90 p-2.5 shadow-inner">
+        <div className="flex w-full max-w-35 flex-col gap-2 rounded-2xl border border-(--hypr-line) bg-zinc-950/90 p-2.5 shadow-inner">
           <div className="mx-auto h-1 w-8 rounded-full bg-white/15" />
           <div className="rounded-lg bg-white/5 px-2 py-1.5 text-center font-hypr-mono text-[10px] text-zinc-400">
             Diapositiva <span className="text-white">{index + 1}</span>
