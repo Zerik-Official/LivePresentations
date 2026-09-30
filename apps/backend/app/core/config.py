@@ -75,5 +75,9 @@ class Settings(BaseSettings):
     def upload_dir(self) -> Path:
         return _INSTANCE_DIR / "uploads"
 
+    @property
+    def avatar_dir(self) -> Path:
+        return _INSTANCE_DIR / "avatars"
+
 
 settings = Settings()
