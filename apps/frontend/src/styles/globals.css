@@ -8,6 +8,104 @@
   --color-input-bg: var(--input-bg);
   --color-input-border: var(--input-border);
   --color-input-text: var(--input-text);
+  --color-hypr-cyan: #33ccff;
+  --color-hypr-mint: #00ff99;
+  --color-hypr-violet: #b48cff;
+  --color-hypr-rose: #ff7ab6;
+  --color-hypr-bg: var(--hypr-bg);
+  --color-hypr-surface: var(--hypr-surface);
+  --color-hypr-line: var(--hypr-line);
+  --font-hypr-display: "Space Grotesk", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-hypr-mono: "JetBrains Mono", ui-monospace, monospace;
+}
+
+@property --hypr-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+:root {
+  --hypr-bg: #f3f4f8;
+  --hypr-surface: rgb(255 255 255 / 0.62);
+  --hypr-line: rgb(24 24 27 / 0.08);
+  --hypr-inactive: rgb(24 24 27 / 0.1);
+  --hypr-glow: rgb(51 204 255 / 0.18);
+}
+
+html.dark {
+  --hypr-bg: #07070c;
+  --hypr-surface: rgb(16 16 24 / 0.58);
+  --hypr-line: rgb(255 255 255 / 0.06);
+  --hypr-inactive: rgb(255 255 255 / 0.08);
+  --hypr-glow: rgb(51 204 255 / 0.22);
+}
+
+@keyframes hypr-spin {
+  to { --hypr-angle: 360deg; }
+}
+
+@utility hypr-window {
+  position: relative;
+  isolation: isolate;
+  background: var(--hypr-surface);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  transition: box-shadow 300ms ease;
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    padding: 1.5px;
+    border-radius: inherit;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+    pointer-events: none;
+  }
+  &::before {
+    background: var(--hypr-inactive);
+  }
+  &::after {
+    background: conic-gradient(from var(--hypr-angle), var(--color-hypr-cyan), var(--color-hypr-mint), var(--color-hypr-violet), var(--color-hypr-rose), var(--color-hypr-cyan));
+    opacity: var(--hypr-on, 0);
+    transition: opacity 300ms ease;
+    animation: hypr-spin 6s linear infinite;
+    animation-play-state: var(--hypr-play, paused);
+  }
+}
+
+@utility hypr-active {
+  --hypr-on: 1;
+  --hypr-play: running;
+  box-shadow: 0 24px 70px -24px var(--hypr-glow);
+}
+
+@utility hypr-grid {
+  background-image: linear-gradient(var(--hypr-line) 1px, transparent 1px), linear-gradient(90deg, var(--hypr-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, #000 40%, transparent 100%);
+}
+
+@utility hypr-text-gradient {
+  background: linear-gradient(100deg, var(--color-hypr-cyan), var(--color-hypr-mint) 45%, var(--color-hypr-violet));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html.hypr-smooth-scroll {
+    scroll-behavior: smooth;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hypr-window::after {
+    animation: none !important;
+  }
 }
 
 :root {
