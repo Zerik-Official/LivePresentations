@@ -9,7 +9,20 @@
 export interface User {
   id: string;
   email: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  last_login_at: string | null;
   created_at: string;
+}
+
+/**
+ * Aggregated profile statistics with quota usage.
+ */
+export interface UserStats {
+  presentations_count: number;
+  used_bytes: number;
+  quota_bytes: number;
+  remaining_bytes: number;
 }
 
 /**
