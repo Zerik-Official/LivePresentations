@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy import select
@@ -44,7 +46,11 @@ async def register(payload: UserCreate, db: AsyncSession = Depends(get_db)) -> T
     if len(payload.password) < 8:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="La contraseña debe tener al menos 8 caracteres")
 
-    user = User(email=payload.email.lower(), hashed_password=get_password_hash(payload.password))
+    user = User(
+        email=payload.email.lower(),
+        hashed_password=get_password_hash(payload.password),
+        last_login_at=datetime.now(timezone.utc),
+    )
     db.add(user)
     await db.commit()
     await db.refresh(user)
@@ -62,5 +68,8 @@ async def login(payload: UserLogin, db: AsyncSession = Depends(get_db)) -> Token
     if user is None or not verify_password(payload.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas")
 
+    user.last_login_at = datetime.now(timezone.utc)
+    await db.commit()
+    await db.refresh(user)
     token = create_access_token(subject=user.id)
     return TokenWithUser(access_token=token, user=UserRead.model_validate(user))
