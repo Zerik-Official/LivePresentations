@@ -56,7 +56,13 @@ async def lifespan(_app: FastAPI):  # type: ignore[no-untyped-def]
         pass
 
 
-app = FastAPI(title=settings.app_name, lifespan=lifespan)
+app = FastAPI(
+    title=settings.app_name,
+    lifespan=lifespan,
+    docs_url=None if settings.is_production else "/docs",
+    redoc_url=None if settings.is_production else "/redoc",
+    openapi_url=None if settings.is_production else "/openapi.json",
+)
 
 
 _allow_all = "*" in settings.parsed_cors_origins
