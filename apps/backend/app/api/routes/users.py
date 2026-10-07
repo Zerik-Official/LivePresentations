@@ -216,7 +216,7 @@ async def upload_my_avatar(
     if size == 0:
         tmp_dest.unlink(missing_ok=True)
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="El archivo está vacío")
-    _remove_previous_avatars(dest.parent)
+    _remove_previous_avatars(dest.parent, keep=tmp_dest)
     tmp_dest.rename(dest)
 
     current_user.avatar_url = f"{url}?v={cache_suffix}"
