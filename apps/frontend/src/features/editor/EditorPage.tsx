@@ -5,7 +5,6 @@ import { Link, useParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
-import { Select } from "@/components/ui/Select";
 import { Spinner } from "@/components/ui/Spinner";
 import { TooltipSimple } from "@/components/ui/Tooltip";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -15,12 +14,12 @@ import { presentationsApi } from "@/lib/api";
 import { getDescendantIds } from "@/lib/presentation/hierarchy";
 import { parsePresentationData } from "@/lib/presentation/parser";
 import type { Presentation } from "@/types/backend";
-import type { PresentationData, Slide } from "@/types/presentation";
+import type { PresentationData } from "@/types/presentation";
 import { DraggableElement } from "./DraggableElement";
+import { EditorRibbon } from "./components/EditorRibbon";
 import { EditorSidebar } from "./components/EditorSidebar";
 import { PropertiesOverlay } from "./components/PropertiesOverlay";
 import { SlidesList } from "./components/SlidesList";
-import { Toolbar } from "./components/Toolbar";
 import { useCanvasDrop } from "./hooks/useCanvasDrop";
 import { useElements } from "./hooks/useElements";
 import { useKeyboardDelete } from "./hooks/useKeyboardDelete";
@@ -178,6 +177,20 @@ export function EditorPage(): React.ReactNode {
 
       {error && <div className="mx-4 mt-3 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-3 py-2 text-sm text-red-700 dark:text-red-300">{error}</div>}
 
+      <EditorRibbon
+        onAdd={addElement}
+        disabled={!slide}
+        slide={slide}
+        data={data}
+        activeSlide={activeSlide}
+        onUpdateBackground={updateBackground}
+        onUpdateTransition={updateTransition}
+        onUpdateData={setData}
+        onAddSlide={addSlide}
+        onDuplicateSlide={duplicateSlide}
+        onRequestDeleteSlide={(idx) => setConfirmSlideIdx(idx)}
+      />
+
       <div className="flex flex-1 overflow-hidden">
         <SlidesList
           data={data}
@@ -194,19 +207,6 @@ export function EditorPage(): React.ReactNode {
         />
 
         <main className="flex flex-1 flex-col items-center overflow-auto p-4 bg-zinc-50 dark:bg-zinc-950">
-          <Toolbar onAdd={addElement} disabled={!slide} />
-          {slide && (
-            <div className="mt-3 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2">
-              <span className="text-xs font-medium text-zinc-600 dark:text-zinc-300">Fondo</span>
-              <input type="color" value={slide.background} onChange={(e) => updateBackground(e.target.value)} className="h-7 w-12 rounded border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800" />
-              <input value={slide.background} onChange={(e) => updateBackground(e.target.value)} placeholder="#ffffff" className="w-24 rounded-lg border bg-(--input-bg) border-(--input-border) text-(--input-text) px-2 py-1.5 text-xs outline-none focus:border-zinc-900 dark:focus:border-zinc-400" />
-              <span className="ml-2 text-xs font-medium text-zinc-600 dark:text-zinc-300">Transición</span>
-              <div className="w-28">
-                <Select value={slide.transition} options={[{ value: "fade", label: "Fade" }, { value: "slide", label: "Slide" }, { value: "zoom", label: "Zoom" }]} onChange={(v) => updateTransition(v as Slide["transition"])} placeholder="Transición" />
-              </div>
-            </div>
-          )}
-
           <DndContext onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd}>
             <div
               onDragOver={(e) => e.preventDefault()}
