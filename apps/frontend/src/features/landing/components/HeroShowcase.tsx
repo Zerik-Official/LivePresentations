@@ -18,24 +18,24 @@ function stamp(): string {
   return new Date().toLocaleTimeString("es-CO", { hour12: false });
 }
 
-function SlideArchitecture({ highlight }: { highlight: boolean }): React.ReactNode {
-  const bars = [
-    { label: "editor/", width: "82%" },
-    { label: "player/", width: "64%" },
-    { label: "room/", width: "48%" },
+function SlideEditor({ highlight }: { highlight: boolean }): React.ReactNode {
+  const layers = [
+    { label: "Texto", width: "82%" },
+    { label: "Imagen", width: "64%" },
+    { label: "Código", width: "48%" },
   ];
   return (
     <div className="flex h-full flex-col justify-center gap-3 p-5 sm:p-7">
-      <p className="font-hypr-mono text-[10px] uppercase tracking-[0.2em] text-zinc-400">src/features</p>
-      <h3 className="font-hypr-display text-lg font-semibold text-white sm:text-2xl">Arquitectura por features</h3>
+      <p className="font-hypr-mono text-[10px] uppercase tracking-[0.2em] text-zinc-400">editor · lienzo 1280×720</p>
+      <h3 className="font-hypr-display text-lg font-semibold text-white sm:text-2xl">Diseña y arrastra sin fricción</h3>
       <div className="mt-1 flex flex-col gap-2">
-        {bars.map((bar, i) => (
-          <div key={bar.label} className="flex items-center gap-3">
-            <span className="w-14 font-hypr-mono text-[10px] text-zinc-400">{bar.label}</span>
+        {layers.map((layer, i) => (
+          <div key={layer.label} className="flex items-center gap-3">
+            <span className="w-14 font-hypr-mono text-[10px] text-zinc-400">{layer.label}</span>
             <div className="h-2 flex-1 overflow-hidden rounded-full bg-white/8">
               <motion.div
                 initial={{ width: 0 }}
-                animate={{ width: bar.width }}
+                animate={{ width: layer.width }}
                 transition={{ delay: 0.15 + i * 0.1, duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
                 className={`h-full rounded-full ${highlight && i === 0 ? "bg-white shadow-sm" : "bg-zinc-500"}`}
               />
@@ -85,7 +85,7 @@ function SlideRaffle({ highlight }: { highlight: boolean }): React.ReactNode {
   );
 }
 
-const SLIDES = [SlideArchitecture, SlideQuestion, SlideRaffle];
+const SLIDES = [SlideEditor, SlideQuestion, SlideRaffle];
 
 export function HeroShowcase(): React.ReactNode {
   const reduceMotion = useReducedMotion();
