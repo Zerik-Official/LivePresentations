@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     database_url: str = f"sqlite+aiosqlite:///{_DEFAULT_DB_PATH.as_posix()}"
 
     cors_origins: str = "*"
+    environment: str = "development"
     enable_turnstille_captcha: bool = True
     turnstile_public_key: str = ""
     turnstile_private_key: str = ""
@@ -47,6 +48,10 @@ class Settings(BaseSettings):
         if not path.is_absolute():
             path = _BACKEND_ROOT / path if path.parts and path.parts[0] == "instance" else _INSTANCE_DIR / path
         return f"{prefix}{path.resolve().as_posix()}"
+
+    @property
+    def is_production(self) -> bool:
+        return self.environment.strip().lower() == "production"
 
     @property
     def turnstile_enabled(self) -> bool:
