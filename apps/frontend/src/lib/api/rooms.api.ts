@@ -1,5 +1,5 @@
 import type { ApiClient } from "./client";
-import type { Room } from "@/types/backend";
+import type { PublicRoom, Room } from "@/types/backend";
 
 /**
  * Room management endpoints.
@@ -35,6 +35,16 @@ export class RoomsApi {
   }
 
   /**
+   * Fetch a public room as an anonymous viewer.
+   * @param code - Room code
+   * @returns Title and the slides shown so far
+   */
+  async getPublic(code: string): Promise<PublicRoom> {
+    const { data } = await this.client.axios.get<PublicRoom>(`/api/rooms/${code}/public`);
+    return data;
+  }
+
+  /**
    * List active rooms for current user.
    * @returns Rooms
    */
@@ -53,7 +63,7 @@ export class RoomsApi {
    * @param config - Config patch
    * @returns Updated room
    */
-  async updateConfig(code: string, config: { show_controls?: boolean; fullscreen?: boolean; anti_spoiler?: boolean; auto_fullscreen?: boolean }): Promise<Room> {
+  async updateConfig(code: string, config: { show_controls?: boolean; fullscreen?: boolean; anti_spoiler?: boolean; auto_fullscreen?: boolean; is_public?: boolean }): Promise<Room> {
     const { data } = await this.client.axios.patch<Room>(`/api/rooms/${code}/config`, config);
     return data;
   }
