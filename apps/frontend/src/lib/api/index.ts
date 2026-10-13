@@ -1,4 +1,5 @@
 import { apiClient } from "./client";
+import { AiApi } from "./ai.api";
 import { AuthApi } from "./auth.api";
 import { ConfigApi } from "./config.api";
 import { PresentationsApi } from "./presentations.api";
@@ -9,6 +10,7 @@ import { UsersApi } from "./users.api";
 export { apiClient } from "./client";
 export { resolveFileUrl } from "./users.api";
 
+export const aiApi = new AiApi(apiClient);
 export const authApi = new AuthApi(apiClient);
 export const configApi = new ConfigApi(apiClient);
 export const presentationsApi = new PresentationsApi(apiClient);
