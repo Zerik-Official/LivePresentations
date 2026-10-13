@@ -1,9 +1,12 @@
 import { useMemo, useState } from "react";
-import { FaCode, FaFont, FaIcons, FaImage, FaShapes, FaStar, FaVideo } from "react-icons/fa";
-import { FiCopy, FiDatabase, FiPlus, FiTrash2 } from "react-icons/fi";
+import { FaCode, FaFont, FaIcons, FaImage, FaPencilAlt, FaShapes, FaStar, FaTable, FaVideo } from "react-icons/fa";
+import { FiArrowUpRight, FiChevronsDown, FiChevronsUp, FiCopy, FiCornerUpLeft, FiCornerUpRight, FiDatabase, FiPlus, FiTrash2 } from "react-icons/fi";
+import { LuMagnet } from "react-icons/lu";
+import { MdAlignHorizontalCenter, MdAlignHorizontalLeft, MdAlignHorizontalRight, MdAlignVerticalBottom, MdAlignVerticalCenter, MdAlignVerticalTop } from "react-icons/md";
 
 import { Select } from "@/components/ui/Select";
 import { TooltipSimple } from "@/components/ui/Tooltip";
+import type { AlignMode } from "@/lib/presentation/operations";
 import type { PresentationData, Slide, SlideElement } from "@/types/presentation";
 import { elementRegistry } from "../elements/registry";
 import { SpecialsPickerModal } from "../elements/specials/SpecialsPickerModal";
@@ -12,7 +15,7 @@ import { VariablesModal } from "./VariablesModal";
 /**
  * Ribbon tab identifier.
  */
-export type EditorRibbonTab = "insert" | "design" | "slides" | "data";
+export type EditorRibbonTab = "insert" | "arrange" | "design" | "slides" | "data";
 
 /**
  * Props for the editor ribbon.
@@ -40,7 +43,44 @@ interface EditorRibbonProps {
   onDuplicateSlide: (idx: number) => void;
   /** Handler to request slide deletion by index. */
   onRequestDeleteSlide: (idx: number) => void;
+  /** Whether an element is selected, enabling the arrange actions. */
+  hasSelection: boolean;
+  /** Whether freehand drawing mode is active. */
+  drawing: boolean;
+  /** Toggle freehand drawing mode. */
+  onToggleDrawing: () => void;
+  /** Undo the last change. */
+  onUndo: () => void;
+  /** Redo the last undone change. */
+  onRedo: () => void;
+  /** Whether there is a change to undo. */
+  canUndo: boolean;
+  /** Whether there is a change to redo. */
+  canRedo: boolean;
+  /** Duplicate the selected element. */
+  onDuplicate: () => void;
+  /** Align the selected element against the canvas. */
+  onAlign: (mode: AlignMode) => void;
+  /** Send the selected element to the front or the back. */
+  onLayer: (position: "front" | "back") => void;
+  /** Whether dragged elements snap to alignment guides. */
+  smartGuides: boolean;
+  /** Turn the alignment guides on or off. */
+  onToggleSmartGuides: () => void;
 }
+
+const ALIGN_ACTIONS: Array<{ mode: AlignMode; label: string; Icon: React.ComponentType<{ size?: number }> }> = [
+  { mode: "left", label: "Alinear a la izquierda", Icon: MdAlignHorizontalLeft },
+  { mode: "center", label: "Centrar horizontalmente", Icon: MdAlignHorizontalCenter },
+  { mode: "right", label: "Alinear a la derecha", Icon: MdAlignHorizontalRight },
+  { mode: "top", label: "Alinear arriba", Icon: MdAlignVerticalTop },
+  { mode: "middle", label: "Centrar verticalmente", Icon: MdAlignVerticalCenter },
+  { mode: "bottom", label: "Alinear abajo", Icon: MdAlignVerticalBottom },
+];
+
+const GROUP_LABEL_CLASS = "text-[10px] font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400";
+const ACTION_BUTTON_CLASS =
+  "inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 px-3 py-2 text-xs font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:cursor-not-allowed disabled:opacity-40";
 
 const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
   text: FaFont,
@@ -50,10 +90,13 @@ const ICON_MAP: Record<string, React.ComponentType<{ size?: number }>> = {
   code: FaCode,
   video: FaVideo,
   specials: FaStar,
+  line: FiArrowUpRight,
+  table: FaTable,
 };
 
 const TABS: Array<{ id: EditorRibbonTab; label: string }> = [
   { id: "insert", label: "Insertar" },
+  { id: "arrange", label: "Organizar" },
   { id: "design", label: "Diseño" },
   { id: "slides", label: "Diapositivas" },
   { id: "data", label: "Datos" },
@@ -72,6 +115,18 @@ const TABS: Array<{ id: EditorRibbonTab; label: string }> = [
  * @param onAddSlide - Add slide handler
  * @param onDuplicateSlide - Duplicate slide handler
  * @param onRequestDeleteSlide - Request slide deletion handler
+ * @param hasSelection - Whether an element is selected
+ * @param drawing - Whether drawing mode is active
+ * @param onToggleDrawing - Drawing mode toggle
+ * @param onUndo - Undo handler
+ * @param onRedo - Redo handler
+ * @param canUndo - Whether undo is available
+ * @param canRedo - Whether redo is available
+ * @param onDuplicate - Duplicate element handler
+ * @param onAlign - Align element handler
+ * @param onLayer - Layer order handler
+ * @param smartGuides - Whether smart guides are on
+ * @param onToggleSmartGuides - Smart guides toggle
  * @returns Ribbon element
  */
 export function EditorRibbon({
@@ -86,12 +141,24 @@ export function EditorRibbon({
   onAddSlide,
   onDuplicateSlide,
   onRequestDeleteSlide,
+  hasSelection,
+  drawing,
+  onToggleDrawing,
+  onUndo,
+  onRedo,
+  canUndo,
+  canRedo,
+  onDuplicate,
+  onAlign,
+  onLayer,
+  smartGuides,
+  onToggleSmartGuides,
 }: EditorRibbonProps): React.ReactNode {
   const [activeTab, setActiveTab] = useState<EditorRibbonTab>("insert");
   const [specialsOpen, setSpecialsOpen] = useState(false);
   const [variablesOpen, setVariablesOpen] = useState(false);
 
-  const items = useMemo(() => elementRegistry.getAll().filter((d) => d.type !== "specials"), []);
+  const items = useMemo(() => elementRegistry.getAll().filter((d) => d.type !== "specials" && d.type !== "drawing"), []);
 
   /**
    * Update canvas dimensions keeping the rest of the data intact.
@@ -122,7 +189,7 @@ export function EditorRibbon({
   function renderInsert(): React.ReactNode {
     return (
       <div className="flex flex-wrap items-stretch gap-3">
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5" data-tour="ribbon-elements">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Elementos</span>
           <div className="flex flex-wrap gap-1.5">
             {items.map((def) => {
@@ -144,7 +211,23 @@ export function EditorRibbon({
           </div>
         </div>
         <div className="w-px self-stretch bg-zinc-200 dark:bg-zinc-700" />
-        <div className="flex flex-col gap-1.5">
+        <div className="flex flex-col gap-1.5" data-tour="ribbon-draw">
+          <span className={GROUP_LABEL_CLASS}>A mano alzada</span>
+          <TooltipSimple content={drawing ? "Salir del modo dibujo" : "Dibujar sobre la diapositiva"} side="bottom">
+            <button
+              type="button"
+              onClick={onToggleDrawing}
+              disabled={disabled}
+              aria-pressed={drawing}
+              className={`flex min-w-17 cursor-pointer flex-col items-center gap-1 rounded-lg border px-3 py-2 disabled:cursor-not-allowed disabled:opacity-40 ${drawing ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}
+            >
+              <FaPencilAlt size={15} />
+              <span className="text-[11px] font-medium">Dibujar</span>
+            </button>
+          </TooltipSimple>
+        </div>
+        <div className="w-px self-stretch bg-zinc-200 dark:bg-zinc-700" />
+        <div className="flex flex-col gap-1.5" data-tour="ribbon-specials">
           <span className="text-[10px] font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Especiales</span>
           <TooltipSimple content="Elementos especiales" side="bottom">
             <button
@@ -155,6 +238,85 @@ export function EditorRibbon({
             >
               <FaStar size={15} />
               <span className="text-[11px] font-medium">Especiales</span>
+            </button>
+          </TooltipSimple>
+        </div>
+      </div>
+    );
+  }
+
+  /**
+   * Render the arrange tab with history, duplication, alignment and layering.
+   * @returns Arrange tab content
+   */
+  function renderArrange(): React.ReactNode {
+    return (
+      <div className="flex flex-wrap items-stretch gap-3">
+        <div className="flex flex-col gap-1.5">
+          <span className={GROUP_LABEL_CLASS}>Historial</span>
+          <div className="flex gap-1.5">
+            <TooltipSimple content="Deshacer (Ctrl+Z)" side="bottom">
+              <button type="button" onClick={onUndo} disabled={!canUndo} className={ACTION_BUTTON_CLASS}>
+                <FiCornerUpLeft size={13} /> Deshacer
+              </button>
+            </TooltipSimple>
+            <TooltipSimple content="Rehacer (Ctrl+Y)" side="bottom">
+              <button type="button" onClick={onRedo} disabled={!canRedo} className={ACTION_BUTTON_CLASS}>
+                <FiCornerUpRight size={13} /> Rehacer
+              </button>
+            </TooltipSimple>
+          </div>
+        </div>
+        <div className="w-px self-stretch bg-zinc-200 dark:bg-zinc-700" />
+        <div className="flex flex-col gap-1.5">
+          <span className={GROUP_LABEL_CLASS}>Elemento</span>
+          <TooltipSimple content="Duplicar elemento (Ctrl+D)" side="bottom">
+            <button type="button" onClick={onDuplicate} disabled={!hasSelection} className={ACTION_BUTTON_CLASS}>
+              <FiCopy size={13} /> Duplicar
+            </button>
+          </TooltipSimple>
+        </div>
+        <div className="w-px self-stretch bg-zinc-200 dark:bg-zinc-700" />
+        <div className="flex flex-col gap-1.5">
+          <span className={GROUP_LABEL_CLASS}>Alinear en el lienzo</span>
+          <div className="flex gap-1.5">
+            {ALIGN_ACTIONS.map(({ mode, label, Icon }) => (
+              <TooltipSimple key={mode} content={label} side="bottom">
+                <button type="button" aria-label={label} onClick={() => onAlign(mode)} disabled={!hasSelection} className={`${ACTION_BUTTON_CLASS} px-2.5`}>
+                  <Icon size={15} />
+                </button>
+              </TooltipSimple>
+            ))}
+          </div>
+        </div>
+        <div className="w-px self-stretch bg-zinc-200 dark:bg-zinc-700" />
+        <div className="flex flex-col gap-1.5">
+          <span className={GROUP_LABEL_CLASS}>Orden</span>
+          <div className="flex gap-1.5">
+            <TooltipSimple content="Traer al frente" side="bottom">
+              <button type="button" onClick={() => onLayer("front")} disabled={!hasSelection} className={ACTION_BUTTON_CLASS}>
+                <FiChevronsUp size={13} /> Al frente
+              </button>
+            </TooltipSimple>
+            <TooltipSimple content="Enviar al fondo" side="bottom">
+              <button type="button" onClick={() => onLayer("back")} disabled={!hasSelection} className={ACTION_BUTTON_CLASS}>
+                <FiChevronsDown size={13} /> Al fondo
+              </button>
+            </TooltipSimple>
+          </div>
+        </div>
+        <div className="w-px self-stretch bg-zinc-200 dark:bg-zinc-700" />
+        <div className="flex flex-col gap-1.5" data-tour="smart-guides">
+          <span className={GROUP_LABEL_CLASS}>Al arrastrar</span>
+          <TooltipSimple content="Muestra líneas y ajusta el elemento cuando sus bordes o su centro coinciden con otro elemento o con el lienzo" side="bottom">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={smartGuides}
+              onClick={onToggleSmartGuides}
+              className={`inline-flex cursor-pointer items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium ${smartGuides ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}
+            >
+              <LuMagnet size={13} /> Guías inteligentes: {smartGuides ? "sí" : "no"}
             </button>
           </TooltipSimple>
         </div>
@@ -336,7 +498,7 @@ export function EditorRibbon({
   }
 
   return (
-    <div className="border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+    <div className="border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900" data-tour="ribbon">
       <div role="tablist" aria-label="Editor ribbon" className="flex gap-1 overflow-x-auto px-3 pt-2 sm:px-4">
         {TABS.map((tab) => {
           const isActive = tab.id === activeTab;
@@ -346,6 +508,7 @@ export function EditorRibbon({
               type="button"
               role="tab"
               aria-selected={isActive}
+              data-tour={`ribbon-tab-${tab.id}`}
               onClick={() => setActiveTab(tab.id)}
               className={`cursor-pointer whitespace-nowrap border-b-2 px-3 py-2 text-xs font-medium transition-colors ${
                 isActive
@@ -360,6 +523,7 @@ export function EditorRibbon({
       </div>
       <div className="border-t border-zinc-200 dark:border-zinc-700 bg-zinc-50/60 dark:bg-zinc-950/40 px-3 py-2.5 sm:px-4">
         {activeTab === "insert" ? renderInsert() : null}
+        {activeTab === "arrange" ? renderArrange() : null}
         {activeTab === "design" ? renderDesign() : null}
         {activeTab === "slides" ? renderSlides() : null}
         {activeTab === "data" ? renderData() : null}
