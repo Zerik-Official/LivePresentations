@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
-import { FiCopy, FiExternalLink, FiInfo, FiSettings } from "react-icons/fi";
+import { FiCopy, FiExternalLink, FiGlobe, FiInfo, FiSettings } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -29,6 +29,7 @@ export function RoomCreatedModal({ open, code, onClose }: Props): React.ReactNod
   const [fullscreen, setFullscreen] = useState(false);
   const [antiSpoiler, setAntiSpoiler] = useState(false);
   const [autoFullscreen, setAutoFullscreen] = useState(true);
+  const [isPublic, setIsPublic] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export function RoomCreatedModal({ open, code, onClose }: Props): React.ReactNod
         setFullscreen(r.fullscreen ?? false);
         setAntiSpoiler(r.anti_spoiler ?? false);
         setAutoFullscreen(r.auto_fullscreen ?? true);
+        setIsPublic(r.is_public ?? false);
       })
       .catch(() => null);
   }, [open, code]);
@@ -50,6 +52,23 @@ export function RoomCreatedModal({ open, code, onClose }: Props): React.ReactNod
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const controlUrl = `${origin}/control/${code}`;
   const presentUrl = `${origin}/present/${code}`;
+  const watchUrl = `${origin}/watch/${code}`;
+
+  /**
+   * Open or close the room to anonymous viewers.
+   * @param value - New value
+   */
+  async function togglePublic(value: boolean): Promise<void> {
+    setIsPublic(value);
+    setSaving(true);
+    try {
+      await roomsApi.updateConfig(code as string, { is_public: value });
+    } catch {
+      setIsPublic(!value);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   /**
    * Toggle show controls config.
@@ -173,6 +192,32 @@ export function RoomCreatedModal({ open, code, onClose }: Props): React.ReactNod
                   </button>
                 </TooltipSimple>
               </div>
+            </div>
+
+            <div className="w-full rounded-xl border border-zinc-200 dark:border-zinc-700 p-3">
+              <Checkbox
+                checked={isPublic}
+                onChange={(checked) => void togglePublic(checked)}
+                label="Sala pública"
+                description="Cualquiera con el enlace puede seguir la presentación sin cuenta. No puede controlarla."
+                disabled={saving}
+              />
+              {isPublic && (
+                <div className="mt-3 flex flex-col items-center gap-3">
+                  <div className="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white p-3">
+                    <QRCodeSVG value={watchUrl} size={120} />
+                  </div>
+                  <div className="flex w-full items-center gap-2 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-800 px-3 py-2">
+                    <FiGlobe size={13} className="shrink-0 text-zinc-500 dark:text-zinc-400" />
+                    <span className="flex-1 truncate text-xs text-zinc-700 dark:text-zinc-300">{watchUrl}</span>
+                    <TooltipSimple content="Copiar enlace para espectadores" side="top">
+                      <button type="button" aria-label="Copiar enlace para espectadores" onClick={() => void navigator.clipboard.writeText(watchUrl)} className="cursor-pointer rounded-md bg-white dark:bg-zinc-700 p-1.5 border border-zinc-200 dark:border-zinc-600">
+                        <FiCopy size={14} />
+                      </button>
+                    </TooltipSimple>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         ) : (
