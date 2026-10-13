@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { FiChevronDown, FiLogOut, FiSettings, FiUser } from "react-icons/fi";
+import { LuSparkles } from "react-icons/lu";
 
 import { resolveFileUrl } from "@/lib/api";
 import type { User } from "@/types/backend";
@@ -9,6 +10,7 @@ interface UserMenuProps {
   user: User | null;
   onOpenProfile: () => void;
   onOpenSettings: () => void;
+  onOpenAi: () => void;
   onLogout: () => void;
 }
 
@@ -17,10 +19,11 @@ interface UserMenuProps {
  * @param user - Authenticated user
  * @param onOpenProfile - Open profile callback
  * @param onOpenSettings - Open settings callback
+ * @param onOpenAi - Open AI assistant settings callback
  * @param onLogout - Logout callback
  * @returns Floating menu element
  */
-export function UserMenu({ user, onOpenProfile, onOpenSettings, onLogout }: UserMenuProps): React.ReactNode {
+export function UserMenu({ user, onOpenProfile, onOpenSettings, onOpenAi, onLogout }: UserMenuProps): React.ReactNode {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const avatarSrc = resolveFileUrl(user?.avatar_url);
@@ -94,6 +97,10 @@ export function UserMenu({ user, onOpenProfile, onOpenSettings, onLogout }: User
           <button type="button" role="menuitem" className={itemClass} onClick={() => handleAction(onOpenSettings)}>
             <FiSettings size={15} className="shrink-0 text-zinc-500 dark:text-zinc-400" />
             Configuración
+          </button>
+          <button type="button" role="menuitem" className={itemClass} onClick={() => handleAction(onOpenAi)}>
+            <LuSparkles size={15} className="shrink-0 text-zinc-500 dark:text-zinc-400" />
+            Asistente de IA
           </button>
           <div className="my-1 border-t border-zinc-200 dark:border-zinc-700" />
           <button
