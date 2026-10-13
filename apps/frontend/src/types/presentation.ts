@@ -13,12 +13,18 @@ export interface Variable {
   value: unknown;
 }
 
+/** Element types supported by the editor, in schema order. */
+export const ELEMENT_TYPES = ["text", "image", "shape", "video", "code", "icon", "specials", "line", "drawing", "table"] as const;
+
+/** Discriminator of a slide element. */
+export type ElementType = (typeof ELEMENT_TYPES)[number];
+
 /**
  * Slide element with absolute layout and extensible props.
  */
 export interface SlideElement {
   id: string;
-  type: "text" | "image" | "shape" | "video" | "code" | "icon" | "specials";
+  type: ElementType;
   x: number;
   y: number;
   w: number;
