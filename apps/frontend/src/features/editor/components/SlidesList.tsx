@@ -89,7 +89,7 @@ export function SlidesList({ data, activeSlide, onSelect, onAdd, onDelete, onDup
   }
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+    <aside data-tour="slides-list" className="flex w-64 shrink-0 flex-col border-r border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
       <div className="flex items-center justify-between border-b border-zinc-200 dark:border-zinc-700 px-3 py-3">
         <h3 className="text-xs font-semibold uppercase tracking-widest text-zinc-500 dark:text-zinc-400">Diapositivas</h3>
         <TooltipSimple content="Añadir diapositiva" side="right">
