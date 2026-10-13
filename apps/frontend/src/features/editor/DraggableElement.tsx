@@ -1,8 +1,9 @@
 import { useDraggable } from "@dnd-kit/core";
-import { CSS } from "@dnd-kit/utilities";
 
 import type { SlideElement } from "@/types/presentation";
 import { elementRegistry } from "./elements/registry";
+
+const MIN_SIZE = 16;
 
 interface Props {
   element: SlideElement;
@@ -11,7 +12,16 @@ interface Props {
   onResize: (id: string, w: number, h: number) => void;
   dragDelta?: { x: number; y: number } | null;
   isDescendantOfDragging?: boolean;
+  /** Canvas zoom, to convert pointer pixels to slide pixels */
+  scale?: number;
+  /** Marks the element as created or modified by an assistant edit awaiting review */
+  review?: "added" | "updated";
 }
+
+const REVIEW_CLASSES: Record<NonNullable<Props["review"]>, string> = {
+  added: "outline-2 outline-dashed outline-offset-2 outline-emerald-500 animate-[popIn_0.3s_ease_both]",
+  updated: "outline-2 outline-dashed outline-offset-2 outline-amber-500",
+};
 
 /**
  * Draggable wrapper for a slide element in the editor with resize handles.
@@ -19,12 +29,19 @@ interface Props {
  * @param selected - Whether selected
  * @param onSelect - Selection handler
  * @param onResize - Resize handler
+ * @param dragDelta - Drag offset of the dragged ancestor, in slide pixels
+ * @param isDescendantOfDragging - Whether an ancestor is being dragged
+ * @param scale - Canvas zoom
+ * @param review - Pending assistant edit affecting the element
  */
-export function DraggableElement({ element, selected, onSelect, onResize, dragDelta, isDescendantOfDragging }: Props): React.ReactNode {
+export function DraggableElement({ element, selected, onSelect, onResize, dragDelta, isDescendantOfDragging, scale = 1, review }: Props): React.ReactNode {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: element.id });
   const rawListeners = listeners as Record<string, unknown> | undefined;
 
-  const activeTranslate = CSS.Translate.toString(transform);
+  // While this element is dragged, the editor's offset wins over the raw pointer
+  // offset: it is already in slide pixels and adjusted by the smart guides.
+  const dragged = transform ? (dragDelta ?? { x: transform.x / scale, y: transform.y / scale }) : null;
+  const activeTranslate = dragged ? `translate3d(${dragged.x}px, ${dragged.y}px, 0)` : null;
   const descendantTranslate = isDescendantOfDragging && dragDelta ? `translate3d(${dragDelta.x}px, ${dragDelta.y}px, 0)` : "";
   const translate = activeTranslate ?? descendantTranslate;
   const rotate = element.rotation ? ` rotate(${element.rotation}deg)` : "";
@@ -59,19 +76,19 @@ export function DraggableElement({ element, selected, onSelect, onResize, dragDe
      * @param ev - Pointer event
      */
     function onMove(ev: PointerEvent): void {
-      const dx = ev.clientX - startX;
-      const dy = ev.clientY - startY;
+      const dx = (ev.clientX - startX) / scale;
+      const dy = (ev.clientY - startY) / scale;
       let w = startW;
       let h = startH;
-      if (dir.includes("e")) w = Math.max(40, startW + dx);
-      if (dir.includes("s")) h = Math.max(40, startH + dy);
+      if (dir.includes("e")) w = Math.max(MIN_SIZE, startW + dx);
+      if (dir.includes("s")) h = Math.max(MIN_SIZE, startH + dy);
       if (dir === "e") h = startH;
       if (dir === "s") w = startW;
       if (dir === "se") {
-        w = Math.max(40, startW + dx);
-        h = Math.max(40, startH + dy);
+        w = Math.max(MIN_SIZE, startW + dx);
+        h = Math.max(MIN_SIZE, startH + dy);
       }
-      onResize(element.id, w, h);
+      onResize(element.id, Math.round(w), Math.round(h));
     }
 
     /**
@@ -104,7 +121,7 @@ export function DraggableElement({ element, selected, onSelect, onResize, dragDe
     <div
       ref={setNodeRef}
       style={style}
-      className={`absolute select-none rounded-md border ${isTransparentVisual ? "bg-transparent" : "bg-white"} ${selected ? "border-zinc-900 ring-2 ring-zinc-900" : isTransparentVisual ? "border-transparent" : "border-zinc-200"} ${isDragging || isDescendantOfDragging ? "shadow-lg" : ""}`}
+      className={`absolute select-none rounded-md border ${isTransparentVisual ? "bg-transparent" : "bg-white"} ${selected ? "border-zinc-900 ring-2 ring-zinc-900" : isTransparentVisual ? "border-transparent" : "border-zinc-200"} ${isDragging || isDescendantOfDragging ? "shadow-lg" : ""} ${review ? REVIEW_CLASSES[review] : ""}`}
       onPointerDown={handlePointerDown}
       onClick={() => onSelect(element.id)}
       {...attributes}
