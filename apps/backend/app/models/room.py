@@ -22,5 +22,6 @@ class Room(Base):
     fullscreen: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="0")
     anti_spoiler: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="0")
     auto_fullscreen: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False, server_default="1")
+    is_public: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False, server_default="0")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc) + timedelta(hours=4), nullable=False)
