@@ -17,6 +17,8 @@ interface Props {
   onCollapseCode?: () => void;
   fullscreen?: boolean;
   showControls?: boolean;
+  /** Content painted above every element, e.g. live annotations */
+  overlay?: React.ReactNode;
 }
 
 /**
@@ -104,6 +106,7 @@ function ElementView({
  * @param codeHighlightedLines - Highlighted lines for expanded code
  * @param codeScrollTop - Scroll top for expanded code
  * @param onCollapseCode - Collapse handler
+ * @param overlay - Content painted above the elements
  */
 export function SlideRenderer({
   slide,
@@ -117,26 +120,8 @@ export function SlideRenderer({
   onCollapseCode,
   fullscreen = false,
   showControls = true,
+  overlay,
 }: Props): React.ReactNode {
-  if (!slide) {
-    return (
-      <div style={{ width, height }} className="flex items-center justify-center rounded-xl border border-dashed bg-white text-sm text-zinc-500">
-        Sin diapositiva
-      </div>
-    );
-  }
-
-  const t = slide.transition ?? "fade";
-  const slideVariants =
-    t === "slide"
-      ? { initial: { opacity: 0, x: 80 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -80 } }
-      : t === "zoom"
-        ? { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 1.06 } }
-        : { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
-
-  const expandedElement = codeExpandedId ? (slide.elements.find((e) => e.id === codeExpandedId) ?? null) : null;
-  const isCodeExpanded = Boolean(expandedElement && expandedElement.type === "code");
-
   const [scale, setScale] = useState(1);
 
   useEffect(() => {
@@ -156,6 +141,25 @@ export function SlideRenderer({
     window.addEventListener("resize", updateScale);
     return () => window.removeEventListener("resize", updateScale);
   }, [width, height, fullscreen]);
+
+  if (!slide) {
+    return (
+      <div style={{ width, height }} className="flex items-center justify-center rounded-xl border border-dashed bg-white text-sm text-zinc-500">
+        Sin diapositiva
+      </div>
+    );
+  }
+
+  const t = slide.transition ?? "fade";
+  const slideVariants =
+    t === "slide"
+      ? { initial: { opacity: 0, x: 80 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -80 } }
+      : t === "zoom"
+        ? { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 1.06 } }
+        : { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
+
+  const expandedElement = codeExpandedId ? (slide.elements.find((e) => e.id === codeExpandedId) ?? null) : null;
+  const isCodeExpanded = Boolean(expandedElement && expandedElement.type === "code");
 
   const containerClass = fullscreen ? "relative overflow-hidden border-0 bg-white shadow-none" : "relative overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm";
   const containerStyle: React.CSSProperties = fullscreen ? { width: "100vw", height: "100vh", background: slide.background } : { width, height, background: slide.background };
@@ -177,6 +181,7 @@ export function SlideRenderer({
           .map((el) => (
             <ElementView key={el.id} element={el} highlighted={highlightedId === el.id} isTriggered={animTriggerId === el.id} width={width} height={height} fullscreen={fullscreen} scale={scale} />
           ))}
+        {overlay}
         {isCodeExpanded && <CodeExpandedOverlay element={expandedElement} expanded={isCodeExpanded} highlightedLines={codeHighlightedLines ?? []} scrollTop={codeScrollTop ?? 0} onCollapse={showControls ? onCollapseCode : undefined} />}
       </motion.div>
     </AnimatePresence>
