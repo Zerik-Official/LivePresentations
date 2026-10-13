@@ -21,6 +21,13 @@ class UserLogin(BaseModel):
     turnstile_token: str | None = None
 
 
+class GoogleLogin(BaseModel):
+    """Payload for signing in with a Google ID token."""
+
+    credential: str = Field(min_length=1, max_length=4096)
+    turnstile_token: str | None = None
+
+
 class UserRead(BaseModel):
     """Public user representation."""
 
@@ -28,6 +35,9 @@ class UserRead(BaseModel):
     email: EmailStr
     display_name: str | None = None
     avatar_url: str | None = None
+    has_password: bool = True
+    google_linked: bool = False
+    email_verified: bool = True
     last_login_at: datetime | None = None
     created_at: datetime
 
@@ -41,9 +51,12 @@ class UserProfileUpdate(BaseModel):
 
 
 class PasswordChange(BaseModel):
-    """Payload for changing the account password."""
+    """Payload for changing or creating the account password.
 
-    current_password: str = Field(min_length=1)
+    `current_password` is only required when the account already has one.
+    """
+
+    current_password: str | None = None
     new_password: str = Field(min_length=8, max_length=128)
 
 
