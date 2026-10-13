@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { FiChevronLeft, FiChevronRight, FiClock } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiClock, FiEyeOff } from "react-icons/fi";
 import { useParams } from "react-router-dom";
 
 import { Button } from "@/components/ui/Button";
@@ -10,10 +10,12 @@ import { parsePresentationData } from "@/lib/presentation/parser";
 import { useRoom } from "./useRoom";
 import { CodeControllerModal } from "./elements/code/CodeControllerModal";
 import { SpecialsController } from "./elements/specials/SpecialsController";
+import { AnnotationPad } from "./controls/AnnotationPad";
 import { ElementControls } from "./controls/ElementControls";
 
 /**
- * Controller view (mobile): next/prev slide, highlight, trigger animation.
+ * Controller view (mobile): next/prev slide, live annotations with pen,
+ * highlighter and laser pointer, blackout, highlight and animation triggers.
  */
 export function ControllerPage(): React.ReactNode {
   const { code } = useParams<{ code: string }>();
@@ -94,6 +96,7 @@ export function ControllerPage(): React.ReactNode {
           <h1 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Controlador — Sala {code}</h1>
           <p className={`text-xs ${room.connected ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
             {room.connected ? "Conectado" : "Desconectado"}
+            {room.roomConfig.isPublic && <span className="text-zinc-500 dark:text-zinc-400"> · {room.viewers === 1 ? "1 espectador" : `${room.viewers} espectadores`}</span>}
           </p>
         </div>
         <ThemeToggle />
@@ -124,6 +127,27 @@ export function ControllerPage(): React.ReactNode {
             Siguiente <FiChevronRight />
           </button>
         </div>
+
+        <button
+          type="button"
+          aria-pressed={room.blackout}
+          onClick={() => room.send("BLACKOUT", { enabled: !room.blackout })}
+          className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border py-3 text-sm font-medium ${room.blackout ? "border-zinc-900 dark:border-white bg-zinc-900 dark:bg-white text-white dark:text-zinc-900" : "border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700"}`}
+        >
+          <FiEyeOff /> {room.blackout ? "Pantalla en negro activa · tocar para volver" : "Pantalla en negro"}
+        </button>
+
+        {slide && (
+          <AnnotationPad
+            slide={slide}
+            slideIndex={room.currentSlide}
+            width={data.width}
+            height={data.height}
+            strokes={room.annotations[room.currentSlide] ?? []}
+            onStroke={room.drawStroke}
+            send={room.send}
+          />
+        )}
 
         {room.roomConfig.antiSpoiler && !room.spoilerDismissed && (
           <div className="rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 p-4">
