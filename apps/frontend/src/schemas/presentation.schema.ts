@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { ELEMENT_TYPES } from "@/types/presentation";
+
 /**
  * Schema for a presentation-level variable.
  */
@@ -16,7 +18,7 @@ export const variableSchema = z.object({
  */
 export const elementSchema = z.object({
   id: z.string(),
-  type: z.enum(["text", "image", "shape", "video", "code", "icon", "specials"]),
+  type: z.enum(ELEMENT_TYPES),
   x: z.number(),
   y: z.number(),
   w: z.number(),
