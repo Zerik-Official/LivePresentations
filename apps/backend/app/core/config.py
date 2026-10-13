@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 _BACKEND_ROOT = Path(__file__).resolve().parents[2]
@@ -17,7 +17,19 @@ class Settings(BaseSettings):
     app_name: str = "LivePresentations"
     secret_key: str = "change-me-in-production-use-env"
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 60 * 24
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_days: int = 30
+    cookie_secure: bool | None = None
+    cookie_domain: str = ""
+
+    email_verification_enabled: bool = True
+    resend_api_key: str = ""
+    email_from: str = "LivePresentations <onboarding@resend.dev>"
+    otp_expire_minutes: int = 10
+    otp_resend_cooldown_seconds: int = 60
+    otp_max_attempts: int = 5
+
+    public_room_max_viewers: int = 300
 
     database_url: str = f"sqlite+aiosqlite:///{_DEFAULT_DB_PATH.as_posix()}"
 
@@ -27,6 +39,11 @@ class Settings(BaseSettings):
     turnstile_public_key: str = ""
     turnstile_private_key: str = ""
     upload_quota_mb: int = 20
+    google_client_id: str = ""
+    ai_encryption_key: str = ""
+    ai_allow_private_base_urls: bool = False
+    ai_request_timeout_seconds: int = 120
+    ai_max_output_tokens: int = 8192
 
     model_config = SettingsConfigDict(
         env_file=_BACKEND_ROOT / ".env",
@@ -56,6 +73,22 @@ class Settings(BaseSettings):
     @property
     def turnstile_enabled(self) -> bool:
         return self.enable_turnstille_captcha and bool(self.turnstile_public_key and self.turnstile_private_key)
+
+    @model_validator(mode="after")
+    def require_email_delivery_in_production(self) -> Settings:
+        """Refuse to start in production when codes could not be delivered."""
+        if self.is_production and self.email_verification_enabled and not self.resend_api_key.strip():
+            raise ValueError("RESEND_API_KEY is required in production while EMAIL_VERIFICATION_ENABLED is true")
+        return self
+
+    @property
+    def use_secure_cookies(self) -> bool:
+        """Whether auth cookies are restricted to HTTPS (defaults to production only)."""
+        return self.is_production if self.cookie_secure is None else self.cookie_secure
+
+    @property
+    def google_auth_enabled(self) -> bool:
+        return bool(self.google_client_id.strip())
 
     @property
     def parsed_cors_origins(self) -> list[str]:
