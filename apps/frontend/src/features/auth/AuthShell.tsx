@@ -1,4 +1,5 @@
 import { FiAlertCircle } from "react-icons/fi";
+import { Link } from "react-router-dom";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -48,6 +49,15 @@ export function AuthShell({ title, subtitle, error, children }: Props): React.Re
 
         {children}
       </div>
+
+      <nav aria-label="Legal" className="absolute inset-x-0 bottom-4 flex justify-center gap-4 text-xs text-zinc-500 dark:text-zinc-400">
+        <Link to="/terms" className="hover:text-zinc-900 dark:hover:text-zinc-100">
+          Términos
+        </Link>
+        <Link to="/privacy" className="hover:text-zinc-900 dark:hover:text-zinc-100">
+          Privacidad
+        </Link>
+      </nav>
     </div>
   );
 }
