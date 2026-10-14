@@ -26,6 +26,10 @@ _ADDED_COLUMNS: dict[str, dict[str, str]] = {
     "rooms": {
         "is_public": "BOOLEAN NOT NULL DEFAULT '0'",
     },
+    "ai_messages": {
+        "input_tokens": "INTEGER",
+        "output_tokens": "INTEGER",
+    },
 }
 _ADDED_INDEXES: tuple[str, ...] = ("CREATE UNIQUE INDEX IF NOT EXISTS ix_users_google_sub ON users (google_sub)",)
 
