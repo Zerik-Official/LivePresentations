@@ -105,8 +105,8 @@ export function DraggableElement({ element, selected, onSelect, onResize, dragDe
     window.addEventListener("pointerup", onUp);
   }
 
-  const previewRun = useAnimationPreview((s) => (s.run?.elementId === element.id ? s.run : null));
-  const previewAnimation = previewRun ? (element.animations?.find((a) => a.id === previewRun.animationId) ?? null) : null;
+  const previewRun = useAnimationPreview((s) => (s.run?.targets.includes(element.id) ? s.run : null));
+  const previewAnimation = previewRun?.animation ?? null;
   const definition = elementRegistry.tryGet(element.type);
   const content = definition ? definition.renderEditor(element) : null;
   const isTransparentVisual = definition?.isTransparent?.(element) ?? element.type === "image";
