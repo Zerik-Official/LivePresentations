@@ -65,6 +65,9 @@ class AIMessage(Base):
     tool_call_id: Mapped[str | None] = mapped_column(String(200), nullable=True, default=None)
     summary: Mapped[str | None] = mapped_column(String(300), nullable=True, default=None)
     ok: Mapped[bool | None] = mapped_column(Boolean, nullable=True, default=None)
+    #: Tokens of the model request that produced an assistant message.
+    input_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
+    output_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True, default=None)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow, nullable=False)
 
 
