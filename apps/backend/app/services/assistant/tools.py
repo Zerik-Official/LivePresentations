@@ -48,6 +48,39 @@ _ELEMENT_PROPS: dict[str, object] = {
         "src": {"type": "string", "description": "image: absolute https URL"},
         "alt": {"type": "string", "description": "image"},
         "fit": {"type": "string", "enum": ["cover", "contain", "fill", "none"], "description": "image"},
+        "crop": {
+            "type": "object",
+            "description": "image/video: part of the source to show, as fractions 0-1 of its width and height",
+            "properties": {"x": {"type": "number"}, "y": {"type": "number"}, "w": {"type": "number"}, "h": {"type": "number"}},
+            "required": ["x", "y", "w", "h"],
+        },
+    },
+}
+
+ANIMATION_EFFECTS = [
+    "fadeIn", "slideInLeft", "slideInRight", "slideInUp", "slideInDown", "zoomIn", "popIn", "flipIn", "rotateIn", "blurIn",
+    "fadeOut", "slideOutLeft", "slideOutRight", "zoomOut", "blurOut",
+    "pulse", "bounce", "shake", "wiggle", "spin", "float", "heartbeat", "flash",
+    "custom",
+]
+
+_ANIMATIONS: dict[str, object] = {
+    "type": "array",
+    "description": "Animations of the element. Replaces the whole list when given.",
+    "items": {
+        "type": "object",
+        "properties": {
+            "name": {"type": "string", "description": "Short label shown on the controller, e.g. 'Revelar gráfico'"},
+            "effect": {"type": "string", "enum": ANIMATION_EFFECTS},
+            "trigger": {"type": "string", "enum": ["enter", "controller"]},
+            "durationMs": {"type": "number"},
+            "delayMs": {"type": "number"},
+            "easing": {"type": "string", "enum": ["ease", "ease-in", "ease-out", "ease-in-out", "linear", "spring"]},
+            "iterations": {"type": "string", "description": "A number such as '1' or '3', or 'infinite'"},
+            "includeChildren": {"type": "boolean"},
+            "keyframes": {"type": "string", "description": "Only for effect custom: body of a CSS @keyframes rule"},
+        },
+        "required": ["effect", "trigger"],
     },
 }
 
@@ -62,6 +95,7 @@ _ELEMENT_SPEC: dict[str, object] = {
         "h": {"type": "number", "description": "Height"},
         "rotation": {"type": "number", "description": "Degrees clockwise; use it to angle lines"},
         "props": _ELEMENT_PROPS,
+        "animations": _ANIMATIONS,
     },
     "required": ["type", "x", "y", "w", "h"],
 }
@@ -120,7 +154,7 @@ ASSISTANT_TOOLS: list[dict[str, object]] = [
     ),
     _tool(
         "update_element",
-        "Move, resize, rotate or restyle an element. Only the provided fields and props change.",
+        "Move, resize, rotate, restyle or animate an element. Only the provided fields and props change; animations, when given, replace the list.",
         {
             "slide_index": _SLIDE_INDEX,
             "element_id": {"type": "string"},
@@ -130,6 +164,7 @@ ASSISTANT_TOOLS: list[dict[str, object]] = [
             "h": {"type": "number"},
             "rotation": {"type": "number"},
             "props": _ELEMENT_PROPS,
+            "animations": _ANIMATIONS,
         },
         ["slide_index", "element_id"],
     ),
