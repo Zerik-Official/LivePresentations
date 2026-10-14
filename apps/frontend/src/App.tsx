@@ -11,7 +11,9 @@ import { WatchPage } from "@/features/player/WatchPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { LoginPage } from "@/pages/LoginPage";
+import { PrivacyPage } from "@/pages/PrivacyPage";
 import { RegisterPage } from "@/pages/RegisterPage";
+import { TermsPage } from "@/pages/TermsPage";
 import { VerifyEmailPage } from "@/pages/VerifyEmailPage";
 import { useAuthStore } from "@/stores/authStore";
 
@@ -43,6 +45,8 @@ export default function App(): React.ReactNode {
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
           <Route path="/watch/:code" element={<WatchPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route
             path="/dashboard"
             element={
