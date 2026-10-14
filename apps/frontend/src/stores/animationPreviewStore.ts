@@ -1,12 +1,23 @@
 import { create } from "zustand";
 
-import type { AnimationRun } from "@/lib/animations/playback";
+import type { ElementAnimation } from "@/lib/animations/effects";
+
+/**
+ * Animation playing on the editor canvas.
+ */
+export interface AnimationPreview {
+  animation: ElementAnimation;
+  /** Elements that play it: the owner and, if included, its linked children */
+  targets: string[];
+  /** Changes on every preview so the same animation can replay */
+  nonce: number;
+}
 
 interface AnimationPreviewState {
   /** Animation being previewed on the editor canvas */
-  run: AnimationRun | null;
-  /** Play an animation of an element on the canvas for a while, then restore it */
-  preview: (elementId: string, animationId: string, playMs: number) => void;
+  run: AnimationPreview | null;
+  /** Play an animation on some elements for a while, then restore them */
+  preview: (animation: ElementAnimation, targets: string[], playMs: number) => void;
   /** Stop the preview */
   clear: () => void;
 }
@@ -17,8 +28,8 @@ interface AnimationPreviewState {
  */
 export const useAnimationPreview = create<AnimationPreviewState>((set, get) => ({
   run: null,
-  preview: (elementId, animationId, playMs) => {
-    const run = { elementId, animationId, nonce: Date.now() };
+  preview: (animation, targets, playMs) => {
+    const run = { animation, targets, nonce: Date.now() };
     set({ run });
     // Exits end hidden and loops never end: put the element back afterwards.
     window.setTimeout(() => {
