@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { EFFECTS } from "@/lib/animations/effects";
 import { ELEMENT_TYPES } from "@/types/presentation";
 
 /**
@@ -15,6 +16,7 @@ export const variableSchema = z.object({
 
 /**
  * Schema for an element animation; missing fields get sensible defaults.
+ * Entrances start hidden unless told otherwise.
  */
 export const animationSchema = z.object({
   id: z.string(),
@@ -26,8 +28,9 @@ export const animationSchema = z.object({
   easing: z.enum(["ease", "ease-in", "ease-out", "ease-in-out", "linear", "spring"]).default("ease-out"),
   iterations: z.number().default(1),
   includeChildren: z.boolean().default(true),
+  startHidden: z.boolean().optional(),
   keyframes: z.string().optional(),
-});
+}).transform((animation) => ({ ...animation, startHidden: animation.startHidden ?? EFFECTS[animation.effect]?.kind === "in" }));
 
 /**
  * Schema for a slide element.
