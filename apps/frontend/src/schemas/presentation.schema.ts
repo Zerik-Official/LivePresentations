@@ -14,6 +14,22 @@ export const variableSchema = z.object({
 });
 
 /**
+ * Schema for an element animation; missing fields get sensible defaults.
+ */
+export const animationSchema = z.object({
+  id: z.string(),
+  name: z.string().default("Animación"),
+  effect: z.string(),
+  trigger: z.enum(["enter", "controller"]).default("enter"),
+  durationMs: z.number().default(600),
+  delayMs: z.number().default(0),
+  easing: z.enum(["ease", "ease-in", "ease-out", "ease-in-out", "linear", "spring"]).default("ease-out"),
+  iterations: z.number().default(1),
+  includeChildren: z.boolean().default(true),
+  keyframes: z.string().optional(),
+});
+
+/**
  * Schema for a slide element.
  */
 export const elementSchema = z.object({
@@ -33,6 +49,7 @@ export const elementSchema = z.object({
       durationMs: z.number().default(300),
     })
     .optional(),
+  animations: z.array(animationSchema).optional(),
   highlightable: z.boolean().default(true),
   parentId: z.string().nullable().optional().default(null),
 });
