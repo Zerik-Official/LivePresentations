@@ -2,7 +2,7 @@ import { DndContext, type DragEndEvent, type DragMoveEvent, type DragStartEvent 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FiArrowLeft, FiCheck, FiDownload, FiSave, FiUpload, FiX } from "react-icons/fi";
 import { LuGraduationCap } from "react-icons/lu";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { DrawingSurface, type DrawingTool } from "@/components/DrawingSurface";
 import { DrawingToolbar } from "@/components/DrawingToolbar";
@@ -63,6 +63,7 @@ const AUTOSAVE_DELAY_MS = 2000;
  */
 export function EditorPage(): React.ReactNode {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const history = useHistoryState<PresentationData>();
   const data = history.value;
   const setData = history.set;
@@ -82,7 +83,6 @@ export function EditorPage(): React.ReactNode {
   const [dragDelta, setDragDelta] = useState<{ x: number; y: number } | null>(null);
   const [guides, setGuides] = useState<Guide[]>([]);
   const [smartGuides, setSmartGuides] = useStoredFlag("editor_smart_guides", true);
-  const snappedDelta = useRef<{ x: number; y: number } | null>(null);
   const [zoomMode, setZoomMode] = useState<ZoomMode>("fit");
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
   const [sketch, setSketch] = useState<Stroke[] | null>(null);
@@ -128,8 +128,6 @@ export function EditorPage(): React.ReactNode {
   } = useElements(data, setData, activeSlide, selectedId, setSelectedId);
   const { handleCanvasDrop } = useCanvasDrop(data, activeSlide, setData, setSelectedId, setError);
 
-  // The assistant runs several tools between renders, so it reads the editor
-  // through refs that always hold the latest values.
   const liveState = useRef({ title, activeSlide });
   liveState.current = { title, activeSlide };
   const bridge = useRef<EditorBridge>({
@@ -184,44 +182,47 @@ export function EditorPage(): React.ReactNode {
    * @param event - Drag start event
    */
   function onDragStart(event: DragStartEvent): void {
-    snappedDelta.current = null;
     setDragActiveId(String(event.active.id));
     setDragDelta({ x: 0, y: 0 });
   }
 
   /**
-   * Handle drag move to sync children.
-   * @param event - Drag move event
+   * Turn the pointer offset of a drag into the slide offset to apply, snapped
+   * to the smart guides when they are on. Elements that travel with the
+   * dragged one are not alignment targets.
+   * @param event - Drag move or end event
+   * @returns Offset in slide units and the guides to draw
    */
-  function onDragMove(event: DragMoveEvent): void {
+  function resolveDrag(event: DragMoveEvent | DragEndEvent): { delta: { x: number; y: number }; guides: Guide[] } {
     const raw = { x: event.delta.x / scale, y: event.delta.y / scale };
     const moving = slide?.elements.find((el) => el.id === String(event.active.id));
-    if (!smartGuides || !moving || !slide || !data) {
-      snappedDelta.current = raw;
-      setDragDelta(raw);
-      return;
-    }
-    // Elements that travel with the dragged one are not alignment targets.
+    if (!smartGuides || !moving || !slide || !data) return { delta: raw, guides: [] };
     const carried = new Set([moving.id, ...getDescendantIds(slide.elements, moving.id)]);
     const others = slide.elements.filter((el) => !carried.has(el.id));
     const snap = snapDrag(moving, raw.x, raw.y, others, data, SNAP_DISTANCE_PX / scale);
-    snappedDelta.current = { x: snap.dx, y: snap.dy };
-    setDragDelta(snappedDelta.current);
-    setGuides(snap.guides);
+    return { delta: { x: snap.dx, y: snap.dy }, guides: snap.guides };
   }
 
   /**
-   * Handle drag end and reset tracking.
+   * Handle drag move to sync children and show the guides.
+   * @param event - Drag move event
+   */
+  function onDragMove(event: DragMoveEvent): void {
+    const { delta, guides: next } = resolveDrag(event);
+    setDragDelta(delta);
+    setGuides(next);
+  }
+
+  /**
+   * Commit the position the user saw, including the smart-guide adjustment.
    * @param event - Drag end event
    */
   function onDragEnd(event: DragEndEvent): void {
-    const final = snappedDelta.current;
-    snappedDelta.current = null;
+    const { delta } = resolveDrag(event);
     setDragActiveId(null);
     setDragDelta(null);
     setGuides([]);
-    // Commit the position the user saw, including the smart-guide adjustment.
-    handleDragEnd(final ? { ...event, delta: { x: final.x * scale, y: final.y * scale } } : event, scale);
+    handleDragEnd({ ...event, delta: { x: delta.x * scale, y: delta.y * scale } }, scale);
   }
 
   useKeyboardDelete(drawing ? null : selectedId, () => setConfirmElementOpen(true));
@@ -232,7 +233,6 @@ export function EditorPage(): React.ReactNode {
 
   const slideCount = data?.slides.length ?? 0;
   useEffect(() => {
-    // Undoing a slide creation can leave the active index past the end.
     if (slideCount > 0 && activeSlide >= slideCount) setActiveSlide(slideCount - 1);
   }, [slideCount, activeSlide]);
 
@@ -270,11 +270,13 @@ export function EditorPage(): React.ReactNode {
   }, [id, resetHistory]);
 
   /**
-   * Persist presentation.
+   * Persist presentation. A failed state is remembered so autosave does not
+   * retry it in a loop.
+   * @returns True when the document is saved
    */
-  const handleSave = useCallback(async (): Promise<void> => {
+  const handleSave = useCallback(async (): Promise<boolean> => {
     const current = history.valueRef.current;
-    if (!id || !current) return;
+    if (!id || !current) return false;
     const currentTitle = liveState.current.title;
     setSaving(true);
     setError(null);
@@ -283,11 +285,12 @@ export function EditorPage(): React.ReactNode {
       setSavedSnapshot({ data: current, title: currentTitle });
       failedSnapshot.current = null;
       setSaveFailed(false);
+      return true;
     } catch (e) {
-      // Remember what failed so autosave does not retry the same state in a loop.
       failedSnapshot.current = { data: current, title: currentTitle };
       setSaveFailed(true);
       setError(e instanceof Error ? e.message : "Error al guardar");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -316,13 +319,49 @@ export function EditorPage(): React.ReactNode {
     function saveWhenHidden(): void {
       if (document.visibilityState === "hidden") void handleSave();
     }
+    /**
+     * Send the last changes with a request that outlives the closing page.
+     */
+    function saveOnPageHide(): void {
+      const current = history.valueRef.current;
+      if (id && current) presentationsApi.saveOnExit(id, { title: liveState.current.title, data: current as unknown as Record<string, unknown> });
+    }
     window.addEventListener("beforeunload", warnBeforeLeaving);
+    window.addEventListener("pagehide", saveOnPageHide);
     document.addEventListener("visibilitychange", saveWhenHidden);
     return () => {
       window.removeEventListener("beforeunload", warnBeforeLeaving);
+      window.removeEventListener("pagehide", saveOnPageHide);
       document.removeEventListener("visibilitychange", saveWhenHidden);
     };
-  }, [dirty, handleSave]);
+  }, [id, dirty, handleSave, history.valueRef]);
+
+  const unsaved = useRef(false);
+  useEffect(() => {
+    unsaved.current = dirty;
+  }, [dirty]);
+
+  useEffect(
+    () => () => {
+      const current = history.valueRef.current;
+      if (id && current && unsaved.current) void presentationsApi.update(id, { title: liveState.current.title, data: current as unknown as Record<string, unknown> }).catch(() => null);
+    },
+    [id, history.valueRef],
+  );
+
+  /**
+   * Go back to the dashboard once the pending changes are saved, so the list
+   * shows them; stays in the editor when saving fails.
+   * @param event - Click on the back link
+   */
+  async function leaveEditor(event: React.MouseEvent<HTMLAnchorElement>): Promise<void> {
+    if (!dirty) return;
+    event.preventDefault();
+    if (await handleSave()) {
+      unsaved.current = false;
+      navigate("/dashboard");
+    }
+  }
 
   /**
    * Copy the selected element and its children to the editor clipboard.
@@ -411,7 +450,7 @@ export function EditorPage(): React.ReactNode {
     <div className="flex h-screen flex-col bg-zinc-50 dark:bg-zinc-950">
       <header className="flex items-center gap-3 border-b border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-3">
         <TooltipSimple content="Volver al dashboard" side="bottom">
-          <Link to="/dashboard" className="inline-flex cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 p-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800">
+          <Link to="/dashboard" onClick={(e) => void leaveEditor(e)} className="inline-flex cursor-pointer rounded-lg border border-zinc-200 dark:border-zinc-700 p-2 text-zinc-700 dark:text-zinc-300 hover:bg-zinc-50 dark:hover:bg-zinc-800">
             <FiArrowLeft />
           </Link>
         </TooltipSimple>
@@ -513,7 +552,6 @@ export function EditorPage(): React.ReactNode {
 
           <main ref={mainRef} className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950">
             <div className="flex min-h-full min-w-full items-center justify-center p-6" style={{ width: "max-content" }}>
-              {/* Auto-scroll would add the scroll distance to the drag delta while the canvas already fits the view. */}
               <DndContext autoScroll={false} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd}>
                 <div style={{ width: data.width * scale, height: data.height * scale }} className="relative shrink-0" data-tour="canvas">
                   <div
@@ -546,18 +584,19 @@ export function EditorPage(): React.ReactNode {
                       <div className="flex h-full items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">Crea una diapositiva</div>
                     )}
                     <AnimationStyles />
-                    {guides.map((guide) => (
-                      <span
-                        key={`${guide.orientation}-${guide.position}`}
-                        aria-hidden="true"
-                        style={
-                          guide.orientation === "vertical"
-                            ? { left: guide.position, top: guide.start, height: guide.end - guide.start, width: 0, borderLeftWidth: 1 / scale }
-                            : { top: guide.position, left: guide.start, width: guide.end - guide.start, height: 0, borderTopWidth: 1 / scale }
-                        }
-                        className="pointer-events-none absolute z-[1900] border-dashed border-fuchsia-500"
-                      />
-                    ))}
+                    <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-[1900]">
+                      {guides.map((guide) => (
+                        <span
+                          key={`${guide.orientation}-${guide.position}`}
+                          style={
+                            guide.orientation === "vertical"
+                              ? { left: guide.position, top: guide.start, height: guide.end - guide.start, width: 0, borderLeftWidth: 1 / scale }
+                              : { top: guide.position, left: guide.start, width: guide.end - guide.start, height: 0, borderTopWidth: 1 / scale }
+                          }
+                          className="absolute border-dashed border-fuchsia-500"
+                        />
+                      ))}
+                    </div>
                     {drawing && slide && (
                       <DrawingSurface
                         width={data.width}
