@@ -1,4 +1,5 @@
 import { elementRegistry } from "@/features/editor/elements/registry";
+import { normalizeAnimations } from "@/lib/animations/effects";
 import { createDefaultElement, createEmptySlide } from "@/lib/presentation/factory";
 import { getSubtree } from "@/lib/presentation/hierarchy";
 import { createId, insertElements, patchElement, removeElement, updateSlideAt } from "@/lib/presentation/operations";
@@ -133,6 +134,7 @@ function buildElement(raw: unknown): SlideElement {
     h: Math.max(1, Math.round(requireNumber(spec.h, "h"))),
     rotation: typeof spec.rotation === "number" ? spec.rotation : 0,
     props: { ...base.props, ...props },
+    animations: spec.animations === undefined ? undefined : normalizeAnimations(spec.animations, () => createId("anim")),
   });
   if (!parsed.success) throw new ToolError(`Invalid element: ${parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`).join("; ")}`);
   return parsed.data as SlideElement;
@@ -290,6 +292,7 @@ const HANDLERS: Record<string, ToolHandler> = {
     for (const key of ["x", "y", "w", "h", "rotation"] as const) {
       if (args[key] !== undefined) layout[key] = Math.round(requireNumber(args[key], key));
     }
+    if (args.animations !== undefined) layout.animations = normalizeAnimations(args.animations, () => createId("anim"));
     const props = args.props && typeof args.props === "object" ? (args.props as Record<string, unknown>) : undefined;
     bridge.setData(patchElement(data, index, element.id, layout, props));
     bridge.setActiveSlide(index);
