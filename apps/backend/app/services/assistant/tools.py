@@ -78,6 +78,7 @@ _ANIMATIONS: dict[str, object] = {
             "easing": {"type": "string", "enum": ["ease", "ease-in", "ease-out", "ease-in-out", "linear", "spring"]},
             "iterations": {"type": "string", "description": "A number such as '1' or '3', or 'infinite'"},
             "includeChildren": {"type": "boolean"},
+            "startHidden": {"type": "boolean", "description": "With trigger controller: keep the element invisible until triggered. Defaults to true for entrance effects"},
             "keyframes": {"type": "string", "description": "Only for effect custom: body of a CSS @keyframes rule"},
         },
         "required": ["effect", "trigger"],
