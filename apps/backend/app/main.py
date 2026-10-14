@@ -115,4 +115,5 @@ async def public_config() -> dict[str, object]:
         "upload_quota_bytes": settings.upload_quota_bytes,
         "google_client_id": settings.google_client_id.strip() or None,
         "email_verification_enabled": settings.email_verification_enabled,
+        "contact_email": settings.contact_email.strip() or None,
     }
