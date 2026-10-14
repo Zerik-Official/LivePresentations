@@ -116,7 +116,19 @@ export function RegisterPage(): React.ReactNode {
 
       <GoogleAuthSection clientId={runtimeConfig?.google_client_id} text="signup_with" captchaRequired={captchaRequired} captchaToken={turnstileToken} onResult={applyResult} onError={setError} onAttempt={resetCaptcha} />
 
-      <p className="mt-5 text-center text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="mt-5 text-center text-xs leading-relaxed text-zinc-500 dark:text-zinc-400">
+        Al crear una cuenta aceptas los{" "}
+        <Link to="/terms" className="underline underline-offset-2 hover:text-zinc-900 dark:hover:text-zinc-100">
+          Términos y condiciones
+        </Link>{" "}
+        y la{" "}
+        <Link to="/privacy" className="underline underline-offset-2 hover:text-zinc-900 dark:hover:text-zinc-100">
+          Política de privacidad
+        </Link>
+        .
+      </p>
+
+      <p className="mt-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
         ¿Ya tienes cuenta?{" "}
         <Link to="/login" className="cursor-pointer font-medium text-zinc-900 dark:text-zinc-100 underline decoration-zinc-300 dark:decoration-zinc-600 underline-offset-4 hover:text-black dark:hover:text-white">
           Inicia sesión
