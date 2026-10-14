@@ -125,7 +125,9 @@ class OpenAICompatibleProvider(AIProvider):
         """Translate chat-completions SSE chunks into stream events.
 
         Tool call fragments are accumulated by index and emitted whole once
-        the stream finishes.
+        the stream finishes. Provider data attached to a call, such as the
+        Gemini thought signature in `extra_content`, is kept as JSON so it
+        can be sent back with the call on the next request.
 
         Args:
             response: Open streaming response.
@@ -170,12 +172,17 @@ class OpenAICompatibleProvider(AIProvider):
                         call["name"] = str(function["name"])
                     if function.get("arguments"):
                         call["arguments"] += str(function["arguments"])
+                    if isinstance(fragment.get("extra_content"), dict):
+                        call["extra_content"] = json.dumps(fragment["extra_content"])
                 if choice.get("finish_reason"):
                     finish_reason = str(choice["finish_reason"])
         for index in sorted(tool_calls):
             call = tool_calls[index]
             if call["name"]:
-                yield StreamEvent("tool_call", {"id": call["id"] or f"call_{index}", "name": call["name"], "arguments": call["arguments"] or "{}"})
+                event = {"id": call["id"] or f"call_{index}", "name": call["name"], "arguments": call["arguments"] or "{}"}
+                if call.get("extra_content"):
+                    event["extra_content"] = call["extra_content"]
+                yield StreamEvent("tool_call", event)
         yield StreamEvent("done", {"finish_reason": "tool_calls" if tool_calls else finish_reason})
 
     async def list_models(self, api_key: str, base_url: str) -> list[str]:
