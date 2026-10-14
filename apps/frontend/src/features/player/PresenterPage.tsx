@@ -5,13 +5,16 @@ import { useParams } from "react-router-dom";
 import { Spinner } from "@/components/ui/Spinner";
 import { presentationsApi, roomsApi } from "@/lib/api";
 import { parsePresentationData } from "@/lib/presentation/parser";
+import { nextControllerAnimation } from "@/lib/animations/playback";
+import { AnnotationLayer } from "./elements/AnnotationLayer";
 import { AntiSpoilerOverlay } from "./elements/AntiSpoilerOverlay";
 import { SpecialsPresenter } from "./elements/specials/SpecialsPresenter";
 import { SlideRenderer } from "./SlideRenderer";
 import { useRoom } from "./useRoom";
 
 /**
- * Presenter view: displays slides, syncs via WS, can change slides and highlight.
+ * Presenter view: displays slides, syncs via WS, can change slides and highlight,
+ * and shows the annotations, laser pointer and blackout sent by the controller.
  */
 export function PresenterPage(): React.ReactNode {
   const { code } = useParams<{ code: string }>();
@@ -75,6 +78,13 @@ export function PresenterPage(): React.ReactNode {
     );
 
   const slide = data.slides[room.currentSlide] ?? null;
+  const nextAnimation = slide ? nextControllerAnimation(slide, new Set(Object.keys(room.animationRuns))) : null;
+  const slideStrokes = [
+    ...(room.annotations[room.currentSlide] ?? []),
+    ...Object.values(room.liveStrokes)
+      .filter((live) => live.slide === room.currentSlide)
+      .map((live) => live.stroke),
+  ];
   const specialsElements = slide ? slide.elements.filter((e) => e.type === "specials") : [];
   const activeSpecials = specialsElements
     .map((el) => ({ element: el, state: room.specialsState[el.id] as Record<string, unknown> | undefined }))
@@ -88,7 +98,10 @@ export function PresenterPage(): React.ReactNode {
       {!isFullscreen && (
         <header className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
           <span className="text-sm font-medium">Presentando — Sala {code}</span>
-          <span className={`text-xs ${room.connected ? "text-emerald-400" : "text-red-400"}`}>{room.connected ? "Conectado" : "Desconectado"}</span>
+          <span className={`text-xs ${room.connected ? "text-emerald-400" : "text-red-400"}`}>
+            {room.connected ? "Conectado" : "Desconectado"}
+            {room.roomConfig.isPublic && <span className="text-zinc-400"> · {room.viewers === 1 ? "1 espectador" : `${room.viewers} espectadores`}</span>}
+          </span>
         </header>
       )}
 
@@ -98,6 +111,7 @@ export function PresenterPage(): React.ReactNode {
             slide={slide}
             highlightedId={room.highlightedId}
             animTriggerId={room.animTriggerId}
+            animationRuns={room.animationRuns}
             width={data.width}
             height={data.height}
             codeExpandedId={room.codeOverlay.elementId}
@@ -106,11 +120,13 @@ export function PresenterPage(): React.ReactNode {
             onCollapseCode={showControls ? () => room.send("CODE_COLLAPSE", {}) : undefined}
             fullscreen={isFullscreen}
             showControls={showControls}
+            overlay={<AnnotationLayer strokes={slideStrokes} pointer={room.pointer} width={data.width} height={data.height} />}
           />
           {activeSpecials.map(({ element, state }) => (
             <SpecialsPresenter key={element.id} element={element} state={state} variables={data.variables} fullscreen={isFullscreen} />
           ))}
           {showIntro && <AntiSpoilerOverlay active={showIntro} countdown={room.countdown} />}
+          {room.blackout && <div className="fixed inset-0 z-[6000] bg-black" role="status" aria-label="Pantalla en negro" />}
           {showControls && !isFullscreen && (
             <div className="mt-4 flex items-center gap-3">
               <button
@@ -169,13 +185,15 @@ export function PresenterPage(): React.ReactNode {
                   {el.id.slice(0, 6)} {room.highlightedId === el.id ? "●" : "○"}
                 </button>
               ))}
-            <button
-              type="button"
-              onClick={() => slide.elements[0] && room.send("ANIMATION_TRIGGER", { elementId: slide.elements[0].id })}
-              className="cursor-pointer rounded-full border border-zinc-700 px-3 py-1 text-xs"
-            >
-              Animación
-            </button>
+            {nextAnimation && (
+              <button
+                type="button"
+                onClick={() => room.send("ANIMATION_TRIGGER", { elementId: nextAnimation.element.id, animationId: nextAnimation.animation.id })}
+                className="cursor-pointer rounded-full border border-zinc-700 px-3 py-1 text-xs"
+              >
+                Siguiente animación: {nextAnimation.animation.name}
+              </button>
+            )}
           </div>
         )}
       </main>

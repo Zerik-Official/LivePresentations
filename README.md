@@ -35,12 +35,24 @@ LivePresentations is a platform for creating, presenting, and controlling slides
 - **Borderless fullscreen** that automatically adapts the size and position of all elements to the window size without black bars.
 - **Export and import** complete presentations as `.zip` files that include general information, each slide separately, variables, and all uploaded assets, with support for the previous `.json` format.
 - **Light and dark themes** switchable throughout the interface.
+- **Google sign-in** next to email and password: new accounts take their name and picture from Google and can change both later. When the captcha is enabled, the Google button unlocks only after solving it.
+- **Email verification** at sign-up with a one-time code sent through Resend. It cannot be skipped: no session is issued until the code is confirmed, and logging in again asks for it. Code lifetime and resend cooldown are configurable.
+- **Cookie sessions**: a short-lived access token and a rotating refresh token in `HttpOnly` cookies, never readable from JavaScript or kept in browser storage.
+- **Autosave** a couple of seconds after the last change, with a visible save status and a warning before leaving with unsaved work.
+- **Image and video cropping**: show only part of the source, such as its right half, by dragging a frame or picking a preset; the element can resize to keep proportions.
+- **Animations**: entrance, exit and emphasis effects per element, or custom CSS `@keyframes`, played when the slide appears or triggered from the controller (optionally carrying linked child elements along).
+- **Assistant effort levels**: low, medium, high or maximum, trading tokens for thoroughness, with the tokens of every reply shown in the chat.
+- **Public rooms**: an optional viewer link (`/watch/<code>`) lets anyone follow the presentation without an account. Viewers cannot control it; they can look back at earlier slides and return to the live one.
+- **Richer editor**: 16 shape variants, lines and arrows, tables, freehand drawing, undo/redo history, duplicate, copy/paste, canvas alignment, layer ordering, keyboard nudging and zoom-to-fit.
+- **Live annotations from the controller**: draw on the current slide with pen or highlighter, point with a laser pointer and black out the screen, all synced to the presenter in real time.
+- **Tutorial library** inside the editor with guided step-by-step tours and a keyboard shortcut reference.
+- **AI assistant** in a floating chat window that creates and edits slides through tool calls. It runs on the server and talks to the editor over a WebSocket: changes appear on the canvas as they happen, each one can be accepted or discarded, replies render Markdown, and the conversation is stored per presentation. Users bring their own API key (Gemini, NVIDIA NIM, OpenAI, Groq, OpenRouter, Mistral, DeepSeek or any OpenAI-compatible endpoint); keys are encrypted at rest and never returned to the browser. A usage dashboard shows tokens per day and per model.
 
 ---
 
 ## Architecture
 
-Monorepo with `apps/frontend` + `apps/backend` using feature-based architecture. Frontend: `React 19 + TypeScript + Vite + Tailwind 4 + Framer Motion + Zustand` organized under `src/features/` (`editor/`, `player/`, `room/`) with base components in `src/components/ui/` (`Button`, `Modal`, `Select`, `Checkbox`, `CodeBlock`). Room state managed with `useRoom` and presentation data validated with `zod` (`presentationDataSchema`). Backend: `FastAPI + SQLAlchemy 2.0 (async) + aiosqlite + Uvicorn` with `app/api/routes/` (`presentations`, `rooms`, `uploads`), `app/services/presentation_package.py` for zip operations, and `app/ws/` for generic broadcast handling (`SPECIALS_*/ELEMENT_*/CUSTOM_*` messages) without modifying the backend for each new element type. SQLite database stored at `instance/livepresentations.db`. Frontend uses only `zustand` for external state management (`auth`/`theme`).
+Monorepo with `apps/frontend` + `apps/backend` using feature-based architecture. Frontend: `React 19 + TypeScript + Vite + Tailwind 4 + Framer Motion + Zustand` organized under `src/features/` (`editor/`, `player/`, `room/`) with base components in `src/components/ui/` (`Button`, `Modal`, `Select`, `Checkbox`, `CodeBlock`). Room state managed with `useRoom` and presentation data validated with `zod` (`presentationDataSchema`). Backend: `FastAPI + SQLAlchemy 2.0 (async) + aiosqlite + Uvicorn` with `app/api/routes/` (`auth`, `users`, `presentations`, `rooms`, `uploads`, `ai`), `app/services/presentation_package.py` for zip operations, `app/services/ai/` for the provider layer (subclass `AIProvider` and register it to add a provider), and `app/ws/events/` for room events: each event is a `RoomEvent` subclass with a pydantic payload, registered with `@room_events.register`, while `SPECIALS_*/ELEMENT_*/CUSTOM_*` messages are still rebroadcast untouched so new element types need no backend change. SQLite database stored at `instance/livepresentations.db`. Frontend uses only `zustand` for external state management (`auth`/`theme`).
 
 ---
 
@@ -144,7 +156,7 @@ From the `apps/backend` directory:
 uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-API available at `http://localhost:8000`, documentation at `http://localhost:8000/docs`, WebSocket at `/ws/room/{code}`.
+API available at `http://localhost:8000`, documentation at `http://localhost:8000/docs`, WebSockets at `/ws/room/{code}` (live rooms) and `/ws/assistant/{presentation_id}` (AI assistant).
 
 #### Configuration
 
@@ -154,8 +166,17 @@ Settings are read from `apps/backend/.env`:
 - `ENABLE_TURNSTILLE_CAPTCHA`: Enable Cloudflare Turnstile CAPTCHA (default: `true`)
 - `TURNSTILE_PUBLIC_KEY` & `TURNSTILE_PRIVATE_KEY`: Only required if CAPTCHA is enabled
 - `UPLOAD_QUOTA_MB`: Maximum upload size per user in MB (default: 20)
+- `ACCESS_TOKEN_EXPIRE_MINUTES` / `REFRESH_TOKEN_EXPIRE_DAYS`: Lifetime of the access token (default: 15 minutes) and of the refresh token that renews it (default: 30 days). Both travel in `HttpOnly` cookies; `COOKIE_SECURE` defaults to `true` in production and `COOKIE_DOMAIN` is optional.
+- `EMAIL_VERIFICATION_ENABLED`: Require the emailed code before a new account can log in (default: `true`).
+- `RESEND_API_KEY` / `EMAIL_FROM`: Resend credentials and sender (e.g. `LivePresentations <no-reply@yourdomain.com>`, on a domain verified in Resend). Without a key in development the code is printed in the backend log; in production the server refuses to start without it while verification is enabled.
+- `OTP_EXPIRE_MINUTES` / `OTP_RESEND_COOLDOWN_SECONDS` / `OTP_MAX_ATTEMPTS`: How long a code is valid (default: 10), how often a new one can be requested (default: 60) and how many wrong tries a code allows (default: 5).
+- `PUBLIC_ROOM_MAX_VIEWERS`: Maximum simultaneous viewers of a public room (default: 300).
+- `CONTACT_EMAIL`: Contact address shown in the site footer and in the terms (`/terms`) and privacy policy (`/privacy`) pages, which Google asks for when verifying the OAuth consent screen.
+- `GOOGLE_CLIENT_ID`: OAuth 2.0 Web client ID that enables Google sign-in. Create it in Google Cloud Console → APIs & Services → Credentials and add your frontend origin (e.g. `http://localhost:5173`) to "Authorized JavaScript origins". Leave empty to hide the Google button.
+- `AI_ENCRYPTION_KEY`: Key used to encrypt users' AI provider API keys at rest (generate with `openssl rand -hex 32`). Falls back to `SECRET_KEY` when empty; changing either makes stored keys unreadable.
+- `AI_ALLOW_PRIVATE_BASE_URLS`: Allow `http://` and private-network URLs for the "OpenAI-compatible" provider, for self-hosted models such as Ollama (default: `false`; keep it off on shared servers).
 
-If no `.env` file exists, CORS will be open to all origins.
+If no `.env` file exists, CORS will be open to all origins. Set `CORS_ORIGINS` to your real origins in production: besides CORS, it is the list of sites allowed to open the app's WebSockets with a user's session.
 
 In development, the frontend proxies API requests to `http://localhost:8000`. On desktop, open `http://<your-ip>:8000/docs` to test the API.
 

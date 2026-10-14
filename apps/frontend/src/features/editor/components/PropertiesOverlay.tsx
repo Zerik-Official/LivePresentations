@@ -63,6 +63,7 @@ export function PropertiesOverlay({ selected, onPatch, onPatchId, onReplace, onR
 
   return (
     <div
+      data-tour="properties"
       style={{ transform: `translate(${pos.x}px, ${pos.y}px)` }}
       className={`fixed right-6 top-24 z-40 w-80 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-xl ${minimized ? "overflow-hidden" : ""}`}
     >

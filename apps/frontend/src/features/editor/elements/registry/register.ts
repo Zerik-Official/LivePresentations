@@ -1,9 +1,12 @@
 import { elementRegistry } from "./index";
 import { codeDefinition } from "../code/code.definition";
+import { drawingDefinition } from "../drawing/drawing.definition";
 import { iconDefinition } from "../icon/icon.definition";
 import { imageDefinition } from "../image/image.definition";
+import { lineDefinition } from "../line/line.definition";
 import { shapeDefinition } from "../shape/shape.definition";
 import { specialsDefinition } from "../specials/specials.definition";
+import { tableDefinition } from "../table/table.definition";
 import { textDefinition } from "../text/text.definition";
 import { videoDefinition } from "../video/video.definition";
 
@@ -16,6 +19,9 @@ export function registerElementDefinitions(): void {
   elementRegistry.register(textDefinition);
   elementRegistry.register(imageDefinition);
   elementRegistry.register(shapeDefinition);
+  elementRegistry.register(lineDefinition);
+  elementRegistry.register(tableDefinition);
+  elementRegistry.register(drawingDefinition);
   elementRegistry.register(videoDefinition);
   elementRegistry.register(codeDefinition);
   elementRegistry.register(iconDefinition);

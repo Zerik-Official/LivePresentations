@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { AnimatedFrame, AnimationStyles } from "@/components/AnimatedFrame";
+import { resolvePlayback, type AnimationRun, type ElementPlayback } from "@/lib/animations/playback";
 import type { Slide, SlideElement } from "@/types/presentation";
 import { elementRegistry } from "@/features/editor/elements/registry";
 import { CodeExpandedOverlay } from "./elements/code/CodeExpandedOverlay";
@@ -17,7 +19,13 @@ interface Props {
   onCollapseCode?: () => void;
   fullscreen?: boolean;
   showControls?: boolean;
+  /** Content painted above every element, e.g. live annotations */
+  overlay?: React.ReactNode;
+  /** Animations triggered from the controller on this slide, by animation id */
+  animationRuns?: Record<string, AnimationRun>;
 }
+
+const STATIC_PLAYBACK: ElementPlayback = { animation: null, runKey: "static", hidden: false };
 
 /**
  * Render a single element according to its type via registry.
@@ -33,6 +41,7 @@ function ElementView({
   height,
   fullscreen,
   scale,
+  playback,
 }: {
   element: SlideElement;
   highlighted: boolean;
@@ -41,6 +50,7 @@ function ElementView({
   height: number;
   fullscreen?: boolean;
   scale?: number;
+  playback: ElementPlayback;
 }): React.ReactNode {
   const style: React.CSSProperties = fullscreen
     ? {
@@ -88,9 +98,11 @@ function ElementView({
       variants={variants}
       transition={{ delay: (anim?.delayMs ?? 0) / 1000, duration: (anim?.durationMs ?? 300) / 1000, ease: "easeOut" }}
       style={style}
-      className={`absolute overflow-hidden rounded-md transition-shadow duration-300 ${highlightClass}`}
+      className="absolute"
     >
-      {content}
+      <AnimatedFrame animation={playback.animation} runKey={playback.runKey} hidden={playback.hidden}>
+        <div className={`h-full w-full overflow-hidden rounded-md transition-shadow duration-300 ${highlightClass}`}>{content}</div>
+      </AnimatedFrame>
     </motion.div>
   );
 }
@@ -104,6 +116,7 @@ function ElementView({
  * @param codeHighlightedLines - Highlighted lines for expanded code
  * @param codeScrollTop - Scroll top for expanded code
  * @param onCollapseCode - Collapse handler
+ * @param overlay - Content painted above the elements
  */
 export function SlideRenderer({
   slide,
@@ -117,27 +130,11 @@ export function SlideRenderer({
   onCollapseCode,
   fullscreen = false,
   showControls = true,
+  overlay,
+  animationRuns,
 }: Props): React.ReactNode {
-  if (!slide) {
-    return (
-      <div style={{ width, height }} className="flex items-center justify-center rounded-xl border border-dashed bg-white text-sm text-zinc-500">
-        Sin diapositiva
-      </div>
-    );
-  }
-
-  const t = slide.transition ?? "fade";
-  const slideVariants =
-    t === "slide"
-      ? { initial: { opacity: 0, x: 80 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -80 } }
-      : t === "zoom"
-        ? { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 1.06 } }
-        : { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
-
-  const expandedElement = codeExpandedId ? (slide.elements.find((e) => e.id === codeExpandedId) ?? null) : null;
-  const isCodeExpanded = Boolean(expandedElement && expandedElement.type === "code");
-
   const [scale, setScale] = useState(1);
+  const playback = useMemo(() => (slide ? resolvePlayback(slide, animationRuns ?? {}) : new Map<string, ElementPlayback>()), [slide, animationRuns]);
 
   useEffect(() => {
     if (!fullscreen) return;
@@ -157,6 +154,25 @@ export function SlideRenderer({
     return () => window.removeEventListener("resize", updateScale);
   }, [width, height, fullscreen]);
 
+  if (!slide) {
+    return (
+      <div style={{ width, height }} className="flex items-center justify-center rounded-xl border border-dashed bg-white text-sm text-zinc-500">
+        Sin diapositiva
+      </div>
+    );
+  }
+
+  const t = slide.transition ?? "fade";
+  const slideVariants =
+    t === "slide"
+      ? { initial: { opacity: 0, x: 80 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -80 } }
+      : t === "zoom"
+        ? { initial: { opacity: 0, scale: 0.92 }, animate: { opacity: 1, scale: 1 }, exit: { opacity: 0, scale: 1.06 } }
+        : { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } };
+
+  const expandedElement = codeExpandedId ? (slide.elements.find((e) => e.id === codeExpandedId) ?? null) : null;
+  const isCodeExpanded = Boolean(expandedElement && expandedElement.type === "code");
+
   const containerClass = fullscreen ? "relative overflow-hidden border-0 bg-white shadow-none" : "relative overflow-hidden rounded-xl border border-zinc-200 bg-white shadow-sm";
   const containerStyle: React.CSSProperties = fullscreen ? { width: "100vw", height: "100vh", background: slide.background } : { width, height, background: slide.background };
 
@@ -175,8 +191,10 @@ export function SlideRenderer({
           .slice()
           .sort((a, b) => a.zIndex - b.zIndex)
           .map((el) => (
-            <ElementView key={el.id} element={el} highlighted={highlightedId === el.id} isTriggered={animTriggerId === el.id} width={width} height={height} fullscreen={fullscreen} scale={scale} />
+            <ElementView key={el.id} element={el} highlighted={highlightedId === el.id} isTriggered={animTriggerId === el.id} width={width} height={height} fullscreen={fullscreen} scale={scale} playback={playback.get(el.id) ?? STATIC_PLAYBACK} />
           ))}
+        <AnimationStyles />
+        {overlay}
         {isCodeExpanded && <CodeExpandedOverlay element={expandedElement} expanded={isCodeExpanded} highlightedLines={codeHighlightedLines ?? []} scrollTop={codeScrollTop ?? 0} onCollapse={showControls ? onCollapseCode : undefined} />}
       </motion.div>
     </AnimatePresence>

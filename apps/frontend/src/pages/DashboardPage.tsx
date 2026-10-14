@@ -10,6 +10,7 @@ import { PresentationsSection } from "@/features/dashboard/components/Presentati
 import { RoomBanner } from "@/features/dashboard/components/RoomBanner";
 import { useDashboard } from "@/features/dashboard/hooks/useDashboard";
 import { RoomCreatedModal } from "@/features/room/RoomCreatedModal";
+import { useAiStore } from "@/stores/aiStore";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
@@ -53,8 +54,8 @@ export function DashboardPage(): React.ReactNode {
    * Handle logout and redirect to login.
    */
   function handleLogout(): void {
-    logout();
-    navigate("/login");
+    useAiStore.getState().reset();
+    void logout().then(() => navigate("/login"));
   }
 
   return (

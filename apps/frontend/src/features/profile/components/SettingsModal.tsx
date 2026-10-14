@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Modal, ModalBody, ModalFooter, ModalHeader } from "@/components/ui/Modal";
 import { Spinner } from "@/components/ui/Spinner";
 import { usersApi } from "@/lib/api";
+import { useAuthStore } from "@/stores/authStore";
 
 interface SettingsModalProps {
   open: boolean;
@@ -13,11 +14,15 @@ interface SettingsModalProps {
 
 /**
  * Settings modal for changing the account password.
+ * Accounts created with Google have none yet, so they create one instead.
  * @param open - Visibility
  * @param onClose - Close handler
  * @returns Settings modal element
  */
 export function SettingsModal({ open, onClose }: SettingsModalProps): React.ReactNode {
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
+  const hasPassword = user?.has_password ?? true;
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -40,8 +45,8 @@ export function SettingsModal({ open, onClose }: SettingsModalProps): React.Reac
   async function handleSubmit(): Promise<void> {
     setError(null);
     setSuccess(null);
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setError("Completa los tres campos de contraseña");
+    if ((hasPassword && !currentPassword) || !newPassword || !confirmPassword) {
+      setError("Completa todos los campos de contraseña");
       return;
     }
     if (newPassword.length < 8) {
@@ -54,8 +59,9 @@ export function SettingsModal({ open, onClose }: SettingsModalProps): React.Reac
     }
     setSaving(true);
     try {
-      await usersApi.changePassword(currentPassword, newPassword);
-      setSuccess("Contraseña actualizada correctamente");
+      await usersApi.changePassword(hasPassword ? currentPassword : null, newPassword);
+      if (user) setUser({ ...user, has_password: true });
+      setSuccess(hasPassword ? "Contraseña actualizada correctamente" : "Contraseña creada correctamente");
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -71,7 +77,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps): React.Reac
 
   return (
     <Modal open={open} onClose={onClose}>
-      <ModalHeader title="Configuración" subtitle="Cambia tu contraseña de acceso" onClose={onClose} />
+      <ModalHeader title="Configuración" subtitle={hasPassword ? "Cambia tu contraseña de acceso" : "Crea una contraseña para entrar también con tu correo"} onClose={onClose} />
       <ModalBody>
         {error && (
           <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
@@ -86,6 +92,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps): React.Reac
           </div>
         )}
 
+        {hasPassword && (
         <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
           Contraseña actual
           <div className="relative mt-1">
@@ -100,6 +107,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps): React.Reac
             />
           </div>
         </label>
+        )}
 
         <label className="block text-sm font-medium text-zinc-900 dark:text-zinc-100">
           Nueva contraseña
@@ -141,7 +149,7 @@ export function SettingsModal({ open, onClose }: SettingsModalProps): React.Reac
               <Spinner className="size-4 text-white dark:text-zinc-900" /> Guardando...
             </>
           ) : (
-            "Cambiar contraseña"
+            hasPassword ? "Cambiar contraseña" : "Crear contraseña"
           )}
         </Button>
       </ModalFooter>

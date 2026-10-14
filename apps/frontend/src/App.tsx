@@ -4,13 +4,18 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Spinner } from "@/components/ui/Spinner";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SeoTags } from "@/components/SeoTags";
 import { EditorPage } from "@/features/editor/EditorPage";
 import { ControllerPage } from "@/features/player/ControllerPage";
 import { PresenterPage } from "@/features/player/PresenterPage";
+import { WatchPage } from "@/features/player/WatchPage";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { LandingPage } from "@/pages/LandingPage";
 import { LoginPage } from "@/pages/LoginPage";
+import { PrivacyPage } from "@/pages/PrivacyPage";
 import { RegisterPage } from "@/pages/RegisterPage";
+import { TermsPage } from "@/pages/TermsPage";
+import { VerifyEmailPage } from "@/pages/VerifyEmailPage";
 import { useAuthStore } from "@/stores/authStore";
 
 /**
@@ -36,9 +41,14 @@ export default function App(): React.ReactNode {
   return (
     <TooltipProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <SeoTags />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/watch/:code" element={<WatchPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
           <Route
             path="/dashboard"
             element={

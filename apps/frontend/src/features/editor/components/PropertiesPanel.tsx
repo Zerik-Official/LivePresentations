@@ -9,6 +9,7 @@ import { getSubtree } from "@/lib/presentation/hierarchy";
 import { elementSchema } from "@/schemas/presentation.schema";
 import type { PresentationData, Slide, SlideElement } from "@/types/presentation";
 import { elementRegistry } from "../elements/registry";
+import { AnimationsPanel } from "./AnimationsPanel";
 
 type Tab = "general" | "code";
 
@@ -227,6 +228,8 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onRep
           </label>
 
           {PropertiesComponent ? <PropertiesComponent element={selected} onPatch={onPatch} data={data} /> : null}
+
+          <AnimationsPanel element={selected} onPatch={onPatch} slide={slide} />
 
           <Button variant="danger" size="sm" onClick={onDelete} className="cursor-pointer">
             <FiTrash2 /> Eliminar

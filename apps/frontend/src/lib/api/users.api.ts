@@ -58,12 +58,12 @@ export class UsersApi {
   }
 
   /**
-   * Change the account password.
-   * @param currentPassword - Current password for verification
+   * Change the account password, or create one for Google-only accounts.
+   * @param currentPassword - Current password, or null when the account has none
    * @param newPassword - New password with at least 8 characters
    * @returns Confirmation status
    */
-  async changePassword(currentPassword: string, newPassword: string): Promise<{ status: string }> {
+  async changePassword(currentPassword: string | null, newPassword: string): Promise<{ status: string }> {
     const { data } = await this.client.axios.post<{ status: string }>("/api/users/me/password", {
       current_password: currentPassword,
       new_password: newPassword,

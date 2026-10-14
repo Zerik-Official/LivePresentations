@@ -8,7 +8,7 @@ export function HowItWorksSection(): React.ReactNode {
     <section id="flujo" aria-labelledby="flujo-title" className="scroll-mt-24 px-4 py-20 sm:px-6 lg:py-28">
       <div className="mx-auto max-w-6xl">
         <Reveal>
-          <SectionHeading id="flujo-title" eyebrow="Flujo" title="De la idea al escenario en tres pasos" />
+          <SectionHeading id="flujo-title" eyebrow="Cómo funciona" title="De la idea al escenario en tres pasos" />
         </Reveal>
 
         <div className="relative mt-14">

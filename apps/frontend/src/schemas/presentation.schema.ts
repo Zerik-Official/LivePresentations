@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+import { EFFECTS } from "@/lib/animations/effects";
+import { ELEMENT_TYPES } from "@/types/presentation";
+
 /**
  * Schema for a presentation-level variable.
  */
@@ -12,11 +15,29 @@ export const variableSchema = z.object({
 });
 
 /**
+ * Schema for an element animation; missing fields get sensible defaults.
+ * Entrances start hidden unless told otherwise.
+ */
+export const animationSchema = z.object({
+  id: z.string(),
+  name: z.string().default("Animación"),
+  effect: z.string(),
+  trigger: z.enum(["enter", "controller"]).default("enter"),
+  durationMs: z.number().default(600),
+  delayMs: z.number().default(0),
+  easing: z.enum(["ease", "ease-in", "ease-out", "ease-in-out", "linear", "spring"]).default("ease-out"),
+  iterations: z.number().default(1),
+  includeChildren: z.boolean().default(true),
+  startHidden: z.boolean().optional(),
+  keyframes: z.string().optional(),
+}).transform((animation) => ({ ...animation, startHidden: animation.startHidden ?? EFFECTS[animation.effect]?.kind === "in" }));
+
+/**
  * Schema for a slide element.
  */
 export const elementSchema = z.object({
   id: z.string(),
-  type: z.enum(["text", "image", "shape", "video", "code", "icon", "specials"]),
+  type: z.enum(ELEMENT_TYPES),
   x: z.number(),
   y: z.number(),
   w: z.number(),
@@ -31,6 +52,7 @@ export const elementSchema = z.object({
       durationMs: z.number().default(300),
     })
     .optional(),
+  animations: z.array(animationSchema).optional(),
   highlightable: z.boolean().default(true),
   parentId: z.string().nullable().optional().default(null),
 });

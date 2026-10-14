@@ -33,7 +33,7 @@ export function EditorSidebar({ slide, selectedId, onSelect, onReorder, onSort, 
 
   return (
     <>
-      <aside className="hidden w-72 shrink-0 flex-col border-l border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 lg:flex">
+      <aside data-tour="layers" className="hidden w-72 shrink-0 flex-col border-l border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 lg:flex">
         <div className="flex gap-1 border-b border-zinc-200 dark:border-zinc-700 p-2">
           <button
             type="button"
@@ -78,6 +78,8 @@ export function EditorSidebar({ slide, selectedId, onSelect, onReorder, onSort, 
                 <li>Iconos: usa el selector con fondo opcional.</li>
                 <li>Código: elige lenguaje para resaltado Prism.</li>
                 <li>Pulsa Supr para borrar elemento seleccionado.</li>
+                <li>Ctrl+Z deshace, Ctrl+D duplica y las flechas mueven el elemento.</li>
+                <li>Abre «Tutoriales» en la barra superior para ver guías paso a paso.</li>
                 <li>Arrastra las diapositivas en el sidebar izquierdo para reordenar.</li>
                 <li>Usa el menú ≡ en cada miniatura para duplicar o eliminar.</li>
               </ul>

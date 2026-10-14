@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +15,7 @@ from app.db.session import get_db
 from app.models.presentation import Presentation
 from app.models.user import User
 from app.schemas.user import PasswordChange, UserProfileUpdate, UserRead, UserStatsRead
+from app.services.sessions import revoke_all_sessions, start_session
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -143,10 +144,14 @@ async def update_me(
 @router.post("/me/password", status_code=status.HTTP_200_OK)
 async def change_my_password(
     payload: PasswordChange,
+    response: Response,
     current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ) -> dict[str, str]:
     """Change the account password after verifying the current one.
+
+    Accounts created with Google have no password yet, so they can set one
+    without providing the current password.
 
     Args:
         payload: Current and new passwords.
@@ -156,18 +161,23 @@ async def change_my_password(
     Returns:
         Confirmation status.
     """
-    if not verify_password(payload.current_password, current_user.hashed_password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="La contraseña actual no es correcta",
-        )
-    if payload.current_password == payload.new_password:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="La nueva contraseña debe ser diferente a la actual",
-        )
+    if current_user.has_password:
+        if not payload.current_password or not verify_password(payload.current_password, current_user.hashed_password):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="La contraseña actual no es correcta",
+            )
+        if payload.current_password == payload.new_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="La nueva contraseña debe ser diferente a la actual",
+            )
     current_user.hashed_password = get_password_hash(payload.new_password)
+    current_user.has_password = True
     await db.commit()
+    # A new password closes every other session; this one continues with fresh tokens.
+    await revoke_all_sessions(db, current_user.id)
+    await start_session(db, current_user, response)
     return {"status": "updated"}
 
 

@@ -66,6 +66,7 @@ export const textDefinition: ElementDefinition = {
           textAlign: (p.align as React.CSSProperties["textAlign"]) ?? "left",
           fontFamily: p.fontFamily ? `"${p.fontFamily}", sans-serif` : undefined,
           lineHeight: p.lineHeight ?? 1.2,
+          whiteSpace: "pre-wrap",
           letterSpacing: p.letterSpacing ? `${p.letterSpacing}px` : undefined,
           opacity: p.opacity ?? 1,
           backgroundColor: hasBg ? (p.backgroundColor ?? "#ffffff") : "transparent",
@@ -102,6 +103,7 @@ export const textDefinition: ElementDefinition = {
           textDecoration: p.underline ? "underline" : "none",
           fontFamily: p.fontFamily ? `"${p.fontFamily}", sans-serif` : undefined,
           lineHeight: p.lineHeight ?? 1.2,
+          whiteSpace: "pre-wrap",
           letterSpacing: p.letterSpacing ? `${p.letterSpacing}px` : undefined,
           opacity: p.opacity ?? 1,
           backgroundColor: hasBg ? (p.backgroundColor ?? "#ffffff") : "transparent",
@@ -133,6 +135,7 @@ export const textDefinition: ElementDefinition = {
           fontFamily: p.fontFamily ? `"${p.fontFamily}", sans-serif` : undefined,
           overflow: "hidden",
           lineHeight: 1.2,
+          whiteSpace: "pre-wrap",
           backgroundColor: hasBg ? (p.backgroundColor ?? "#ffffff") : "transparent",
           borderRadius: hasBg ? (p.backgroundRadius ?? 4) : undefined,
         }}
