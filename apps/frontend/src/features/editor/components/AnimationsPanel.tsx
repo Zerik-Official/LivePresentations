@@ -3,9 +3,10 @@ import { FiChevronDown, FiPlay, FiPlus, FiTrash2 } from "react-icons/fi";
 
 import { Select, type SelectOption } from "@/components/ui/Select";
 import { EASINGS, EFFECTS, normalizeAnimations, sanitizeKeyframes, type AnimationEasing, type ElementAnimation } from "@/lib/animations/effects";
+import { getDescendantIds } from "@/lib/presentation/hierarchy";
 import { createId } from "@/lib/presentation/operations";
 import { useAnimationPreview } from "@/stores/animationPreviewStore";
-import type { SlideElement } from "@/types/presentation";
+import type { Slide, SlideElement } from "@/types/presentation";
 
 const GROUP_LABELS = { in: "Entrada", out: "Salida", emphasis: "Énfasis" } as const;
 
@@ -26,6 +27,17 @@ const INPUT_CLASS = "w-full rounded-lg border bg-(--input-bg) border-(--input-bo
 interface Props {
   element: SlideElement;
   onPatch: (patch: Partial<SlideElement> & { propsPatch?: Record<string, unknown> }) => void;
+  /** Slide of the element, to preview animations on linked children */
+  slide?: Slide | null;
+}
+
+/**
+ * Default name of an animation, used until the user names it.
+ * @param effect - Effect key
+ * @returns Label of the effect
+ */
+function defaultName(effect: string): string {
+  return EFFECTS[effect]?.label ?? "Animación personalizada";
 }
 
 /**
@@ -33,9 +45,10 @@ interface Props {
  * custom CSS keyframes, played when the slide appears or from the controller.
  * @param element - Selected element
  * @param onPatch - Patch handler
+ * @param slide - Slide of the element
  * @returns Animations section of the properties panel
  */
-export function AnimationsPanel({ element, onPatch }: Props): React.ReactNode {
+export function AnimationsPanel({ element, onPatch, slide }: Props): React.ReactNode {
   const animations = element.animations ?? [];
   const [expanded, setExpanded] = useState<string | null>(null);
   const preview = useAnimationPreview((s) => s.preview);
@@ -85,7 +98,13 @@ export function AnimationsPanel({ element, onPatch }: Props): React.ReactNode {
                 <span className="truncate text-xs font-medium text-zinc-800 dark:text-zinc-100">{animation.name}</span>
                 <span className="shrink-0 text-[10px] text-zinc-500 dark:text-zinc-400">{animation.trigger === "controller" ? "controlador" : "al mostrar"}</span>
               </button>
-              <button type="button" aria-label="Previsualizar animación" title="Previsualizar" disabled={customInvalid} onClick={() => preview(element.id, animation.id, animation.delayMs + animation.durationMs * (animation.iterations > 0 ? Math.min(animation.iterations, 5) : 3))} className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 dark:text-zinc-300 dark:hover:bg-zinc-800">
+              <button type="button" aria-label="Previsualizar animación" title="Previsualizar" disabled={customInvalid} onClick={() =>
+                  preview(
+                    animation,
+                    animation.includeChildren && slide ? [element.id, ...getDescendantIds(slide.elements, element.id)] : [element.id],
+                    animation.delayMs + animation.durationMs * (animation.iterations > 0 ? Math.min(animation.iterations, 5) : 3),
+                  )
+                } className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-zinc-600 hover:bg-zinc-100 disabled:opacity-40 dark:text-zinc-300 dark:hover:bg-zinc-800">
                 <FiPlay size={11} />
               </button>
               <button type="button" aria-label="Eliminar animación" title="Eliminar" onClick={() => save(animations.filter((a) => a.id !== animation.id))} className="flex h-6 w-6 cursor-pointer items-center justify-center rounded-md text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950">
@@ -104,7 +123,15 @@ export function AnimationsPanel({ element, onPatch }: Props): React.ReactNode {
                   <Select
                     value={animation.effect}
                     options={EFFECT_OPTIONS}
-                    onChange={(effect) => update(animation.id, { effect, durationMs: EFFECTS[effect]?.durationMs ?? animation.durationMs, keyframes: effect === "custom" ? (animation.keyframes ?? CUSTOM_EXAMPLE) : animation.keyframes })}
+                    onChange={(effect) =>
+                      update(animation.id, {
+                        effect,
+                        // Keep a name the user typed; otherwise follow the effect.
+                        name: animation.name === defaultName(animation.effect) ? defaultName(effect) : animation.name,
+                        durationMs: EFFECTS[effect]?.durationMs ?? animation.durationMs,
+                        keyframes: effect === "custom" ? (animation.keyframes ?? CUSTOM_EXAMPLE) : animation.keyframes,
+                      })
+                    }
                   />
                 </label>
                 <label className="block text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
