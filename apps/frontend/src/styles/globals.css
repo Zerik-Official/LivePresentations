@@ -120,6 +120,8 @@ html.dark {
   --primary: #18181b;
   --primary-hover: #27272a;
   --primary-active: #09090b;
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
 }
 
 html.dark {
@@ -135,6 +137,8 @@ html.dark {
   --primary: #fafafa;
   --primary-hover: #e4e4e7;
   --primary-active: #d4d4d8;
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
 }
 
 * {

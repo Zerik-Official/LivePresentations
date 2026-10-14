@@ -1,6 +1,7 @@
 import type { DragEndEvent } from "@dnd-kit/core";
 import { createDefaultElement } from "@/lib/presentation/factory";
 import { canLink, getDescendantIds } from "@/lib/presentation/hierarchy";
+import { alignElement, cloneSubtree, createId, insertElements, moveElement, nextZIndex, setElementLayer, type AlignMode } from "@/lib/presentation/operations";
 import type { PresentationData, SlideElement } from "@/types/presentation";
 
 /**
@@ -24,13 +25,17 @@ export function useElements(
   replaceSelected: (next: SlideElement) => boolean;
   replaceSubtree: (next: { element: SlideElement; children: SlideElement[] }) => boolean;
   deleteSelected: () => void;
-  handleDragEnd: (event: DragEndEvent) => void;
+  handleDragEnd: (event: DragEndEvent, scale?: number) => void;
   handleResize: (elemId: string, w: number, h: number) => void;
   handleReorder: (elemId: string, dir: 1 | -1) => void;
   handleSortLayer: (activeId: string, overId: string) => void;
   setParent: (childId: string, parentId: string | null) => boolean;
   unlinkElement: (childId: string) => void;
   duplicateWithChildren: (rootId: string) => void;
+  addElements: (elements: SlideElement[]) => void;
+  nudgeSelected: (dx: number, dy: number) => void;
+  alignSelected: (mode: AlignMode) => void;
+  layerSelected: (position: "front" | "back") => void;
 } {
   /**
    * Add element to current slide.
@@ -40,7 +45,7 @@ export function useElements(
     if (!data) return;
     const slide = data.slides[activeSlide];
     if (!slide) return;
-    const el = createDefaultElement(type, `el-${Date.now()}`);
+    const el = { ...createDefaultElement(type, createId("el")), zIndex: nextZIndex(slide) };
     const slides = [...data.slides];
     slides[activeSlide] = { ...slide, elements: [...slide.elements, el] };
     setData({ ...data, slides });
@@ -164,10 +169,12 @@ export function useElements(
   /**
    * Handle drag end for @dnd-kit, propagating delta to descendants.
    * @param event - Drag end event
+   * @param scale - Canvas zoom, to convert screen pixels to slide pixels
    */
-  function handleDragEnd(event: DragEndEvent): void {
-    const { active, delta } = event;
-    if (!data || !delta) return;
+  function handleDragEnd(event: DragEndEvent, scale = 1): void {
+    const { active } = event;
+    if (!data || !event.delta) return;
+    const delta = { x: event.delta.x / scale, y: event.delta.y / scale };
     const slide = data.slides[activeSlide];
     if (!slide) return;
     const activeId = String(active.id);
@@ -279,21 +286,46 @@ export function useElements(
     if (!slide) return;
     const root = slide.elements.find((e) => e.id === rootId);
     if (!root) return;
-    const descendantIds = getDescendantIds(slide.elements, rootId);
-    const subtree = slide.elements.filter((e) => e.id === rootId || descendantIds.includes(e.id));
-    const idMap = new Map<string, string>();
-    for (const el of subtree) idMap.set(el.id, `el-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`);
-    const clones: SlideElement[] = subtree.map((el) => {
-      const newId = idMap.get(el.id)!;
-      const newParentId = el.parentId ? (idMap.get(el.parentId) ?? null) : null;
-      return { ...el, id: newId, parentId: newParentId, x: el.x + 20, y: el.y + 20, zIndex: slide.elements.length + 1 };
-    });
-    const slides = [...data.slides];
-    slides[activeSlide] = { ...slide, elements: [...slide.elements, ...clones] };
-    setData({ ...data, slides });
-    const newRootId = idMap.get(rootId);
-    if (newRootId) setSelectedId(newRootId);
+    addElements(cloneSubtree(slide.elements, rootId));
   }
 
-  return { addElement, patchSelected, patchSelectedId, replaceSelected, replaceSubtree, deleteSelected, handleDragEnd, handleResize, handleReorder, handleSortLayer, setParent, unlinkElement, duplicateWithChildren };
+  /**
+   * Add ready-made elements to the active slide and select the first one.
+   * @param elements - Elements to add, root first
+   */
+  function addElements(elements: SlideElement[]): void {
+    if (!data || elements.length === 0) return;
+    setData(insertElements(data, activeSlide, elements));
+    setSelectedId(elements[0]!.id);
+  }
+
+  /**
+   * Move the selected element and its children.
+   * @param dx - Horizontal offset in slide pixels
+   * @param dy - Vertical offset in slide pixels
+   */
+  function nudgeSelected(dx: number, dy: number): void {
+    if (!data || !selectedId) return;
+    setData(moveElement(data, activeSlide, selectedId, dx, dy));
+  }
+
+  /**
+   * Align the selected element against the canvas.
+   * @param mode - Alignment
+   */
+  function alignSelected(mode: AlignMode): void {
+    if (!data || !selectedId) return;
+    setData(alignElement(data, activeSlide, selectedId, mode));
+  }
+
+  /**
+   * Send the selected element to the front or the back.
+   * @param position - Target layer
+   */
+  function layerSelected(position: "front" | "back"): void {
+    if (!data || !selectedId) return;
+    setData(setElementLayer(data, activeSlide, selectedId, position));
+  }
+
+  return { addElements, nudgeSelected, alignSelected, layerSelected, addElement, patchSelected, patchSelectedId, replaceSelected, replaceSubtree, deleteSelected, handleDragEnd, handleResize, handleReorder, handleSortLayer, setParent, unlinkElement, duplicateWithChildren };
 }

@@ -1,6 +1,30 @@
+import { CroppedMedia, readCrop } from "@/components/CroppedMedia";
 import { ImageProperties } from "./ImageProperties";
 import type { ImageElementProps, SlideElement } from "@/types/presentation";
 import type { ElementDefinition, ElementPropertiesProps, ElementRenderContext } from "../registry/types";
+
+const FIT_CLASSES: Record<ImageElementProps["fit"], string> = { cover: "object-cover", contain: "object-contain", fill: "object-fill", none: "object-none" };
+
+/**
+ * Render an image, cropped to a region of the source when one is set.
+ * A crop always fills the frame; the fit option applies to uncropped images.
+ * @param element - Image element
+ * @param rounding - Corner radius class
+ * @param extraClass - Extra classes for uncropped images
+ * @returns React node
+ */
+function renderImage(element: SlideElement, rounding: string, extraClass = ""): React.ReactNode {
+  const p = element.props as unknown as ImageElementProps;
+  const crop = readCrop(p.crop);
+  if (crop) {
+    return (
+      <CroppedMedia crop={crop} className={rounding}>
+        <img src={p.src ?? ""} alt={p.alt ?? ""} className="h-full w-full object-fill" draggable={false} />
+      </CroppedMedia>
+    );
+  }
+  return <img src={p.src ?? ""} alt={p.alt ?? ""} className={`h-full w-full ${rounding} ${FIT_CLASSES[p.fit] ?? "object-cover"} ${extraClass}`} draggable={false} />;
+}
 
 /**
  * Definition for image elements.
@@ -36,10 +60,7 @@ export const imageDefinition: ElementDefinition = {
    * @returns React node
    */
   renderEditor(element: SlideElement): React.ReactNode {
-    const p = element.props as unknown as ImageElementProps;
-    const fit = p.fit ?? "cover";
-    const fitClass = fit === "contain" ? "object-contain" : fit === "fill" ? "object-fill" : fit === "none" ? "object-none" : "object-cover";
-    return <img src={p.src ?? ""} alt={p.alt ?? ""} className={`h-full w-full rounded-md ${fitClass} bg-transparent`} draggable={false} />;
+    return renderImage(element, "rounded-md", "bg-transparent");
   },
 
   /**
@@ -48,11 +69,8 @@ export const imageDefinition: ElementDefinition = {
    * @returns React node
    */
   renderPlayer(element: SlideElement, _ctx: ElementRenderContext): React.ReactNode {
-    const p = element.props as unknown as ImageElementProps;
-    const fit = p.fit ?? "cover";
-    const fitClass = fit === "contain" ? "object-contain" : fit === "fill" ? "object-fill" : fit === "none" ? "object-none" : "object-cover";
-    const bgClass = fit === "contain" ? "bg-zinc-100" : "";
-    return <img src={p.src ?? ""} alt={p.alt ?? ""} className={`h-full w-full rounded-md ${fitClass} ${bgClass}`} draggable={false} />;
+    const fit = (element.props as unknown as ImageElementProps).fit ?? "cover";
+    return renderImage(element, "rounded-md", fit === "contain" ? "bg-zinc-100" : "");
   },
 
   /**
@@ -61,10 +79,7 @@ export const imageDefinition: ElementDefinition = {
    * @returns React node
    */
   renderThumbnail(element: SlideElement): React.ReactNode {
-    const p = element.props as unknown as ImageElementProps;
-    const fit = p.fit ?? "cover";
-    const fitClass = fit === "contain" ? "object-contain" : fit === "fill" ? "object-fill" : fit === "none" ? "object-none" : "object-cover";
-    return <img src={p.src ?? ""} alt="" className={`h-full w-full rounded-sm ${fitClass}`} draggable={false} />;
+    return renderImage(element, "rounded-sm");
   },
 
   /**

@@ -1,7 +1,9 @@
 import { FiUpload, FiYoutube } from "react-icons/fi";
 
 import type { SlideElement } from "@/types/presentation";
+import { MediaCropControls } from "../shared/MediaCropControls";
 import { useFileUpload } from "../shared/useFileUpload";
+import { youTubeStill } from "./video.definition";
 import { isYouTubeUrl, parseYouTubeId } from "./youtube";
 
 interface Props {
@@ -48,6 +50,12 @@ export function VideoProperties({ element, onPatch }: Props): React.ReactNode {
         />
       </label>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+      <MediaCropControls
+        element={element}
+        onPatch={onPatch}
+        source={!props.src ? null : isYouTube && youtubeId ? { kind: "image", url: youTubeStill(youtubeId), aspect: 16 / 9 } : isYouTube ? null : { kind: "video", url: props.src }}
+      />
+      {Boolean(element.props.crop) && <p className="text-[11px] text-zinc-500 dark:text-zinc-400">Los controles del reproductor se ocultan al recortar; usa reproducción automática.</p>}
       {!isYouTube && (
         <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
           Poster (URL imagen)

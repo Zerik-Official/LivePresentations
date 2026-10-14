@@ -1,6 +1,9 @@
 import type { ApiClient } from "./client";
 import type { Presentation } from "@/types/backend";
 
+/** Largest body a keepalive request may carry, below the browser's 64 KiB quota. */
+const KEEPALIVE_MAX_BYTES = 60_000;
+
 /**
  * Presentation CRUD and import/export.
  */
@@ -42,6 +45,28 @@ export class PresentationsApi {
   async update(id: string, payload: { title?: string; data?: Record<string, unknown> }): Promise<Presentation> {
     const { data } = await this.client.axios.put<Presentation>(`/api/presentations/${id}`, payload);
     return data;
+  }
+
+  /**
+   * Update a presentation while the page is closing. Small documents use a
+   * keepalive request, which the browser finishes after the page is gone;
+   * larger ones exceed the keepalive quota and go through the regular client.
+   * @param id - Presentation id
+   * @param payload - Update payload
+   */
+  saveOnExit(id: string, payload: { title?: string; data?: Record<string, unknown> }): void {
+    const body = JSON.stringify(payload);
+    if (new TextEncoder().encode(body).length > KEEPALIVE_MAX_BYTES) {
+      void this.update(id, payload).catch(() => null);
+      return;
+    }
+    void fetch(`${this.client.baseURL}/api/presentations/${id}`, {
+      method: "PUT",
+      body,
+      keepalive: true,
+      credentials: "include",
+      headers: { "Content-Type": "application/json", "X-Requested-With": "XMLHttpRequest" },
+    }).catch(() => null);
   }
 
   /**

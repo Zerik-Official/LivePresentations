@@ -12,7 +12,7 @@ export function CtaSection(): React.ReactNode {
     <section id="empezar" aria-labelledby="empezar-title" className="scroll-mt-24 px-4 py-20 sm:px-6 lg:py-28">
       <Reveal className="mx-auto max-w-4xl">
         <GlowWindow active label="~/livepresentations — nueva sala" bodyClassName="relative overflow-hidden px-6 py-14 text-center sm:px-12 sm:py-20">
-          <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full bg-zinc-900/5 blur-3xl dark:bg-white/5" />
+          <div aria-hidden className="pointer-events-none absolute -top-24 left-1/2 h-64 w-xl -translate-x-1/2 rounded-full bg-zinc-900/5 blur-3xl dark:bg-white/5" />
           <h2 id="empezar-title" className="relative font-hypr-display text-3xl font-semibold tracking-tight text-balance text-zinc-900 sm:text-5xl dark:text-zinc-50">
             Tu próxima presentación <span className="hypr-text-gradient">empieza aquí</span>
           </h2>

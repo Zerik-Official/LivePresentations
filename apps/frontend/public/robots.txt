@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /dashboard
+Disallow: /editor/
+Disallow: /present/
+Disallow: /control/
+Disallow: /watch/
+Disallow: /verify-email
+
+Sitemap: https://livepresentations.coderhivex.com/sitemap.xml

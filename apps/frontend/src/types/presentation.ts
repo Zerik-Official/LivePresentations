@@ -2,6 +2,8 @@
  * Presentation domain types.
  */
 
+import type { ElementAnimation } from "@/lib/animations/effects";
+
 /**
  * Variable definition for presentation-level state.
  */
@@ -13,12 +15,18 @@ export interface Variable {
   value: unknown;
 }
 
+/** Element types supported by the editor, in schema order. */
+export const ELEMENT_TYPES = ["text", "image", "shape", "video", "code", "icon", "specials", "line", "drawing", "table"] as const;
+
+/** Discriminator of a slide element. */
+export type ElementType = (typeof ELEMENT_TYPES)[number];
+
 /**
  * Slide element with absolute layout and extensible props.
  */
 export interface SlideElement {
   id: string;
-  type: "text" | "image" | "shape" | "video" | "code" | "icon" | "specials";
+  type: ElementType;
   x: number;
   y: number;
   w: number;
@@ -26,11 +34,14 @@ export interface SlideElement {
   rotation: number;
   zIndex: number;
   props: Record<string, unknown>;
+  /** Legacy entrance animation, kept for presentations created before `animations` */
   animation?: {
     type: "fadeIn" | "slideIn" | "scaleIn";
     delayMs: number;
     durationMs: number;
   };
+  /** Animations played when the slide appears or when the controller triggers them */
+  animations?: ElementAnimation[];
   highlightable: boolean;
   parentId: string | null;
 }
@@ -88,6 +99,18 @@ export interface ImageElementProps {
   src: string;
   alt: string;
   fit: "cover" | "contain" | "fill" | "none";
+  /** Part of the source to show, as fractions of its size */
+  crop?: MediaCrop;
+}
+
+/**
+ * Region of an image or video source, as fractions (0-1) of its width and height.
+ */
+export interface MediaCrop {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
 }
 
 /**

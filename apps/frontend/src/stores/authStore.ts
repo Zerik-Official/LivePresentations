@@ -1,58 +1,48 @@
 import { create } from "zustand";
 
-import { authApi } from "@/lib/api";
-import type { AuthResponse, User } from "@/types/backend";
+import { apiClient, authApi } from "@/lib/api";
+import type { User } from "@/types/backend";
 
 interface AuthState {
   user: User | null;
-  token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  setAuth: (data: AuthResponse) => void;
   setUser: (user: User | null) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
   hydrate: () => Promise<void>;
 }
 
+/**
+ * Authenticated user state. The session itself lives in HttpOnly cookies, so
+ * nothing sensitive is kept in JavaScript or in browser storage.
+ */
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
-  token: localStorage.getItem("access_token"),
   isLoading: true,
   isAuthenticated: false,
 
-  /**
-   * Persist auth data after login/register.
-   * @param data - Auth response with token and user
-   */
-  setAuth: (data) => {
-    localStorage.setItem("access_token", data.access_token);
-    set({ token: data.access_token, user: data.user, isAuthenticated: true, isLoading: false });
-  },
-
   /** Update user in store. */
-  setUser: (user) => set({ user, isAuthenticated: !!user }),
+  setUser: (user) => set({ user, isAuthenticated: !!user, isLoading: false }),
 
-  /** Clear auth state and storage. */
-  logout: () => {
-    localStorage.removeItem("access_token");
-    set({ token: null, user: null, isAuthenticated: false, isLoading: false });
+  /** Close the session on the server and clear the local state. */
+  logout: async () => {
+    await authApi.logout().catch(() => null);
+    set({ user: null, isAuthenticated: false, isLoading: false });
   },
 
   /**
-   * Hydrate auth state on app start by validating stored token.
+   * Hydrate auth state on app start from the session cookies.
    */
   hydrate: async () => {
-    const token = localStorage.getItem("access_token");
-    if (!token) {
-      set({ isLoading: false, isAuthenticated: false, user: null });
-      return;
-    }
+    // Tokens were kept in localStorage by earlier versions; make sure none linger.
+    localStorage.removeItem("access_token");
     try {
       const user = await authApi.fetchMe();
-      set({ user, token, isAuthenticated: true, isLoading: false });
+      set({ user, isAuthenticated: true, isLoading: false });
     } catch {
-      localStorage.removeItem("access_token");
-      set({ user: null, token: null, isAuthenticated: false, isLoading: false });
+      set({ user: null, isAuthenticated: false, isLoading: false });
     }
   },
 }));
+
+apiClient.setSessionExpiredHandler(() => useAuthStore.setState({ user: null, isAuthenticated: false, isLoading: false }));
