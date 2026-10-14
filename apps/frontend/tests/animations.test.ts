@@ -68,6 +68,16 @@ describe("animation playback", () => {
     expect(playback.get("label")).toMatchObject({ hidden: true });
   });
 
+  it("lets the author choose whether a controller animation starts hidden", () => {
+    const visibleReveal = animation({ effect: "slideInLeft", trigger: "controller", startHidden: false });
+    const customReveal = animation({ effect: "custom", trigger: "controller", startHidden: true, keyframes: "from { opacity: 0 } to { opacity: 1 }" });
+    const custom: Slide = { ...slide, elements: [element("a", { animations: [visibleReveal] }), element("b", { animations: [customReveal] })] };
+    const playback = resolvePlayback(custom, {});
+    expect(playback.get("a")).toMatchObject({ hidden: false });
+    expect(playback.get("b")).toMatchObject({ hidden: true });
+    expect(animation({ effect: "pulse", trigger: "controller" }).startHidden).toBe(false);
+  });
+
   it("applies a triggered animation to the element and its linked children", () => {
     const playback = resolvePlayback(slide, { [reveal.id]: { elementId: "card", animationId: reveal.id, nonce: 5 } });
     expect(playback.get("card")).toMatchObject({ animation: reveal, hidden: false, runKey: `${reveal.id}-5` });
