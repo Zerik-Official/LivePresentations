@@ -4,6 +4,8 @@ import json
 from dataclasses import dataclass
 
 from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from typing import Literal
+
 from pydantic import Field
 from sqlalchemy import select
 
@@ -84,6 +86,7 @@ class ChatSendPayload(EventPayload):
 
     text: str = Field(min_length=1, max_length=20_000)
     document: DocumentInfo = Field(default_factory=DocumentInfo)
+    effort: Literal["low", "medium", "high", "max"] = "medium"
 
 
 class ToolResultPayload(EventPayload):
@@ -105,7 +108,7 @@ class ChatSend(AssistantEvent[ChatSendPayload]):
 
     async def handle(self, ctx: AssistantContext, payload: ChatSendPayload) -> None:
         """Run the turn in the background unless one is already running."""
-        if not ctx.session.start_turn(payload.text.strip(), payload.document):
+        if not ctx.session.start_turn(payload.text.strip(), payload.document, payload.effort):
             await ctx.send("CHAT_ERROR", {"message": "El asistente todavía está respondiendo"})
 
 
