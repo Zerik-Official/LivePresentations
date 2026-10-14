@@ -51,7 +51,7 @@ Layout, because elements are absolutely positioned and nothing reflows:
 
 Animations (the `animations` list of an element; omit it when not needed):
 - Each item: effect, trigger ("enter" plays when the slide appears, "controller" waits for the presenter to trigger it from the phone), durationMs, delayMs, easing, iterations (a number or "infinite"), includeChildren (also animate linked child elements).
-- Entrance effects: fadeIn, slideInLeft, slideInRight, slideInUp, slideInDown, zoomIn, popIn, flipIn, rotateIn, blurIn. With trigger "controller" the element stays hidden until triggered, like a click-to-reveal.
+- Entrance effects: fadeIn, slideInLeft, slideInRight, slideInUp, slideInDown, zoomIn, popIn, flipIn, rotateIn, blurIn. With trigger "controller" the element stays hidden until triggered, like a click-to-reveal; set startHidden to true for a custom entrance that should behave the same way.
 - Exit effects: fadeOut, slideOutLeft, slideOutRight, zoomOut, blurOut. Emphasis effects: pulse, bounce, shake, wiggle, spin, float, heartbeat, flash.
 - For anything else use effect "custom" with `keyframes`: only the body of a CSS @keyframes rule, e.g. "0% {{ transform: translateY(40px); opacity: 0 }} 60% {{ transform: translateY(-6px) }} 100% {{ transform: none; opacity: 1 }}". Plain declarations only: no @rules, url() or nested blocks.
 - Stagger entrances with delayMs to reveal content in reading order; do not animate everything.
