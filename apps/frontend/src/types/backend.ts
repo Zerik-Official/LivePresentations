@@ -64,6 +64,8 @@ export interface RuntimeConfig {
   upload_quota_bytes: number;
   google_client_id?: string | null;
   email_verification_enabled?: boolean;
+  /** Address shown in the legal pages and the footer */
+  contact_email?: string | null;
 }
 
 /**
