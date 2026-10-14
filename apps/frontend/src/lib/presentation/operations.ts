@@ -148,6 +148,16 @@ export function setElementLayer(data: PresentationData, slideIndex: number, elem
 }
 
 /**
+ * Copy animations with new ids, so a duplicated element can be triggered on
+ * its own from the controller.
+ * @param animations - Animations to copy
+ * @returns Copies, or undefined when there are none
+ */
+export function withFreshIds<T extends { id: string }>(animations: T[] | undefined): T[] | undefined {
+  return animations?.map((animation) => ({ ...animation, id: createId("anim") }));
+}
+
+/**
  * Copy an element and its descendants with fresh ids.
  * @param elements - Elements of the source slide
  * @param rootId - Root element id
@@ -165,6 +175,7 @@ export function cloneSubtree(elements: SlideElement[], rootId: string, offset = 
       x: el.x + offset,
       y: el.y + offset,
       props: structuredClone(el.props),
+      animations: withFreshIds(el.animations),
     }))
     .sort((a, b) => Number(b.parentId === null) - Number(a.parentId === null));
 }
