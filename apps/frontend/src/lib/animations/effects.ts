@@ -30,6 +30,8 @@ export interface ElementAnimation {
   iterations: number;
   /** Also animate the elements linked as children */
   includeChildren: boolean;
+  /** Keep the element invisible until a controller-triggered run plays it */
+  startHidden: boolean;
   /** Body of a CSS @keyframes rule, used by the `custom` effect */
   keyframes?: string;
 }
@@ -198,6 +200,7 @@ export function normalizeAnimations(raw: unknown, createId: () => string): Eleme
         easing: typeof item.easing === "string" && item.easing in EASINGS ? (item.easing as AnimationEasing) : "ease-out",
         iterations,
         includeChildren: item.includeChildren !== false,
+        startHidden: typeof item.startHidden === "boolean" ? item.startHidden : EFFECTS[effect]?.kind === "in",
         keyframes: typeof item.keyframes === "string" ? item.keyframes.slice(0, 4000) : undefined,
       } satisfies ElementAnimation;
     });
