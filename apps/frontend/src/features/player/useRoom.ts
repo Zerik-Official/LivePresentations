@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import type { AnimationRun } from "@/lib/animations/playback";
 import type { Stroke, StrokePoint } from "@/lib/drawing/strokes";
 import { openReconnectingSocket, WS_CLOSE_UNAUTHENTICATED, type ReconnectingSocket, type SocketMessage } from "@/lib/realtime";
 
@@ -62,6 +63,7 @@ export function useRoom(code: string, role: RoomRole) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [animTriggerId, setAnimTriggerId] = useState<string | null>(null);
+  const [animationRuns, setAnimationRuns] = useState<Record<string, AnimationRun>>({});
   const [codeOverlay, setCodeOverlay] = useState<CodeOverlayState>(EMPTY_OVERLAY);
   const [roomConfig, setRoomConfig] = useState<RoomConfigState>({ showControls: true, fullscreen: false, antiSpoiler: false, autoFullscreen: true, isPublic: false });
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -88,6 +90,7 @@ export function useRoom(code: string, role: RoomRole) {
       if (msg.type === "ROOM_STATE") {
         setCurrentSlide((msg.payload.current_slide as number) ?? 0);
         setHighlightedId((msg.payload.highlighted_id as string | null) ?? null);
+        setAnimationRuns({});
         setRoomConfig({
           showControls: (msg.payload.show_controls as boolean) ?? true,
           fullscreen: (msg.payload.fullscreen as boolean) ?? false,
@@ -107,11 +110,18 @@ export function useRoom(code: string, role: RoomRole) {
       } else if (msg.type === "SLIDE_CHANGED") {
         setCurrentSlide(msg.payload.index as number);
         setCodeOverlay(EMPTY_OVERLAY);
+        setAnimationRuns({});
       } else if (msg.type === "HIGHLIGHT_CHANGED") {
         setHighlightedId((msg.payload.elementId as string | null) ?? null);
       } else if (msg.type === "ANIMATION_TRIGGERED") {
-        setAnimTriggerId((msg.payload.elementId as string | null) ?? null);
-        window.setTimeout(() => setAnimTriggerId(null), 50);
+        const elementId = msg.payload.elementId as string | null;
+        const animationId = msg.payload.animationId as string | null;
+        if (elementId && animationId) {
+          setAnimationRuns((prev) => ({ ...prev, [animationId]: { elementId, animationId, nonce: Date.now() } }));
+        } else {
+          setAnimTriggerId(elementId ?? null);
+          window.setTimeout(() => setAnimTriggerId(null), 50);
+        }
       } else if (msg.type === "CODE_EXPANDED") {
         setCodeOverlay({ elementId: msg.payload.elementId as string, expanded: true, highlightedLines: [], scrollTop: 0 });
       } else if (msg.type === "CODE_COLLAPSED") {
@@ -231,6 +241,7 @@ export function useRoom(code: string, role: RoomRole) {
     currentSlide,
     highlightedId,
     animTriggerId,
+    animationRuns,
     codeOverlay,
     roomConfig,
     countdown,
