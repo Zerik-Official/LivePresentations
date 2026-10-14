@@ -10,6 +10,7 @@ import { parsePresentationData } from "@/lib/presentation/parser";
 import { useRoom } from "./useRoom";
 import { CodeControllerModal } from "./elements/code/CodeControllerModal";
 import { SpecialsController } from "./elements/specials/SpecialsController";
+import { AnimationControls } from "./controls/AnimationControls";
 import { AnnotationPad } from "./controls/AnnotationPad";
 import { ElementControls } from "./controls/ElementControls";
 
@@ -209,14 +210,7 @@ export function ControllerPage(): React.ReactNode {
               onOpenCode={(id) => setCodeControlId(id)}
             />
 
-            <button
-              type="button"
-              onClick={() => slide.elements[0] && room.send("ANIMATION_TRIGGER", { elementId: slide.elements[0].id })}
-              disabled={slide.elements.length === 0}
-              className="mt-3 w-full rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 py-3 text-sm font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-700 disabled:opacity-40"
-            >
-              Activar animación
-            </button>
+            <AnimationControls slide={slide} runs={room.animationRuns} onTrigger={(elementId, animationId) => room.send("ANIMATION_TRIGGER", { elementId, animationId })} />
           </>
         )}
 
