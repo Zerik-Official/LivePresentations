@@ -56,6 +56,8 @@ async def append_message(
     tool_call_id: str | None = None,
     summary: str | None = None,
     ok: bool | None = None,
+    input_tokens: int | None = None,
+    output_tokens: int | None = None,
 ) -> AIMessage:
     """Append a message to a conversation.
 
@@ -68,6 +70,8 @@ async def append_message(
         tool_call_id: Call a tool message answers.
         summary: Label of a tool result for the chat UI.
         ok: Whether a tool call succeeded.
+        input_tokens: Prompt tokens of the request that produced an assistant message.
+        output_tokens: Completion tokens of that request.
 
     Returns:
         Stored message.
@@ -82,6 +86,8 @@ async def append_message(
         tool_call_id=tool_call_id,
         summary=summary[:300] if summary else None,
         ok=ok,
+        input_tokens=input_tokens,
+        output_tokens=output_tokens,
     )
     db.add(message)
     await db.commit()
@@ -134,6 +140,8 @@ def to_client_message(message: AIMessage) -> dict[str, object]:
         "tool_call_id": message.tool_call_id,
         "summary": message.summary,
         "ok": message.ok,
+        "input_tokens": message.input_tokens or 0,
+        "output_tokens": message.output_tokens or 0,
     }
 
 
