@@ -36,6 +36,7 @@ import { snapDrag, type Guide } from "@/lib/presentation/snapping";
 import { selectActiveCredential, useAiStore } from "@/stores/aiStore";
 import type { Presentation } from "@/types/backend";
 import type { PresentationData, SlideElement } from "@/types/presentation";
+import { AnimationStyles } from "@/components/AnimatedFrame";
 import { DraggableElement } from "./DraggableElement";
 import { EditorRibbon } from "./components/EditorRibbon";
 import { EditorSidebar } from "./components/EditorSidebar";
@@ -543,6 +544,7 @@ export function EditorPage(): React.ReactNode {
                     ) : (
                       <div className="flex h-full items-center justify-center text-sm text-zinc-500 dark:text-zinc-400">Crea una diapositiva</div>
                     )}
+                    <AnimationStyles />
                     {guides.map((guide) => (
                       <span
                         key={`${guide.orientation}-${guide.position}`}
