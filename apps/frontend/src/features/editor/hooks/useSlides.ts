@@ -1,4 +1,5 @@
 import { createEmptySlide } from "@/lib/presentation/factory";
+import { withFreshIds } from "@/lib/presentation/operations";
 import type { PresentationData, Slide } from "@/types/presentation";
 
 /**
@@ -57,7 +58,7 @@ export function useSlides(
     const copy: Slide = {
       ...src,
       id: `slide-${Date.now()}`,
-      elements: src.elements.map((e) => ({ ...e, id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 6)}` })),
+      elements: src.elements.map((e) => ({ ...e, id: `el-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`, animations: withFreshIds(e.animations) })),
     };
     const slides = [...data.slides];
     slides.splice(idx + 1, 0, copy);
