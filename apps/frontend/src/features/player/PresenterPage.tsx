@@ -5,6 +5,7 @@ import { useParams } from "react-router-dom";
 import { Spinner } from "@/components/ui/Spinner";
 import { presentationsApi, roomsApi } from "@/lib/api";
 import { parsePresentationData } from "@/lib/presentation/parser";
+import { nextControllerAnimation } from "@/lib/animations/playback";
 import { AnnotationLayer } from "./elements/AnnotationLayer";
 import { AntiSpoilerOverlay } from "./elements/AntiSpoilerOverlay";
 import { SpecialsPresenter } from "./elements/specials/SpecialsPresenter";
@@ -77,6 +78,7 @@ export function PresenterPage(): React.ReactNode {
     );
 
   const slide = data.slides[room.currentSlide] ?? null;
+  const nextAnimation = slide ? nextControllerAnimation(slide, new Set(Object.keys(room.animationRuns))) : null;
   const slideStrokes = [
     ...(room.annotations[room.currentSlide] ?? []),
     ...Object.values(room.liveStrokes)
@@ -109,6 +111,7 @@ export function PresenterPage(): React.ReactNode {
             slide={slide}
             highlightedId={room.highlightedId}
             animTriggerId={room.animTriggerId}
+            animationRuns={room.animationRuns}
             width={data.width}
             height={data.height}
             codeExpandedId={room.codeOverlay.elementId}
@@ -182,13 +185,15 @@ export function PresenterPage(): React.ReactNode {
                   {el.id.slice(0, 6)} {room.highlightedId === el.id ? "●" : "○"}
                 </button>
               ))}
-            <button
-              type="button"
-              onClick={() => slide.elements[0] && room.send("ANIMATION_TRIGGER", { elementId: slide.elements[0].id })}
-              className="cursor-pointer rounded-full border border-zinc-700 px-3 py-1 text-xs"
-            >
-              Animación
-            </button>
+            {nextAnimation && (
+              <button
+                type="button"
+                onClick={() => room.send("ANIMATION_TRIGGER", { elementId: nextAnimation.element.id, animationId: nextAnimation.animation.id })}
+                className="cursor-pointer rounded-full border border-zinc-700 px-3 py-1 text-xs"
+              >
+                Siguiente animación: {nextAnimation.animation.name}
+              </button>
+            )}
           </div>
         )}
       </main>
