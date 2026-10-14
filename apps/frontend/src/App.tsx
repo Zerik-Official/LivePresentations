@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Spinner } from "@/components/ui/Spinner";
 import { TooltipProvider } from "@/components/ui/Tooltip";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { SeoTags } from "@/components/SeoTags";
 import { EditorPage } from "@/features/editor/EditorPage";
 import { ControllerPage } from "@/features/player/ControllerPage";
 import { PresenterPage } from "@/features/player/PresenterPage";
@@ -40,6 +41,7 @@ export default function App(): React.ReactNode {
   return (
     <TooltipProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
+        <SeoTags />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
