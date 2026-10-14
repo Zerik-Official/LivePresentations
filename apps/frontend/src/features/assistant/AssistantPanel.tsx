@@ -6,8 +6,16 @@ import { Markdown } from "@/components/Markdown";
 import { MessageScroller } from "@/components/ui/MessageScroller";
 import { Spinner } from "@/components/ui/Spinner";
 import { TooltipSimple } from "@/components/ui/Tooltip";
+import { useStoredChoice } from "@/hooks/useStoredChoice";
 import type { AiCredential } from "@/types/backend";
-import type { AssistantMessage, useAssistant } from "./useAssistant";
+import { EFFORT_LEVELS, type AssistantMessage, type EffortLevel, type LiveTokens, type TokenCount, type useAssistant } from "./useAssistant";
+
+const EFFORT_OPTIONS: Record<EffortLevel, { label: string; hint: string }> = {
+  low: { label: "Bajo", hint: "Rápido y económico: hace solo lo pedido, sin revisar." },
+  medium: { label: "Medio", hint: "Equilibrio entre calidad y consumo." },
+  high: { label: "Alto", hint: "Planifica, añade notas y animaciones y revisa el resultado. Gasta más tokens." },
+  max: { label: "Máximo", hint: "Máxima calidad: revisa cada diapositiva hasta pulirla. Es el que más tokens gasta." },
+};
 
 const SUGGESTIONS = [
   "Crea una presentación de 5 diapositivas sobre energías renovables",
@@ -16,6 +24,24 @@ const SUGGESTIONS = [
 ];
 
 const TOKEN_FORMAT = new Intl.NumberFormat("es-ES", { notation: "compact", maximumFractionDigits: 1 });
+
+/**
+ * Describe what a reply cost.
+ * @param tokens - Input and output tokens
+ * @returns Text such as "4,3 mil tokens · 4 mil entrada · 300 salida"
+ */
+function describeTokens(tokens: TokenCount): string {
+  return `${TOKEN_FORMAT.format(tokens.input + tokens.output)} tokens · ${TOKEN_FORMAT.format(tokens.input)} entrada · ${TOKEN_FORMAT.format(tokens.output)} salida`;
+}
+
+/**
+ * Estimate the tokens of the reply being produced.
+ * @param live - Reported tokens plus streamed characters
+ * @returns Approximate total
+ */
+function estimateLive(live: LiveTokens): number {
+  return live.input + live.output + Math.ceil(live.pendingChars / 4);
+}
 
 interface Props {
   /** Chat state and actions from `useAssistant` */
@@ -32,7 +58,7 @@ interface Props {
  * @param activity - What the assistant is doing right now, when this is the message in progress
  * @returns Message element
  */
-function MessageBubble({ message, activity }: { message: AssistantMessage; activity: string | null }): React.ReactNode {
+function MessageBubble({ message, activity, live }: { message: AssistantMessage; activity: string | null; live: LiveTokens | null }): React.ReactNode {
   if (message.role === "user") {
     return <div className="ml-8 self-end whitespace-pre-wrap rounded-2xl rounded-br-md bg-zinc-900 dark:bg-white px-3.5 py-2 text-sm text-white dark:text-zinc-900">{message.text}</div>;
   }
@@ -55,6 +81,13 @@ function MessageBubble({ message, activity }: { message: AssistantMessage; activ
           <Spinner className="size-3.5" /> {activity}
         </span>
       )}
+      {live ? (
+        <span className="text-[11px] tabular-nums text-zinc-400 dark:text-zinc-500">Gastando ≈ {TOKEN_FORMAT.format(estimateLive(live))} tokens</span>
+      ) : message.tokens ? (
+        <span className="text-[11px] tabular-nums text-zinc-400 dark:text-zinc-500" title="Tokens que costó esta respuesta">
+          ≈ {describeTokens(message.tokens)}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -72,7 +105,8 @@ export function AssistantPanel({ chat, credential, pendingChanges }: Props): Rea
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState("");
   const [position, setPosition] = useState({ x: 0, y: 0 });
-  const { messages, busy, activity, error, usage, connected, send, stop, clear } = chat;
+  const { messages, busy, activity, error, usage, live, connected, send, stop, clear } = chat;
+  const [effort, setEffort] = useStoredChoice<EffortLevel>("assistant_effort", EFFORT_LEVELS, "medium");
   const dragStart = useRef<{ x: number; y: number; pointerX: number; pointerY: number } | null>(null);
 
   /**
@@ -82,7 +116,7 @@ export function AssistantPanel({ chat, credential, pendingChanges }: Props): Rea
   function submit(text: string): void {
     if (!text.trim() || busy || !connected) return;
     setDraft("");
-    send(text);
+    send(text, effort);
   }
 
   /**
@@ -197,7 +231,7 @@ export function AssistantPanel({ chat, credential, pendingChanges }: Props): Rea
         }
       >
         {messages.map((message, index) => (
-          <MessageBubble key={message.id} message={message} activity={busy && index === lastIndex ? (activity ?? (message.text ? null : "Pensando...")) : null} />
+          <MessageBubble key={message.id} message={message} activity={busy && index === lastIndex ? (activity ?? (message.text ? null : "Pensando...")) : null} live={busy && index === lastIndex ? live : null} />
         ))}
         {error && (
           <div role="alert" className="flex items-start gap-2 rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950 px-3 py-2 text-xs text-red-700 dark:text-red-300">
@@ -214,6 +248,25 @@ export function AssistantPanel({ chat, credential, pendingChanges }: Props): Rea
         }}
         className="shrink-0 border-t border-zinc-200 dark:border-zinc-700 p-3"
       >
+        <div className="mb-2 flex items-center gap-2">
+          <span className="shrink-0 text-[11px] font-medium text-zinc-500 dark:text-zinc-400">Esfuerzo</span>
+          <div role="radiogroup" aria-label="Esfuerzo del asistente" className="flex flex-1 gap-0.5 rounded-lg bg-zinc-100 dark:bg-zinc-800 p-0.5">
+            {EFFORT_LEVELS.map((level) => (
+              <TooltipSimple key={level} content={EFFORT_OPTIONS[level].hint} side="top">
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={effort === level}
+                  disabled={busy}
+                  onClick={() => setEffort(level)}
+                  className={`flex-1 cursor-pointer rounded-md px-1.5 py-1 text-[11px] font-medium transition-colors disabled:cursor-not-allowed ${effort === level ? "bg-white text-zinc-900 shadow-sm dark:bg-zinc-900 dark:text-zinc-100" : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-100"}`}
+                >
+                  {EFFORT_OPTIONS[level].label}
+                </button>
+              </TooltipSimple>
+            ))}
+          </div>
+        </div>
         <div className="flex items-end gap-2 rounded-xl border bg-(--input-bg) border-(--input-border) p-2 focus-within:border-zinc-900 dark:focus-within:border-zinc-400">
           <textarea
             value={draft}
