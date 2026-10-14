@@ -30,6 +30,18 @@ class ElementPayload(EventPayload):
         return value if isinstance(value, str) else None
 
 
+class AnimationTriggerPayload(ElementPayload):
+    """Element animation to play; without an id the legacy entrance replays."""
+
+    animation_id: str | None = Field(default=None, alias="animationId", max_length=64)
+
+    @field_validator("animation_id", mode="before")
+    @classmethod
+    def only_string_ids(cls, value: object) -> str | None:
+        """Treat any non-string id as no animation."""
+        return value if isinstance(value, str) else None
+
+
 class RoomConfigPayload(EventPayload):
     """Room configuration flags; omitted flags are left untouched."""
 
@@ -105,12 +117,12 @@ class Highlight(RoomEvent[ElementPayload]):
 
 
 @room_events.register
-class AnimationTrigger(RelayEvent[ElementPayload]):
-    """Replay the entrance animation of an element."""
+class AnimationTrigger(RelayEvent[AnimationTriggerPayload]):
+    """Play one of an element's animations on every screen."""
 
     type = "ANIMATION_TRIGGER"
     out_type = "ANIMATION_TRIGGERED"
-    payload_model = ElementPayload
+    payload_model = AnimationTriggerPayload
 
 
 @room_events.register
