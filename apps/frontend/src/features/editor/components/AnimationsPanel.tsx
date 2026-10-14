@@ -78,7 +78,7 @@ export function AnimationsPanel({ element, onPatch, slide }: Props): React.React
   }
 
   return (
-    <section className="space-y-2 border-t border-zinc-200 dark:border-zinc-700 pt-3">
+    <section data-tour="animations" className="space-y-2 border-t border-zinc-200 dark:border-zinc-700 pt-3">
       <div className="flex items-center justify-between">
         <h5 className="text-xs font-semibold text-zinc-900 dark:text-zinc-100">Animaciones</h5>
         <button type="button" onClick={add} className="inline-flex cursor-pointer items-center gap-1 rounded-md border border-zinc-200 dark:border-zinc-700 px-2 py-1 text-[11px] font-medium text-zinc-700 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800">
@@ -96,7 +96,7 @@ export function AnimationsPanel({ element, onPatch, slide }: Props): React.React
               <button type="button" onClick={() => setExpanded(open ? null : animation.id)} aria-expanded={open} className="flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 text-left">
                 <FiChevronDown size={12} className={`shrink-0 text-zinc-500 transition-transform ${open ? "" : "-rotate-90"}`} />
                 <span className="truncate text-xs font-medium text-zinc-800 dark:text-zinc-100">{animation.name}</span>
-                <span className="shrink-0 text-[10px] text-zinc-500 dark:text-zinc-400">{animation.trigger === "controller" ? "controlador" : "al mostrar"}</span>
+                <span className="shrink-0 text-[10px] text-zinc-500 dark:text-zinc-400">{animation.trigger === "controller" ? (animation.startHidden ? "controlador · oculto" : "controlador") : "al mostrar"}</span>
               </button>
               <button type="button" aria-label="Previsualizar animación" title="Previsualizar" disabled={customInvalid} onClick={() =>
                   preview(
@@ -126,8 +126,8 @@ export function AnimationsPanel({ element, onPatch, slide }: Props): React.React
                     onChange={(effect) =>
                       update(animation.id, {
                         effect,
-                        // Keep a name the user typed; otherwise follow the effect.
                         name: animation.name === defaultName(animation.effect) ? defaultName(effect) : animation.name,
+                        startHidden: effect === "custom" ? animation.startHidden : EFFECTS[effect]?.kind === "in",
                         durationMs: EFFECTS[effect]?.durationMs ?? animation.durationMs,
                         keyframes: effect === "custom" ? (animation.keyframes ?? CUSTOM_EXAMPLE) : animation.keyframes,
                       })
@@ -176,6 +176,12 @@ export function AnimationsPanel({ element, onPatch, slide }: Props): React.React
                   <input type="checkbox" checked={animation.includeChildren} onChange={(e) => update(animation.id, { includeChildren: e.target.checked })} className="cursor-pointer accent-zinc-900 dark:accent-white" />
                   Animar también los elementos enlazados
                 </label>
+                {animation.trigger === "controller" && (
+                  <label className="flex cursor-pointer items-center gap-2 text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
+                    <input type="checkbox" checked={animation.startHidden} onChange={(e) => update(animation.id, { startHidden: e.target.checked })} className="cursor-pointer accent-zinc-900 dark:accent-white" />
+                    Oculto hasta lanzarla desde el controlador
+                  </label>
+                )}
                 {animation.effect === "custom" && (
                   <label className="block text-[11px] font-medium text-zinc-700 dark:text-zinc-300">
                     Fotogramas clave (cuerpo de @keyframes)
