@@ -2,6 +2,7 @@ import { FiUpload } from "react-icons/fi";
 
 import { Select } from "@/components/ui/Select";
 import type { ImageElementProps, SlideElement } from "@/types/presentation";
+import { MediaCropControls } from "../shared/MediaCropControls";
 import { useFileUpload } from "../shared/useFileUpload";
 
 interface Props {
@@ -43,6 +44,7 @@ export function ImageProperties({ element, onPatch }: Props): React.ReactNode {
       </label>
       {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
       {src && <img src={src} alt="" className={`max-h-36 w-full rounded-lg border border-zinc-200 dark:border-zinc-700 ${fit === "contain" ? "object-contain bg-zinc-100 dark:bg-zinc-800" : fit === "fill" ? "object-fill" : fit === "none" ? "object-none" : "object-cover"}`} />}
+      <MediaCropControls element={element} onPatch={onPatch} source={src ? { kind: "image", url: src } : null} />
       <label className="block text-xs font-medium text-zinc-700 dark:text-zinc-300">
         Ajuste
         <Select
@@ -56,7 +58,7 @@ export function ImageProperties({ element, onPatch }: Props): React.ReactNode {
           onChange={(v) => onPatch({ propsPatch: { fit: v } })}
           placeholder="Ajuste"
         />
-        <span className="mt-1 block text-[11px] font-normal text-zinc-500 dark:text-zinc-400">Contener muestra toda la imagen sin importar el tamaño del recuadro</span>
+        <span className="mt-1 block text-[11px] font-normal text-zinc-500 dark:text-zinc-400">Contener muestra toda la imagen sin importar el tamaño del recuadro. Con un recorte, la zona elegida siempre ocupa el recuadro.</span>
       </label>
       <label className="flex flex-col gap-1 text-xs font-medium text-zinc-700 dark:text-zinc-300">
         Texto alternativo
