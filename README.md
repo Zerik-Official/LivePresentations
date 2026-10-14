@@ -39,6 +39,9 @@ LivePresentations is a platform for creating, presenting, and controlling slides
 - **Email verification** at sign-up with a one-time code sent through Resend. It cannot be skipped: no session is issued until the code is confirmed, and logging in again asks for it. Code lifetime and resend cooldown are configurable.
 - **Cookie sessions**: a short-lived access token and a rotating refresh token in `HttpOnly` cookies, never readable from JavaScript or kept in browser storage.
 - **Autosave** a couple of seconds after the last change, with a visible save status and a warning before leaving with unsaved work.
+- **Image and video cropping**: show only part of the source, such as its right half, by dragging a frame or picking a preset; the element can resize to keep proportions.
+- **Animations**: entrance, exit and emphasis effects per element, or custom CSS `@keyframes`, played when the slide appears or triggered from the controller (optionally carrying linked child elements along).
+- **Assistant effort levels**: low, medium, high or maximum, trading tokens for thoroughness, with the tokens of every reply shown in the chat.
 - **Public rooms**: an optional viewer link (`/watch/<code>`) lets anyone follow the presentation without an account. Viewers cannot control it; they can look back at earlier slides and return to the live one.
 - **Richer editor**: 16 shape variants, lines and arrows, tables, freehand drawing, undo/redo history, duplicate, copy/paste, canvas alignment, layer ordering, keyboard nudging and zoom-to-fit.
 - **Live annotations from the controller**: draw on the current slide with pen or highlighter, point with a laser pointer and black out the screen, all synced to the presenter in real time.
@@ -168,6 +171,7 @@ Settings are read from `apps/backend/.env`:
 - `RESEND_API_KEY` / `EMAIL_FROM`: Resend credentials and sender (e.g. `LivePresentations <no-reply@yourdomain.com>`, on a domain verified in Resend). Without a key in development the code is printed in the backend log; in production the server refuses to start without it while verification is enabled.
 - `OTP_EXPIRE_MINUTES` / `OTP_RESEND_COOLDOWN_SECONDS` / `OTP_MAX_ATTEMPTS`: How long a code is valid (default: 10), how often a new one can be requested (default: 60) and how many wrong tries a code allows (default: 5).
 - `PUBLIC_ROOM_MAX_VIEWERS`: Maximum simultaneous viewers of a public room (default: 300).
+- `CONTACT_EMAIL`: Contact address shown in the site footer and in the terms (`/terms`) and privacy policy (`/privacy`) pages, which Google asks for when verifying the OAuth consent screen.
 - `GOOGLE_CLIENT_ID`: OAuth 2.0 Web client ID that enables Google sign-in. Create it in Google Cloud Console → APIs & Services → Credentials and add your frontend origin (e.g. `http://localhost:5173`) to "Authorized JavaScript origins". Leave empty to hide the Google button.
 - `AI_ENCRYPTION_KEY`: Key used to encrypt users' AI provider API keys at rest (generate with `openssl rand -hex 32`). Falls back to `SECRET_KEY` when empty; changing either makes stored keys unreadable.
 - `AI_ALLOW_PRIVATE_BASE_URLS`: Allow `http://` and private-network URLs for the "OpenAI-compatible" provider, for self-hosted models such as Ollama (default: `false`; keep it off on shared servers).
