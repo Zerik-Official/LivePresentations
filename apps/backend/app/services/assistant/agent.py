@@ -229,7 +229,7 @@ class AssistantSession:
                         elif event.type == "tool_start":
                             await self._emit("TOOL_PREPARING", {"name": event.data.get("name", "")})
                         elif event.type == "tool_call":
-                            calls.append({"id": str(event.data["id"]), "name": str(event.data["name"]), "arguments": str(event.data["arguments"])})
+                            calls.append({key: str(value) for key, value in event.data.items() if key in ("id", "name", "arguments", "extra_content")})
                             output_chars += len(calls[-1]["arguments"])
                         elif event.type == "usage":
                             usage = (int(event.data["input_tokens"]), int(event.data["output_tokens"]))  # type: ignore[call-overload]
@@ -239,7 +239,6 @@ class AssistantSession:
                             rejected = True
                             raise AssistantError(str(event.data.get("message", "El proveedor devolvió un error")))
                 finally:
-                    # A stopped response was still generated and billed; a rejected request was not.
                     if usage is not None:
                         step_usage = usage
                         await asyncio.shield(self._record_usage(credential, *usage, estimated=False))
