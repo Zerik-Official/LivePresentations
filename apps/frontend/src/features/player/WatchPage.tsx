@@ -167,6 +167,7 @@ export function WatchPage(): React.ReactNode {
               slide={slide}
               highlightedId={lagging ? null : room.highlightedId}
               animTriggerId={lagging ? null : room.animTriggerId}
+              animationRuns={lagging ? undefined : room.animationRuns}
               width={data.width}
               height={data.height}
               codeExpandedId={lagging ? null : room.codeOverlay.elementId}
