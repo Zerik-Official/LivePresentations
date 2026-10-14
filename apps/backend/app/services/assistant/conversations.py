@@ -145,6 +145,28 @@ def to_client_message(message: AIMessage) -> dict[str, object]:
     }
 
 
+def _wire_tool_call(call: dict[str, str]) -> dict[str, object]:
+    """Convert a stored tool call to the chat-completions format.
+
+    Provider data received with the call (`extra_content`, where Gemini puts
+    the thought signature it requires back) is returned unchanged.
+
+    Args:
+        call: Stored call with id, name, arguments and optional extra content.
+
+    Returns:
+        Tool call ready to send.
+    """
+    wire: dict[str, object] = {"id": call.get("id", ""), "type": "function", "function": {"name": call.get("name", ""), "arguments": call.get("arguments", "{}")}}
+    try:
+        extra = json.loads(call["extra_content"]) if call.get("extra_content") else None
+    except ValueError:
+        extra = None
+    if isinstance(extra, dict):
+        wire["extra_content"] = extra
+    return wire
+
+
 def to_model_messages(messages: list[AIMessage]) -> list[dict[str, object]]:
     """Convert stored messages to the chat-completions wire format.
 
@@ -173,7 +195,7 @@ def to_model_messages(messages: list[AIMessage]) -> list[dict[str, object]]:
         entry: dict[str, object] = {"role": message.role, "content": message.content}
         calls = read_tool_calls(message) if message.role == "assistant" else []
         if calls:
-            entry["tool_calls"] = [{"id": call.get("id", ""), "type": "function", "function": {"name": call.get("name", ""), "arguments": call.get("arguments", "{}")}} for call in calls]
+            entry["tool_calls"] = [_wire_tool_call(call) for call in calls]
         wire.append(entry)
         if not calls:
             continue
