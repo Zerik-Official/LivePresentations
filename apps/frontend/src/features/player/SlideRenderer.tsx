@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
+import { AnimatedFrame, AnimationStyles } from "@/components/AnimatedFrame";
+import { resolvePlayback, type AnimationRun, type ElementPlayback } from "@/lib/animations/playback";
 import type { Slide, SlideElement } from "@/types/presentation";
 import { elementRegistry } from "@/features/editor/elements/registry";
 import { CodeExpandedOverlay } from "./elements/code/CodeExpandedOverlay";
@@ -19,7 +21,11 @@ interface Props {
   showControls?: boolean;
   /** Content painted above every element, e.g. live annotations */
   overlay?: React.ReactNode;
+  /** Animations triggered from the controller on this slide, by animation id */
+  animationRuns?: Record<string, AnimationRun>;
 }
+
+const STATIC_PLAYBACK: ElementPlayback = { animation: null, runKey: "static", hidden: false };
 
 /**
  * Render a single element according to its type via registry.
@@ -35,6 +41,7 @@ function ElementView({
   height,
   fullscreen,
   scale,
+  playback,
 }: {
   element: SlideElement;
   highlighted: boolean;
@@ -43,6 +50,7 @@ function ElementView({
   height: number;
   fullscreen?: boolean;
   scale?: number;
+  playback: ElementPlayback;
 }): React.ReactNode {
   const style: React.CSSProperties = fullscreen
     ? {
@@ -90,9 +98,11 @@ function ElementView({
       variants={variants}
       transition={{ delay: (anim?.delayMs ?? 0) / 1000, duration: (anim?.durationMs ?? 300) / 1000, ease: "easeOut" }}
       style={style}
-      className={`absolute overflow-hidden rounded-md transition-shadow duration-300 ${highlightClass}`}
+      className="absolute"
     >
-      {content}
+      <AnimatedFrame animation={playback.animation} runKey={playback.runKey} hidden={playback.hidden}>
+        <div className={`h-full w-full overflow-hidden rounded-md transition-shadow duration-300 ${highlightClass}`}>{content}</div>
+      </AnimatedFrame>
     </motion.div>
   );
 }
@@ -121,8 +131,10 @@ export function SlideRenderer({
   fullscreen = false,
   showControls = true,
   overlay,
+  animationRuns,
 }: Props): React.ReactNode {
   const [scale, setScale] = useState(1);
+  const playback = useMemo(() => (slide ? resolvePlayback(slide, animationRuns ?? {}) : new Map<string, ElementPlayback>()), [slide, animationRuns]);
 
   useEffect(() => {
     if (!fullscreen) return;
@@ -179,8 +191,9 @@ export function SlideRenderer({
           .slice()
           .sort((a, b) => a.zIndex - b.zIndex)
           .map((el) => (
-            <ElementView key={el.id} element={el} highlighted={highlightedId === el.id} isTriggered={animTriggerId === el.id} width={width} height={height} fullscreen={fullscreen} scale={scale} />
+            <ElementView key={el.id} element={el} highlighted={highlightedId === el.id} isTriggered={animTriggerId === el.id} width={width} height={height} fullscreen={fullscreen} scale={scale} playback={playback.get(el.id) ?? STATIC_PLAYBACK} />
           ))}
+        <AnimationStyles />
         {overlay}
         {isCodeExpanded && <CodeExpandedOverlay element={expandedElement} expanded={isCodeExpanded} highlightedLines={codeHighlightedLines ?? []} scrollTop={codeScrollTop ?? 0} onCollapse={showControls ? onCollapseCode : undefined} />}
       </motion.div>
