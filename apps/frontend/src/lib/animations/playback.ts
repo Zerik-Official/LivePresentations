@@ -1,6 +1,6 @@
 import { getDescendantIds } from "@/lib/presentation/hierarchy";
 import type { Slide, SlideElement } from "@/types/presentation";
-import { effectKind, type ElementAnimation } from "./effects";
+import type { ElementAnimation } from "./effects";
 
 /**
  * Animation started on an element from the controller.
@@ -38,7 +38,7 @@ export function animationsOf(element: SlideElement): ElementAnimation[] {
  * Resolve the animation state of every element of a slide.
  * A controller run applies to its element and, when the animation includes
  * children, to every descendant. Elements with a controller-triggered
- * entrance stay hidden until that entrance runs.
+ * animation marked `startHidden` stay hidden until it runs.
  * @param slide - Slide being shown
  * @param runs - Controller runs since the slide appeared, keyed by element id
  * @returns Playback state by element id
@@ -68,7 +68,7 @@ export function resolvePlayback(slide: Slide, runs: Record<string, AnimationRun>
       .filter((el) => el.id !== element.id && getDescendantIds(slide.elements, el.id).includes(element.id))
       .flatMap((ancestor) => animationsOf(ancestor).filter((a) => a.includeChildren));
     const entrance = [...own, ...inherited].find((a) => a.trigger === "enter");
-    const waiting = [...own, ...inherited].some((a) => a.trigger === "controller" && effectKind(a) === "in");
+    const waiting = [...own, ...inherited].some((a) => a.trigger === "controller" && a.startHidden);
     playback.set(element.id, { animation: entrance ?? null, runKey: entrance ? `enter-${entrance.id}` : "static", hidden: !entrance && waiting });
   }
   return playback;
