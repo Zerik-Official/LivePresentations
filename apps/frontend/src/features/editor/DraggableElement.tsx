@@ -1,5 +1,7 @@
 import { useDraggable } from "@dnd-kit/core";
 
+import { AnimatedFrame } from "@/components/AnimatedFrame";
+import { useAnimationPreview } from "@/stores/animationPreviewStore";
 import type { SlideElement } from "@/types/presentation";
 import { elementRegistry } from "./elements/registry";
 
@@ -103,6 +105,8 @@ export function DraggableElement({ element, selected, onSelect, onResize, dragDe
     window.addEventListener("pointerup", onUp);
   }
 
+  const previewRun = useAnimationPreview((s) => (s.run?.elementId === element.id ? s.run : null));
+  const previewAnimation = previewRun ? (element.animations?.find((a) => a.id === previewRun.animationId) ?? null) : null;
   const definition = elementRegistry.tryGet(element.type);
   const content = definition ? definition.renderEditor(element) : null;
   const isTransparentVisual = definition?.isTransparent?.(element) ?? element.type === "image";
@@ -127,7 +131,13 @@ export function DraggableElement({ element, selected, onSelect, onResize, dragDe
       {...attributes}
       {...(rawListeners ? Object.fromEntries(Object.entries(rawListeners).filter(([k]) => k !== "onPointerDown")) : {})}
     >
-      {content}
+      {previewAnimation ? (
+        <AnimatedFrame animation={previewAnimation} runKey={`${previewRun!.nonce}`}>
+          {content}
+        </AnimatedFrame>
+      ) : (
+        content
+      )}
       {selected && (
         <>
           <span onPointerDown={(e) => startResize(e, "se")} className="absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded-sm border border-white bg-zinc-900" />
