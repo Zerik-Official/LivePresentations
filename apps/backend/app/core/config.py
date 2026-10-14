@@ -30,6 +30,7 @@ class Settings(BaseSettings):
     otp_max_attempts: int = 5
 
     public_room_max_viewers: int = 300
+    contact_email: str = ""
 
     database_url: str = f"sqlite+aiosqlite:///{_DEFAULT_DB_PATH.as_posix()}"
 
