@@ -14,6 +14,18 @@ export interface AssistantToolActivity {
   ok: boolean;
 }
 
+/** How hard the assistant works on a message; higher levels spend more tokens. */
+export const EFFORT_LEVELS = ["low", "medium", "high", "max"] as const;
+export type EffortLevel = (typeof EFFORT_LEVELS)[number];
+
+/**
+ * Tokens spent producing one assistant reply.
+ */
+export interface TokenCount {
+  input: number;
+  output: number;
+}
+
 /**
  * Chat message as shown in the panel.
  */
@@ -23,6 +35,17 @@ export interface AssistantMessage {
   text: string;
   /** Tool calls made while producing an assistant message */
   tools: AssistantToolActivity[];
+  /** Tokens the reply cost, once known */
+  tokens?: TokenCount;
+}
+
+/**
+ * Tokens of the reply being produced: what the provider reported so far plus
+ * an estimate of the text still streaming.
+ */
+export interface LiveTokens extends TokenCount {
+  /** Characters streamed since the last provider report */
+  pendingChars: number;
 }
 
 /**
@@ -42,6 +65,8 @@ interface HistoryRow {
   content: string;
   summary: string | null;
   ok: boolean | null;
+  input_tokens?: number;
+  output_tokens?: number;
 }
 
 /** Labels shown while the model is still writing a tool call. */
@@ -76,7 +101,12 @@ function toMessages(rows: HistoryRow[]): AssistantMessage[] {
       messages.push(bubble);
     }
     if (row.role === "tool") bubble.tools.push({ id: row.id, summary: row.summary ?? "Herramienta ejecutada", ok: row.ok ?? true });
-    else if (row.content) bubble.text += (bubble.text ? "\n\n" : "") + row.content;
+    else {
+      if (row.content) bubble.text += (bubble.text ? "\n\n" : "") + row.content;
+      if (row.input_tokens || row.output_tokens) {
+        bubble.tokens = { input: (bubble.tokens?.input ?? 0) + (row.input_tokens ?? 0), output: (bubble.tokens?.output ?? 0) + (row.output_tokens ?? 0) };
+      }
+    }
   }
   return messages;
 }
@@ -98,6 +128,7 @@ export function useAssistant(bridge: React.RefObject<EditorBridge>, presentation
   const [error, setError] = useState<string | null>(null);
   const [usage, setUsage] = useState<ConversationUsage>({ input: 0, output: 0 });
   const [connected, setConnected] = useState(false);
+  const [live, setLive] = useState<LiveTokens | null>(null);
   const socket = useRef<ReconnectingSocket | null>(null);
   const newStep = useRef(false);
   const changesHandler = useRef(onChanges);
@@ -153,10 +184,12 @@ export function useAssistant(bridge: React.RefObject<EditorBridge>, presentation
         setBusy(Boolean(payload.busy));
       } else if (type === "CHAT_STARTED") {
         newStep.current = false;
+        setLive({ input: 0, output: 0, pendingChars: 0 });
       } else if (type === "CHAT_DELTA") {
         const separator = newStep.current ? "\n\n" : "";
         newStep.current = false;
         setActivity(null);
+        setLive((current) => (current ? { ...current, pendingChars: current.pendingChars + String(payload.text ?? "").length } : current));
         patchReply((message) => ({ ...message, text: message.text + (message.text ? separator : "") + String(payload.text ?? "") }));
       } else if (type === "CHAT_STEP") {
         newStep.current = true;
@@ -166,14 +199,19 @@ export function useAssistant(bridge: React.RefObject<EditorBridge>, presentation
         void runTool(payload);
       } else if (type === "CHAT_USAGE") {
         setUsage({ input: Number(payload.input_tokens ?? 0), output: Number(payload.output_tokens ?? 0) });
+        setLive({ input: Number(payload.turn_input_tokens ?? 0), output: Number(payload.turn_output_tokens ?? 0), pendingChars: 0 });
       } else if (type === "CHAT_DONE") {
         setBusy(false);
         setActivity(null);
+        setLive(null);
+        const tokens = { input: Number(payload.turn_input_tokens ?? 0), output: Number(payload.turn_output_tokens ?? 0) };
+        if (tokens.input || tokens.output) patchReply((message) => ({ ...message, tokens }));
         if (payload.finish_reason === "length") setError("La respuesta se cortó por el límite de longitud del modelo.");
         else if (payload.finish_reason === "max_steps") setError("El asistente alcanzó el máximo de pasos por mensaje. Pídele que continúe.");
       } else if (type === "CHAT_ERROR") {
         setBusy(false);
         setActivity(null);
+        setLive(null);
         setError(String(payload.message ?? "El asistente devolvió un error"));
       }
     }
@@ -201,13 +239,14 @@ export function useAssistant(bridge: React.RefObject<EditorBridge>, presentation
   /**
    * Send a user message and start a turn.
    * @param text - Message text
+   * @param effort - How hard the assistant should work on it
    */
   const send = useCallback(
-    (text: string): void => {
+    (text: string, effort: EffortLevel = "medium"): void => {
       const prompt = text.trim();
       if (!prompt || busy) return;
       setError(null);
-      if (!socket.current?.send("CHAT_SEND", { text: prompt, document: describeDocument() })) {
+      if (!socket.current?.send("CHAT_SEND", { text: prompt, document: describeDocument(), effort })) {
         setError("Sin conexión con el asistente. Reintentando...");
         return;
       }
@@ -228,5 +267,5 @@ export function useAssistant(bridge: React.RefObject<EditorBridge>, presentation
     socket.current?.send("CHAT_CLEAR", {});
   }, []);
 
-  return { messages, busy, activity, error, usage, connected, send, stop, clear };
+  return { messages, busy, activity, error, usage, live, connected, send, stop, clear };
 }
