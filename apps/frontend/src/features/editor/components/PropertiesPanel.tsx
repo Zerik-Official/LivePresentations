@@ -229,7 +229,7 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onRep
 
           {PropertiesComponent ? <PropertiesComponent element={selected} onPatch={onPatch} data={data} /> : null}
 
-          <AnimationsPanel element={selected} onPatch={onPatch} />
+          <AnimationsPanel element={selected} onPatch={onPatch} slide={slide} />
 
           <Button variant="danger" size="sm" onClick={onDelete} className="cursor-pointer">
             <FiTrash2 /> Eliminar
