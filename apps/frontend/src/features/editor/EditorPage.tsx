@@ -513,7 +513,8 @@ export function EditorPage(): React.ReactNode {
 
           <main ref={mainRef} className="flex-1 overflow-auto bg-zinc-50 dark:bg-zinc-950">
             <div className="flex min-h-full min-w-full items-center justify-center p-6" style={{ width: "max-content" }}>
-              <DndContext onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd}>
+              {/* Auto-scroll would add the scroll distance to the drag delta while the canvas already fits the view. */}
+              <DndContext autoScroll={false} onDragStart={onDragStart} onDragMove={onDragMove} onDragEnd={onDragEnd}>
                 <div style={{ width: data.width * scale, height: data.height * scale }} className="relative shrink-0" data-tour="canvas">
                   <div
                     onDragOver={(e) => e.preventDefault()}
