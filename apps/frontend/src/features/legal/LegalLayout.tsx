@@ -46,8 +46,12 @@ export function ContactEmail(): React.ReactNode {
  */
 export function LegalLayout({ title, intro, sections }: Props): React.ReactNode {
   useEffect(() => {
+    const previous = document.title;
     document.title = `${title} · LivePresentations`;
-    window.scrollTo(0, 0);
+    window.scrollTo({ top: 0, behavior: "instant" });
+    return () => {
+      document.title = previous;
+    };
   }, [title]);
 
   return (
