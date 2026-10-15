@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import type { DragEndEvent } from "@dnd-kit/core";
 import { createDefaultElement } from "@/lib/presentation/factory";
 import { canLink, getDescendantIds } from "@/lib/presentation/hierarchy";
@@ -56,7 +57,7 @@ export function useElements(
    * Patch selected element.
    * @param patch - Patch with optional propsPatch
    */
-  function patchSelected(patch: Partial<SlideElement> & { propsPatch?: Record<string, unknown> }): void {
+  const patchSelected = useCallback((patch: Partial<SlideElement> & { propsPatch?: Record<string, unknown> }): void => {
     if (!data || !selectedId) return;
     const slide = data.slides[activeSlide];
     if (!slide) return;
@@ -70,7 +71,7 @@ export function useElements(
     const slides = [...data.slides];
     slides[activeSlide] = { ...slide, elements };
     setData({ ...data, slides });
-  }
+  }, [data, activeSlide, selectedId, setData]);
 
   /**
    * Patch selected element id.
