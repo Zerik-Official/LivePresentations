@@ -169,7 +169,10 @@ export function PropertiesPanel({ selected, onPatch, onPatchId, onReplace, onRep
     }
   }
 
-  const PropertiesComponent = selected ? elementRegistry.tryGet(selected.type)?.getPropertiesComponent() ?? null : null;
+  const PropertiesComponent = useMemo(
+    () => (selected ? elementRegistry.tryGet(selected.type)?.getPropertiesComponent() ?? null : null),
+    [selected?.type],
+  );
 
   return (
     <div className="space-y-3">
