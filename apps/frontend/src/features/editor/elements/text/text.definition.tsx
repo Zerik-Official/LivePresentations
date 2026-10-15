@@ -58,7 +58,7 @@ export const textDefinition: ElementDefinition = {
     return (
       <div
         style={{
-          fontSize: p.fontSize ?? 24,
+          fontSize: p.fontSize ?? 32,
           color: p.color ?? "#18181b",
           fontWeight: p.bold ? 700 : 400,
           fontStyle: p.italic ? "italic" : "normal",
@@ -128,7 +128,7 @@ export const textDefinition: ElementDefinition = {
     return (
       <div
         style={{
-          fontSize: p.fontSize ?? 24,
+          fontSize: p.fontSize ?? 32,
           color: p.color ?? "#18181b",
           textAlign: (p.align as React.CSSProperties["textAlign"]) ?? "left",
           fontWeight: p.bold ? 700 : 400,
